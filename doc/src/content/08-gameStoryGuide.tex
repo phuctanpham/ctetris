@@ -1,1 +1,33 @@
-% phucpt: doc/src/content/08-gameStoryGuide.tex
+% !TEX TS-program = xelatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass[12pt,a4paper]{article}
+
+\IfFileExists{src/libs/body.tex}{\input{src/libs/body.tex}}{\input{../libs/body.tex}}
+\IfFileExists{src/libs/header.tex}{\input{src/libs/header.tex}}{\input{../libs/header.tex}}
+\IfFileExists{src/libs/footer.tex}{\input{src/libs/footer.tex}}{\input{../libs/footer.tex}}
+\usepackage{docmute}
+\hypersetup{pdftitle={Báo cáo Kỹ năng nghề nghiệp - tính năng cốt truyện: Hướng dẫn}}
+
+\begin{document}
+\providecommand{\StandaloneSectionSetup}[2]{\ApplyStandardFooter{#1}{#2}}
+\StandaloneSectionSetup{08-gameStoryGuide.tex}{LastPageGameStoryGuide}
+\onehalfspacing
+
+\section{Hướng dẫn Build độc lập và Kiểm thử: Cốt truyện}
+
+\subsection{Yêu cầu môi trường (Environment)}
+// tự viết thêm: Cần bộ biên dịch C++ nào (C++17), cờ (flag) CMake nào.
+// tự viết thêm: Cần đặt file kịch bản JSON giả lập ở thư mục `/data/mock/` nào trước khi test?
+
+\subsection{Hướng dẫn Build (How to Build)}
+// tự viết thêm: Lệnh build qua terminal riêng cho module này để tạo file thực thi test. 
+// tự viết thêm: VD: `g++ src/gameStory/*.cpp tests/test_story.cpp -o bin/story_tester`
+
+\subsection{Kịch bản kiểm thử (Test Cases)}
+// tự viết thêm: Hướng dẫn người test (hoặc Dev khác) các bước:
+// tự viết thêm: Bước 1: Mở file thực thi.
+// tự viết thêm: Bước 2: Nhấn phím 'Space'. => Expected: Chữ hiện tiếp.
+// tự viết thêm: Bước 3: Xem log console báo "End of Story" khi chạy xong kịch bản không.
+
+\label{LastPageGameStoryGuide}
+\end{document}
