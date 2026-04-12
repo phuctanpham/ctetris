@@ -1,1 +1,24 @@
-% phucpt: doc/src/content/00-References.tex
+% !TEX TS-program = xelatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass[12pt,a4paper]{article}
+
+\IfFileExists{src/libs/body.tex}{\input{src/libs/body.tex}}{\input{../libs/body.tex}}
+\IfFileExists{src/libs/header.tex}{\input{src/libs/header.tex}}{\input{../libs/header.tex}}
+\IfFileExists{src/libs/footer.tex}{\input{src/libs/footer.tex}}{\input{../libs/footer.tex}}
+\usepackage{docmute}
+\hypersetup{pdftitle={Báo cáo Kỹ năng nghề nghiệp - Tài liệu tham khảo}}
+
+\begin{document}
+\providecommand{\StandaloneSectionSetup}[2]{\ApplyStandardFooter{#1}{#2}}
+\StandaloneSectionSetup{00-References.tex}{LastPageReferences}
+\onehalfspacing
+
+\section{Tài liệu tham khảo}
+\begin{sloppypar}
+\begin{enumerate}
+    \item Ten_Trang_1, \textit{Chu_de_trich_dan_trong_Trang_1}, truy cập tại: \url{https://trang.1/duong_dan_chu_de_trich_dan_trong_Trang_1/} (Truy cập ngày 28/03/2026).
+    \item  Ten_Trang_2, \textit{https://trang.2/duong_dan_chu_de_trich_dan_trong_Trang_2/} (Truy cập ngày 30/03/2026).
+\end{sloppypar}
+
+\label{LastPageReferences}
+\end{document}
