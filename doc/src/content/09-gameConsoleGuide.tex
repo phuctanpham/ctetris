@@ -1,1 +1,30 @@
-% phucpt: doc/src/content/09-gameConsoleGuide.tex
+% !TEX TS-program = xelatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass[12pt,a4paper]{article}
+
+\IfFileExists{src/libs/body.tex}{\input{src/libs/body.tex}}{\input{../libs/body.tex}}
+\IfFileExists{src/libs/header.tex}{\input{src/libs/header.tex}}{\input{../libs/header.tex}}
+\IfFileExists{src/libs/footer.tex}{\input{src/libs/footer.tex}}{\input{../libs/footer.tex}}
+\usepackage{docmute}
+\hypersetup{pdftitle={Báo cáo Kỹ năng nghề nghiệp - tính năng cấu hình: Hướng dẫn}}
+
+\begin{document}
+\providecommand{\StandaloneSectionSetup}[2]{\ApplyStandardFooter{#1}{#2}}
+\StandaloneSectionSetup{09-gameConsoleGuide.tex}{LastPageGameConsoleGuide}
+\onehalfspacing
+
+\section{Hướng dẫn Build độc lập và Kiểm thử: Console/Menu}
+
+\subsection{Yêu cầu môi trường (Environment)}
+// tự viết thêm: Cài đặt thư viện hiển thị (như SDL2/ImGui) vào biến môi trường trước khi build module này.
+
+\subsection{Hướng dẫn Build (How to Build)}
+// tự viết thêm: Lệnh build bao gồm flag liên kết thư viện (linking flags).
+// tự viết thêm: VD: `cmake -B build -S . && cmake --build build --target ConsoleTest`
+
+\subsection{Kịch bản kiểm thử (Test Cases)}
+// tự viết thêm: - Test Lưu Cài Đặt: Mở UI -> Chỉnh âm lượng -> Tắt app -> Mở lại -> Expected: Thanh âm lượng giữ nguyên vị trí cũ.
+// tự viết thêm: - Test Cửa Sổ: Nhấn nút Fullscreen -> Expected: Resize cửa sổ hệ điều hành không bị crash.
+
+\label{LastPageGameConsoleGuide}
+\end{document}
