@@ -1,1 +1,41 @@
-% phucpt: doc/src/content.tex
+% !TEX TS-program = xelatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass[12pt,a4paper]{article}
+
+\IfFileExists{src/libs/body.tex}{\input{src/libs/body.tex}}{\input{../libs/body.tex}}
+\IfFileExists{src/libs/header.tex}{\input{src/libs/header.tex}}{\input{../libs/header.tex}}
+\IfFileExists{src/libs/footer.tex}{\input{src/libs/footer.tex}}{\input{../libs/footer.tex}}
+\usepackage{docmute}
+\hypersetup{pdftitle={Báo cáo Kỹ năng nghề nghiệp - Nội dung}}
+
+\begin{document}
+\StandaloneDocumentSetup{content.tex}{LastPageContent}
+\onehalfspacing
+\renewcommand{\StandaloneSectionSetup}[2]{}
+\newcommand{\InputContentFile}[1]{%
+	\IfFileExists{src/content/#1}{\input{src/content/#1}}{%
+		\IfFileExists{content/#1}{\input{content/#1}}{\input{../content/#1}}%
+	}%
+}
+\InputContentFile{01-Preface.tex}
+\InputContentFile{02-gameStoryRequirements.tex}
+\InputContentFile{03-gameConsoleRequirements.tex}
+\InputContentFile{04-gameCoreRequirements.tex}
+\InputContentFile{05-gameStoryEngineering.tex}
+\InputContentFile{06-gameConsoleEngineering.tex}
+\InputContentFile{07-gameCoreEngineering.tex}
+\InputContentFile{08-gameStoryGuide.tex}
+\InputContentFile{09-gameConsoleGuide.tex}
+\InputContentFile{10-gameCoreGuide.tex}
+\InputContentFile{11-testStrategy.tex}
+\InputContentFile{12-testList.tex}
+\InputContentFile{13-productMilestones.tex}
+\InputContentFile{14-projectGanttChart.tex}
+\InputContentFile{15-technologyAdoption.tex}
+\InputContentFile{16-toolsetList.tex}
+\InputContentFile{17-skillsetList.tex}
+\InputContentFile{00-References.tex}
+\InputContentFile{00-Appendix.tex}
+
+\label{LastPageContent}
+\end{document}
