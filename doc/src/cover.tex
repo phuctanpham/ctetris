@@ -1,1 +1,57 @@
-% phucpt: doc/src/cover.tex
+% !TEX TS-program = xelatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass[12pt,a4paper]{article}
+
+\IfFileExists{src/libs/body.tex}{\input{src/libs/body.tex}}{\input{libs/body.tex}}
+\IfFileExists{src/libs/header.tex}{\input{src/libs/header.tex}}{\input{libs/header.tex}}
+\IfFileExists{src/libs/footer.tex}{\input{src/libs/footer.tex}}{\input{libs/footer.tex}}
+\usepackage{docmute}
+\hypersetup{pdftitle={Bia bao cao Ky nang nghe nghiep}}
+
+\begin{document}
+\begin{titlepage}
+    \begin{tikzpicture}[overlay, remember picture]
+        \draw [line width=2pt]
+            ($(current page.north west) + (2.5cm,-1.5cm)$)|-
+            ($(current page.south east) + (-1.5cm,1.5cm)$)|-
+            ($(current page.north west) + (2.5cm,-1.5cm)$);
+        \draw [line width=0.5pt]
+            ($(current page.north west) + (2.6cm,-1.6cm)$)|-
+            ($(current page.south east) + (-1.6cm,1.6cm)$)|-
+            ($(current page.north west) + (2.6cm,-1.6cm)$);
+    \end{tikzpicture}
+    \begin{center}
+        \textbf{ĐẠI HỌC QUỐC GIA TP. HỒ CHÍ MINH} \\
+        \textbf{TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN} \\
+        \textbf{KHOA KHOA HỌC VÀ KỸ THUẬT THÔNG TIN}
+        \vspace{1cm}
+        \begin{figure}[H]
+            \centering
+            \includesvg[width=0.3\textwidth]{Logo_UIT}
+        \end{figure}
+
+        \vspace{1cm}
+        \Large\textbf{BÁO CÁO MÔN HỌC} \\
+        \large\textbf{KỸ NĂNG NGHỀ NGHIỆP - SS004.F21.CN1.CNTT}
+
+        \vspace{2cm}
+        \Large\textbf{ĐỒ ÁN CUỐI KHÓA: LẬP TRÌNH} \\
+        \vspace{2cm}
+        {\Large \textbf{Tên trò chơi: ctetris}}
+
+        \vspace{2cm}
+        \begin{center}
+            \textbf{SINH VIÊN THỰC HIỆN:} Ngô Triều Vĩ – MSSV: 25730160 \\
+            \hspace{6cm} Phạm Tấn Phúc – MSSV: 25730134 \\
+            \hspace{6cm} Tạ Minh Trường – MSSV: 25730157 \\
+            \hspace{6cm} Đàm Gia Thái – MSSV: 25730144 \\
+            \hspace{6cm} Nguyễn Trung Kiên – MSSV: 25730118 \\
+            \vspace{0.5cm}
+            \textbf{GIẢNG VIÊN HƯỚNG DẪN:} \\ ThS. Nguyễn Văn Toàn
+        \end{center}
+
+        \vfill
+        TP. HỒ CHÍ MINH, 2026
+    \end{center}
+\end{titlepage}
+\end{document}
