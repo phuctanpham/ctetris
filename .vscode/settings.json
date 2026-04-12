@@ -1,0 +1,4 @@
+// phucpt: .vscode/settings.json
+{
+  "latex-workshop.latex.autoBuild.run": "never"
+}
