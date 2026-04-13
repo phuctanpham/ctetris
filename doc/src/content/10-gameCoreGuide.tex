@@ -1,1 +1,30 @@
-% phucpt: doc/src/content/10-gameCoreGuide.tex
+% !TEX TS-program = xelatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass[12pt,a4paper]{article}
+
+\IfFileExists{src/libs/body.tex}{\input{src/libs/body.tex}}{\input{../libs/body.tex}}
+\IfFileExists{src/libs/header.tex}{\input{src/libs/header.tex}}{\input{../libs/header.tex}}
+\IfFileExists{src/libs/footer.tex}{\input{src/libs/footer.tex}}{\input{../libs/footer.tex}}
+\usepackage{docmute}
+\hypersetup{pdftitle={Báo cáo Kỹ năng nghề nghiệp - tính năng chính: Hướng dẫn}}
+
+\begin{document}
+\providecommand{\StandaloneSectionSetup}[2]{\ApplyStandardFooter{#1}{#2}}
+\StandaloneSectionSetup{10-gameCoreGuide.tex}{LastPageGameCoreGuide}
+\onehalfspacing
+
+\section{Hướng dẫn Build độc lập và Kiểm thử: Game Core}
+
+\subsection{Yêu cầu môi trường (Environment)}
+// tự viết thêm: Do chỉ là logic toán học, module này không cần thư viện ngoài. Có thể test trực tiếp bằng Console Application thuần (In mảng 2 chiều ra terminal).
+
+\subsection{Hướng dẫn Build (How to Build)}
+// tự viết thêm: `g++ src/gameCore/app.cpp tests/test_core.cpp -I src/gameCore/app/include -o core_test`
+
+\subsection{Kịch bản kiểm thử (Test Cases)}
+// tự viết thêm: Hướng dẫn Dev khác truyền input qua Terminal (W/A/S/D) để kiểm tra logic lưới.
+// tự viết thêm: - Test Xóa Hàng: Nhét mock-data (1 hàng đầy) vào ma trận -> Nhập lệnh cập nhật vòng lặp -> Expected: Hàng bị xóa, trả về điểm.
+// tự viết thêm: - Test Xoay Chặn: Đặt khối sát tường -> Nhấn lệnh Xoay -> Expected: Khối không vượt ra ngoài index của ma trận lưới.
+
+\label{LastPageGameCoreGuide}
+\end{document}
