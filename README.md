@@ -26,6 +26,7 @@ tên_user_laptop@tên_laptop ctetris % git commit -m "phucpt: sua lai logic xoa 
 tên_user_laptop@tên_laptop ctetris % git add app/src/gameCore/include/row.h
 tên_user_laptop@tên_laptop ctetris % git commit -m "phucpt: sua lai class cho logic xoa 1 hang và nhieu hang"
 ```
+
     - TH2:
       - Vị trí con trỏ trên terminal ở thư mục Desktop.
       - Giả sử dự án đã được git clone để ở màn hình (Desktop), thư mục dự án là ctetris
@@ -34,6 +35,7 @@ tên_user_laptop@tên_laptop ctetris % git commit -m "phucpt: sua lai class cho 
       - Cần di chuyển con trỏ tới vị trí `thư mục đang làm việc trong dự án` ctetris bằng lệnh `cd`
       - Cần chạy lệnh `git add file_cần_commit`
       - Khi chạy lệnh `git commit` nhớ khi báo cờ (flag) `m` và viết ngắn gọn không bỏ dấu nội dung thay đổi file.
+
 ```
 tên_user_laptop@tên_laptop Desktop % cd ctetris/app/src/gameCore
 tên_user_laptop@tên_laptop ctetris % git add app.cpp
