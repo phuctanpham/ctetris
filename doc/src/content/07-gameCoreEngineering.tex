@@ -13,7 +13,7 @@
 \StandaloneSectionSetup{07-gameCoreEngineering.tex}{LastPageGameCoreEngineering}
 \onehalfspacing
 
-\section{Đặc tả thiết kế kỹ thuật: Game Core}
+\section{Đặc tả kỹ thuật tính năng chính}
 
 \subsection{Thuật toán cốt lõi (Core Algorithms)}
 // tự viết thêm: Cấu trúc vòng lặp cập nhật `Update()`.
@@ -24,7 +24,7 @@
 // tự viết thêm: Class mảng 2 chiều: `int playGrid[20][10];` (0 = rỗng, 1-7 = ID màu khối).
 // tự viết thêm: Struct cho khối đang rơi: `struct ActivePiece { int type; int rotationState; Vector2 position; }`
 
-\subsection{Giao diện giao tiếp (Public APIs - Expose cho main.cpp)}
+\subsection{Giao diện giao tiếp (Public interface - Expose cho main.cpp)}
 // tự viết thêm: Module này nên thụ động nhận lệnh. 
 // tự viết thêm: `void CoreEngine::StartSession();`
 // tự viết thêm: `void CoreEngine::ProcessInput(InputMask input);`

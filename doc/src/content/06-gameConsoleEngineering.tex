@@ -13,7 +13,7 @@
 \StandaloneSectionSetup{06-gameConsoleEngineering.tex}{LastPageGameConsoleEngineering}
 \onehalfspacing
 
-\section{Đặc tả thiết kế kỹ thuật: Console/Menu}
+\section{Đặc tả kỹ thuật tính năng cấu hình}
 
 \subsection{Kiến trúc hệ thống (Architecture)}
 // tự viết thêm: Mô tả mô hình quản lý State của UI (VD: Dùng mẫu thiết kế State Pattern cho `MainMenuState`, `SettingsState`, `LeaderboardState`).
@@ -22,7 +22,7 @@
 // tự viết thêm: Singleton Class cho Cấu hình. VD: `struct AppSettings { float bgmVolume; float sfxVolume; bool fullScreen; }`
 // tự viết thêm: Cơ chế Serialize: Lưu settings dưới định dạng .ini hay .json ở thư mục user.
 
-\subsection{Giao diện giao tiếp (Public APIs - Expose cho main.cpp)}
+\subsection{Giao diện giao tiếp (Public interface - Expose cho main.cpp)}
 // tự viết thêm: `void ConsoleMenu::Show();`
 // tự viết thêm: `void ConsoleMenu::Hide();`
 // tự viết thêm: `void ConsoleMenu::OnGameOver(int finalScore);` -> Nhận điểm từ GameCore đẩy vào.
