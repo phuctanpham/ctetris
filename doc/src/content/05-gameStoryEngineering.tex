@@ -12,8 +12,7 @@
 \providecommand{\StandaloneSectionSetup}[2]{\ApplyStandardFooter{#1}{#2}}
 \StandaloneSectionSetup{05-gameStoryEngineering.tex}{LastPageGameStoryEngineering}
 \onehalfspacing
-
-\section{Đặc tả thiết kế kỹ thuật: Cốt truyện}
+\section{Đặc tả kỹ thuật tính năng cốt truyện}
 
 \subsection{Sơ đồ luồng (Flow/State Machine)}
 // tự viết thêm: Sơ đồ sequence khi init module: Load file -> Parse JSON -> Đẩy vào Queue -> Render frame by frame.
@@ -21,9 +20,9 @@
 \subsection{Cấu trúc dữ liệu (Data Structures)}
 // tự viết thêm: Định nghĩa cấu trúc file JSON nội bộ. Ví dụ struct trên code: `struct DialogNode { int id; std::string speakerName; std::string content; std::string spritePath; }`
 
-\subsection{Giao diện giao tiếp (Public APIs - Expose cho main.cpp)}
+\subsection{Giao diện giao tiếp (Public interface - Expose cho main.cpp)}
 // tự viết thêm: Liệt kê các hàm nằm trong src/gameStory/app/include. VD: 
-// tự viết thêm: `bool Story::Initialize(const std::string& scriptPath);`
+// tự viết thêm: `bool Story::Initialize(const std::string\& scriptPath);`
 // tự viết thêm: `void Story::Update(float deltaTime);`
 // tự viết thêm: `bool Story::IsFinished() const;`
 

@@ -13,15 +13,48 @@
 \StandaloneSectionSetup{12-testList.tex}{LastPageTestList}
 \onehalfspacing
 
+\section{Yêu cầu môi trường và Hướng dẫn Build chung}
+
+\subsection{Yêu cầu môi trường}
+Để đảm bảo toàn bộ các module có thể build và chạy kiểm thử độc lập, hệ thống cần đáp ứng các yêu cầu sau:
+\begin{itemize}
+    \item Trình biên dịch C++ hỗ trợ chuẩn \textbf{C++17} trở lên và cài đặt CMake.
+    \item Cài đặt và khai báo các thư viện hiển thị đồ họa (như SDL2, ImGui) vào biến môi trường hệ thống (dành cho module Console/Menu).
+    \item Chuẩn bị sẵn file kịch bản JSON giả lập và đặt tại thư mục \texttt{/data/mock/} trước khi chạy kiểm thử phần Cốt truyện.
+    \item Module Game Core sử dụng logic toán học thuần túy nên không yêu cầu thư viện ngoài, có thể chạy trực tiếp bằng Console Application.
+\end{itemize}
+
+\subsection{Hướng dẫn khởi tạo ứng dụng}
+Dưới đây là các lệnh build độc lập qua terminal để tạo file thực thi test cho từng module tương ứng:
+\begin{itemize}
+    \item \textbf{Build module Cốt truyện:} \\
+    \texttt{g++ src/gameStory/*.cpp tests/test\_story.cpp -o bin/story\_tester}
+    \item \textbf{Build module Cấu hình (Console/Menu):} \\
+    \texttt{cmake -B build -S . \&\& cmake --build build --target ConsoleTest}
+    \item \textbf{Build module Game Core:} \\
+    \texttt{g++ src/gameCore/app.cpp tests/test\_core.cpp -I src/gameCore/app/include -o core\_test}
+\end{itemize}
+
 \section{Danh sách kịch bản kiểm thử}
 
-\subsection{Các kịch bản kiểm thử phần cốt truyện}
-// tự viết thêm: 
+\subsection{Kiểm thử phần tính năng cốt truyện}
+\begin{itemize}
+    \item \textbf{Test tiếp diễn thoại:} Mở file thực thi và nhấn phím 'Space' $\rightarrow$ Expected: Chữ hiện tiếp.
+    \item \textbf{Test kết thúc truyện:} Chạy đến cuối kịch bản $\rightarrow$ Expected: Log console hiển thị báo "End of Story".
+\end{itemize}
 
-\subsection{Các kịch bản kiểm thử phần cấu hình}
-// tự viết thêm:  
-\subsection{Các kịch bản kiểm thử phần cấu hình}
-// tự viết thêm: 
+\subsection{Kiểm thử phần tính năng cấu hình}
+\begin{itemize}
+    \item \textbf{Test Lưu Cài Đặt:} Mở UI $\rightarrow$ Chỉnh âm lượng $\rightarrow$ Tắt app $\rightarrow$ Mở lại $\rightarrow$ Expected: Thanh âm lượng giữ nguyên vị trí cũ.
+    \item \textbf{Test Cửa Sổ:} Nhấn nút Fullscreen $\rightarrow$ Expected: Resize cửa sổ hệ điều hành hoạt động trơn tru, không bị crash ứng dụng.
+\end{itemize}
+
+\subsection{Kiểm thử phần tính năng chính}
+\begin{itemize}
+    \item \textbf{Test Input Lưới:} Truyền input qua Terminal (W/A/S/D) để kiểm tra luồng di chuyển trên lưới.
+    \item \textbf{Test Xóa Hàng:} Nhét mock-data (1 hàng đầy) vào ma trận $\rightarrow$ Nhập lệnh cập nhật vòng lặp $\rightarrow$ Expected: Hàng bị xóa, trả về điểm số tương ứng.
+    \item \textbf{Test Xoay Chặn (Wall Kick):} Đặt khối sát tường (biên ma trận) $\rightarrow$ Nhấn lệnh Xoay $\rightarrow$ Expected: Khối không bị xoay vượt ra ngoài index của ma trận lưới.
+\end{itemize}
 
 \label{LastPageTestList}
 \end{document}
