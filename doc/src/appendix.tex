@@ -9,25 +9,27 @@
 \hypersetup{pdftitle={Báo cáo Kỹ năng nghề nghiệp - Phụ lục}}
 
 \begin{document}
-\pagenumbering{arabic}
+% Removed blank lines to prevent LaTeX from generating an empty first page
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0pt}
 \singlespacing
 \small
+
 \newcommand{\InputAppendixFile}[1]{%
 	\IfFileExists{src/appendix/#1}{\input{src/appendix/#1}}{%
 		\IfFileExists{appendix/#1}{\input{appendix/#1}}{\input{../appendix/#1}}%
 	}%
 }
-\newcommand{\InputAppendixUnit}[1]{%
+
+% Dùng providecommand để main.tex có thể ghi đè an toàn khi build chung
+\providecommand{\InputAppendixUnit}[1]{%
 	\clearpage
-	\pagenumbering{arabic}%
-	\setcounter{page}{1}%
+	\pagenumbering{arabic}% This safely and strictly hard-resets the page counter to 1
 	\InputAppendixFile{#1}%
 }
+
 \InputAppendixUnit{01-teamContract.tex}
 \InputAppendixUnit{02-teamContractValidation.tex}
 \InputAppendixUnit{03-meetingMinute.tex}
-
-\label{LastPageAppendix}
+\InputAppendixUnit{04-teamConflictSolving.tex}
 \end{document}

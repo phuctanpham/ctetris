@@ -6,6 +6,11 @@
 \usepackage{docmute}
 \hypersetup{pdftitle={Báo cáo Kỹ năng nghề nghiệp - Mục lục}}
 
+\begin{document}
+\pagenumbering{arabic}
+
+% Command definitions are placed inside the document body so they survive
+% \input via docmute (which strips the preamble of standalone files).
 \newcommand{\NoTocNumberLine}[1]{}
 
 \makeatletter
@@ -50,21 +55,18 @@
 								\IfFileExists{output.toc}{%
 									\makeatletter\input{output.toc}\makeatother%
 								}{%
-									\tableofcontents
+									% Fallback: render toc entries without repeating the section heading
+									\makeatletter\@starttoc{toc}\makeatother%
 								}%
 							}%
 						}%
 					}%
 				}%
 			}%
-		}{%
-			\tableofcontents
 		}%
 	\endgroup
 }
 
-\begin{document}
-\pagenumbering{arabic}
 \ifdefined\MainDocumentBuildFlag
 	\RenderMainTOC
 \else

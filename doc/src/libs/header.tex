@@ -1,7 +1,7 @@
 % --- header.tex ---
 \usepackage{fancyhdr}
-
-\setlength{\headheight}{14.5pt}
+\setlength{\headheight}{15.5pt} % Thêm dòng này để fix cảnh báo chiều cao
+%\setlength{\headheight}{14.5pt}
 \addtolength{\topmargin}{-2.5pt}
 
 \pagestyle{fancy}
@@ -12,11 +12,11 @@
 \newcommand{\ApplyStandardHeader}{%
   \fancyhead[L]{%
     \begin{minipage}[t]{0.795\linewidth}%
-      UIT \textbar{} SS004.F21 \textbar{} 06 Job Description%
+      UIT \textbar{} SS004.F21 \textbar{} Đồ án cuối kỳ%
     \end{minipage}%
     \vrule%
     \begin{minipage}[t]{0.185\linewidth}%
-      \centering GENY%
+      \centering cTetris%
     \end{minipage}%
   }%
 }
