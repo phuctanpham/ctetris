@@ -6,8 +6,12 @@
 \input{src/libs/header.tex}
 \input{src/libs/footer.tex}
 \usepackage{docmute}
+\usepackage{etoolbox} % Cần thiết để map tên file sang tiêu đề
 \hypersetup{pdftitle={Báo cáo Kỹ năng nghề nghiệp}}
 \def\MainDocumentBuildFlag{1}
+
+% Fix lỗi cảnh báo \headheight is too small trong file log
+\setlength{\headheight}{16pt} 
 
 \begin{document}
 
@@ -34,6 +38,52 @@
 % ==============================================
 \clearpage
 \appendix
+
+% Fix cảnh báo vàng của Header từ log
+\setlength{\headheight}{16pt} 
+
+% Ngăn TOC quét tự động các thẻ \section bên trong file phụ lục
+\addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
+
+% Hàm ánh xạ tên file thành Tiêu đề hiển thị (dành cho TOC và Bookmark)
+\newcommand{\getAppTitle}[1]{%
+  \ifstrequal{#1}{01-teamContract.tex}{Hợp đồng làm việc nhóm}{%
+  \ifstrequal{#1}{02-teamContractValidation.tex}{Biên bản đánh giá hợp đồng làm việc nhóm}{%
+  \ifstrequal{#1}{03-meetingMinute.tex}{Biên bản họp}{%
+  \ifstrequal{#1}{04-teamConflictSolving.tex}{Mô tả quá trình làm việc nhóm}{#1}}}}%
+}
+
+\makeatletter
+% 1. Lưu lại lệnh tạo footer gốc của bạn trong footer.tex
+\let\oldApplyStandardFooter\ApplyStandardFooter
+
+% 2. Dùng \newcommand (Vì appendix.tex đã dùng \providecommand nên sẽ không bị đè)
+\newcommand{\InputAppendixUnit}[1]{%
+    \clearpage
+    \pagenumbering{arabic}
+    \setcounter{page}{1}
+    
+    % --- XỬ LÝ MỤC LỤC & BOOKMARK PDF (Đúng yêu cầu của bạn) ---
+    \hypertarget{app-#1}{}
+    \pdfbookmark[1]{\getAppTitle{#1}}{app-#1} 
+    \addtocontents{toc}{%
+        \protect\vspace{0.2em}%
+        \protect\noindent\protect\hspace*{2em}%
+        \protect\hyperlink{app-#1}{\textnormal{\getAppTitle{#1}}}\protect\par
+    }
+    
+    % --- ĐÁNH CHẶN LỆNH FOOTER TỪ FILE CON ---
+    % Khi file con gọi \ApplyStandardFooter{ID}{LastPage}, lệnh này sẽ đánh tráo "LastPage" thành "lastpage-#1"
+    \renewcommand{\ApplyStandardFooter}[2]{%
+        \oldApplyStandardFooter{##1}{lastpage-#1}%
+    }
+    
+    % Nạp file con và tự động gắn nhãn kết thúc
+    \InputAppendixFile{#1}
+    \label{lastpage-#1}
+}
+\makeatother
+
 \input{src/appendix.tex}
 
 \end{document}
