@@ -71,6 +71,11 @@ int main()
 
     int score = 0;
     int colorNum = 1;
+
+    // Sinh ra trước khối gạch của "Lượt tiếp theo" (Phòng chờ)
+    int nextBlockType = rand() % 7;
+    int nextColorNum = nextBlockType + 1;
+
     int dx = 0;
     bool rotate = false;
     float timer = 0, delay = 0.3f;
@@ -78,13 +83,17 @@ int main()
 
     // Hàm Lambda (Hàm ẩn) để sinh khối mới cho code gọn gàng
     auto spawnNewBlock = [&]() {
-        int n = rand() % 7;       // Random từ 0 đến 6
-        colorNum = n + 1;         // Mã màu từ 1 đến 7
+        int n = nextBlockType;
+        colorNum = nextColorNum;
         for (int i = 0; i < 4; i++) {
             a[i].x = figures[n][i] % 2 + 4;
             a[i].y = figures[n][i] / 2;
         }
-    };
+
+        // Random khối mới cho lượt sau
+        nextBlockType = rand() % 7;
+        nextColorNum = nextBlockType + 1;
+        };
     spawnNewBlock();
 
     while (window.isOpen())
@@ -180,6 +189,16 @@ int main()
         // Vẽ UI Chữ
         window.draw(scoreText);
         window.draw(nextText);
+
+        // Vẽ Khối NEXT ở bên phải màn hình
+        for (int i = 0; i < 4; i++) {
+            float nextX = 600.f + (figures[nextBlockType][i] % 2) * BLOCK_SIZE;
+            float nextY = 150.f + (figures[nextBlockType][i] / 2) * BLOCK_SIZE;
+
+            blockCell.setFillColor(colors[nextColorNum]);
+            blockCell.setPosition({ nextX, nextY });
+            window.draw(blockCell);
+        }
 
         sf::RectangleShape boardBg({ (float)N * BLOCK_SIZE, (float)M * BLOCK_SIZE });
         boardBg.setFillColor(sf::Color::Black);
