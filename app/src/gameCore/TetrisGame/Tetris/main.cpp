@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <optional>
 #include <time.h>
+#include <string>
 
 const int M = 20;
 const int N = 10;
@@ -25,7 +26,7 @@ int main()
 {
     srand((unsigned int)time(0));
     // khởi tạo window
-    sf::RenderWindow window(sf::VideoMode({ 800, 720 }), "Hoc SFML - Buoc 5: Core Gameplay");
+    sf::RenderWindow window(sf::VideoMode({ 800, 720 }), "Hoc SFML - Buoc 6: Game Score");
     float offsetX = (800 - N * BLOCK_SIZE) / 2.0f;
     float offsetY = (720 - M * BLOCK_SIZE) / 2.0f + 20.0f;
     // Bảng 7 màu sắc cho 7 khối (Thêm màu đen ở index 0)
@@ -49,6 +50,26 @@ int main()
     blockCell.setOutlineThickness(-1.f);
     blockCell.setOutlineColor(sf::Color(255, 255, 255, 80));
 
+    // ================= TẢI FONT CHỮ VÀ SETUP TEXT =================
+    sf::Font font;
+    // Bắt buộc phải có file arial.ttf trong thư mục chứa code
+    if (!font.openFromFile("arial_bold.ttf")) {
+        // Nếu chạy lên mà không thấy chữ, nghĩa là SFML không tìm thấy file font này
+    }
+    // Chữ SCORE bên trái
+    sf::Text scoreText(font);
+    scoreText.setCharacterSize(28);
+    scoreText.setFillColor(sf::Color::White);
+    scoreText.setPosition({ 50.f, 100.f }); // Đặt ở góc trái màn hình
+
+    // Chữ NEXT bên phải
+    sf::Text nextText(font);
+    nextText.setString("NEXT");
+    nextText.setCharacterSize(28);
+    nextText.setFillColor(sf::Color::White);
+    nextText.setPosition({ 600.f, 100.f });
+
+    int score = 0;
     int colorNum = 1;
     int dx = 0;
     bool rotate = false;
@@ -142,8 +163,14 @@ int main()
             if (count < N) k--;
         }
 
+        scoreText.setString("SCORE\n" + std::to_string(score));
+
         // ================= VẼ GIAO DIỆN =================
         window.clear(sf::Color(40, 40, 40));
+
+        // Vẽ UI Chữ
+        window.draw(scoreText);
+        window.draw(nextText);
 
         sf::RectangleShape boardBg({ (float)N * BLOCK_SIZE, (float)M * BLOCK_SIZE });
         boardBg.setFillColor(sf::Color::Black);
