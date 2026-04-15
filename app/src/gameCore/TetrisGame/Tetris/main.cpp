@@ -17,7 +17,7 @@ int figures[7][4] = {
 bool check() {
     for (int i = 0; i < 4; i++) {
         if (a[i].x < 0 || a[i].x >= N || a[i].y >= M) return false;
-        else if (field[a[i].y][a[i].x]) return false;
+        else if (a[i].y >= 0 && field[a[i].y][a[i].x]) return false;
     }
     return true;
 }
@@ -95,7 +95,7 @@ int main()
         colorNum = nextColorNum;
         for (int i = 0; i < 4; i++) {
             a[i].x = figures[n][i] % 2 + 4;
-            a[i].y = figures[n][i] / 2;
+            a[i].y = figures[n][i] / 2 - 1;
         }
         if (!check()) {
             isGameOver = true;
@@ -173,14 +173,17 @@ int main()
             if (timer > delay) {
                 for (int i = 0; i < 4; i++) { b[i] = a[i]; a[i].y += 1; }
 
-                // NẾU CHẠM ĐÁY HOẶC GẠCH CŨ
                 if (!check()) {
-                    // Chép tọa độ cũ (b) vào mảng field, lưu lại mã màu
                     for (int i = 0; i < 4; i++) {
-                        field[b[i].y][b[i].x] = colorNum;
+                        if (b[i].y >= 0) {
+                            field[b[i].y][b[i].x] = colorNum;
+                        }
+                        else {
+                            // Nếu khối bị chốt khi vẫn còn ở ngoài màn hình -> Chạm nóc
+                            isGameOver = true;
+                        }
                     }
-                    // Sinh khối mới
-                    spawnNewBlock();
+                    if (!isGameOver) spawnNewBlock();
                 }
                 timer = 0;
             }
@@ -250,12 +253,11 @@ int main()
             }
         }
 
-        if (!isGameOver) {
-            for (int i = 0; i < 4; i++) {
-                blockCell.setFillColor(colors[colorNum]);
-                blockCell.setPosition({ offsetX + a[i].x * BLOCK_SIZE, offsetY + a[i].y * BLOCK_SIZE });
-                window.draw(blockCell);
-            }
+        
+        for (int i = 0; i < 4; i++) {
+            blockCell.setFillColor(colors[colorNum]);
+            blockCell.setPosition({ offsetX + a[i].x * BLOCK_SIZE, offsetY + a[i].y * BLOCK_SIZE });
+            window.draw(blockCell);
         }
 
         // VẼ CHỮ GAME OVER LÊN LỚP TRÊN CÙNG
