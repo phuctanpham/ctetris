@@ -151,6 +151,7 @@ int main()
             timer = 0;
         }
         // --- Thuật toán Xóa hàng (Line Clearing) ---
+        int linesCleared = 0; // Biến đếm số hàng vừa ăn được
         int k = M - 1; // k trỏ vào hàng dưới cùng
         for (int i = M - 1; i > 0; i--) {
             int count = 0; // Đếm số khối gạch trong hàng i
@@ -160,7 +161,15 @@ int main()
             }
             // Nếu hàng i chưa đầy (count < 10), ta cho phép hàng k dịch lên trên
             // Nếu hàng i bị đầy, k đứng im để vòng lặp sau chép hàng phía trên đè xuống nó
-            if (count < N) k--;
+            if (count < N) {
+                k--;
+            } else {
+                linesCleared++; // Đánh dấu đã xóa 1 hàng
+            };
+        }
+
+        if (linesCleared >= 1) {
+            score += linesCleared * 100;
         }
 
         scoreText.setString("SCORE\n" + std::to_string(score));
