@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <optional>
+#include <time.h>
 
 const int M = 20;
 const int N = 10;
@@ -22,31 +23,48 @@ bool check() {
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode({ 800, 720 }), "Hoc SFML - Buoc 4: Ma Tran Xoay");
+    srand((unsigned int)time(0));
+    // khởi tạo window
+    sf::RenderWindow window(sf::VideoMode({ 800, 720 }), "Hoc SFML - Buoc 5: Core Gameplay");
     float offsetX = (800 - N * BLOCK_SIZE) / 2.0f;
     float offsetY = (720 - M * BLOCK_SIZE) / 2.0f + 20.0f;
-
+    // Bảng 7 màu sắc cho 7 khối (Thêm màu đen ở index 0)
+    sf::Color colors[8] = {
+        sf::Color::Black,       // 0: Trống
+        sf::Color::Cyan,        // 1: I
+        sf::Color::Red,         // 2: Z
+        sf::Color::Green,       // 3: S
+        sf::Color::Magenta,     // 4: T
+        sf::Color(255, 165, 0), // 5: L (Cam)
+        sf::Color::Blue,        // 6: J
+        sf::Color::Yellow       // 7: O
+    };
+    //vẽ khung lưới
     sf::RectangleShape gridCell({ (float)BLOCK_SIZE, (float)BLOCK_SIZE });
     gridCell.setFillColor(sf::Color::Transparent);
     gridCell.setOutlineThickness(-1.f);
     gridCell.setOutlineColor(sf::Color(255, 255, 255, 40));
 
     sf::RectangleShape blockCell({ (float)BLOCK_SIZE, (float)BLOCK_SIZE });
-    blockCell.setFillColor(sf::Color::Yellow);
     blockCell.setOutlineThickness(-1.f);
     blockCell.setOutlineColor(sf::Color(255, 255, 255, 80));
 
-    // Dùng khối chữ L (Index 4) để test phép xoay cho rõ ràng
-    int blockType = 4;
-    for (int i = 0; i < 4; i++) {
-        a[i].x = figures[blockType][i] % 2 + 4;
-        a[i].y = figures[blockType][i] / 2;
-    }
-
+    int colorNum = 1;
     int dx = 0;
-    bool rotate = false; // Cờ hiệu lệnh xoay
+    bool rotate = false;
     float timer = 0, delay = 0.3f;
     sf::Clock clock;
+
+    // Hàm Lambda (Hàm ẩn) để sinh khối mới cho code gọn gàng
+    auto spawnNewBlock = [&]() {
+        int n = rand() % 7;       // Random từ 0 đến 6
+        colorNum = n + 1;         // Mã màu từ 1 đến 7
+        for (int i = 0; i < 4; i++) {
+            a[i].x = figures[n][i] % 2 + 4;
+            a[i].y = figures[n][i] / 2;
+        }
+    };
+    spawnNewBlock();
 
     while (window.isOpen())
     {
@@ -58,7 +76,6 @@ int main()
             if (event->is<sf::Event::Closed>()) window.close();
 
             if (const auto* keyEvent = event->getIf<sf::Event::KeyPressed>()) {
-                // Thêm Scancode bắt phím Lên và W để kích hoạt cờ xoay
                 if (keyEvent->scancode == sf::Keyboard::Scancode::Up || keyEvent->scancode == sf::Keyboard::Scancode::W)
                     rotate = true;
                 else if (keyEvent->scancode == sf::Keyboard::Scancode::Left || keyEvent->scancode == sf::Keyboard::Scancode::A)
@@ -97,11 +114,32 @@ int main()
             rotate = false; // Tắt cờ
         }
 
-        // --- Rơi tự động ---
+        // --- Rơi xuống & Chốt gạch ---
         if (timer > delay) {
             for (int i = 0; i < 4; i++) { b[i] = a[i]; a[i].y += 1; }
-            if (!check()) for (int i = 0; i < 4; i++) a[i] = b[i];
+
+            // NẾU CHẠM ĐÁY HOẶC GẠCH CŨ
+            if (!check()) {
+                // Chép tọa độ cũ (b) vào mảng field, lưu lại mã màu
+                for (int i = 0; i < 4; i++) {
+                    field[b[i].y][b[i].x] = colorNum;
+                }
+                // Sinh khối mới
+                spawnNewBlock();
+            }
             timer = 0;
+        }
+        // --- Thuật toán Xóa hàng (Line Clearing) ---
+        int k = M - 1; // k trỏ vào hàng dưới cùng
+        for (int i = M - 1; i > 0; i--) {
+            int count = 0; // Đếm số khối gạch trong hàng i
+            for (int j = 0; j < N; j++) {
+                if (field[i][j]) count++;
+                field[k][j] = field[i][j]; // Chép đè dữ liệu từ hàng i xuống hàng k
+            }
+            // Nếu hàng i chưa đầy (count < 10), ta cho phép hàng k dịch lên trên
+            // Nếu hàng i bị đầy, k đứng im để vòng lặp sau chép hàng phía trên đè xuống nó
+            if (count < N) k--;
         }
 
         // ================= VẼ GIAO DIỆN =================
@@ -119,9 +157,21 @@ int main()
             }
         }
 
+        // Vẽ CÁC KHỐI ĐÃ CHỐT nằm trong field
+        for (int i = 0; i < M; i++) {
+            for (int j = 0; j < N; j++) {
+                if (field[i][j] == 0) continue; // Ô trống thì bỏ qua
+
+                blockCell.setFillColor(colors[field[i][j]]); // Đổ màu theo mã đã lưu
+                blockCell.setPosition({ offsetX + j * BLOCK_SIZE, offsetY + i * BLOCK_SIZE });
+                window.draw(blockCell);
+            }
+        }
+
         for (int i = 0; i < 4; i++) {
             float pixelX = offsetX + a[i].x * BLOCK_SIZE;
             float pixelY = offsetY + a[i].y * BLOCK_SIZE;
+            blockCell.setFillColor(colors[colorNum]);
             blockCell.setPosition({ pixelX, pixelY });
             window.draw(blockCell);
         }
