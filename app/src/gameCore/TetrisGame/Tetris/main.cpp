@@ -5,8 +5,10 @@ const int M = 20; // Số hàng (chiều cao ma trận)
 const int N = 10; // Số cột (chiều rộng ma trận)
 const int BLOCK_SIZE = 32; // Kích thước 1 ô vuông là 32x32 pixel
 
-// 1. Cấu trúc Point để lưu tọa độ X, Y của 4 ô gạch tạo nên 1 khối
-struct Point { int x, y; } a[4];
+// mảng lưu các khối gạch đã rơi xuống
+int field[M][N] = { 0 };
+// Thêm mảng b để làm bản sao lưu hoàn tác (Rollback)
+struct Point { int x, y; } a[4], b[4];
 // 2. Mảng nén hình dáng 7 khối gạch
 int figures[7][4] = {
     {1, 3, 5, 7}, // I
@@ -17,6 +19,18 @@ int figures[7][4] = {
     {3, 5, 7, 6}, // J
     {2, 3, 4, 5}  // O
 };
+
+// ================= THUẬT TOÁN KIỂM TRA VA CHẠM =================
+bool check() {
+    for (int i = 0; i < 4; i++) {
+        // Kiểm tra xem có vượt quá biên Trái (< 0), Phải (>= N) hoặc Đáy (>= M) không
+        if (a[i].x < 0 || a[i].x >= N || a[i].y >= M) return false;
+
+        // Kiểm tra xem vị trí mới có bị đè lên khối gạch cũ nào dưới đáy không
+        else if (field[a[i].y][a[i].x]) return false;
+    }
+    return true; // Hợp lệ, cho phép đi qua
+}
 
 int main()
 {
@@ -55,16 +69,55 @@ int main()
         // Cộng thêm 4 vào X để đẩy khối gạch ra chính giữa chiều ngang bảng game (10 cột)
         a[i].x += 4;
     }
+    int dx = 0;                    // Biến hướng di chuyển ngang (-1 trái, 1 phải)
+    float timer = 0, delay = 0.3f; // Bộ đếm thời gian cho khối rơi tự động
+    sf::Clock clock;
     // ================= VÒNG LẶP GAME (GAME LOOP) =================
     while (window.isOpen())
     {
+        // Tính toán delta time (thời gian trôi qua giữa 2 khung hình)
+        float time = clock.restart().asSeconds();
+        timer += time;
         // A. XỬ LÝ SỰ KIỆN (Input từ hệ điều hành)
         while (const auto event = window.pollEvent())
         {
             if (event->is<sf::Event::Closed>())
                 window.close();
+            // SỬ DỤNG SCANCODE THAY VÌ KEYCODE ĐỂ XUYÊN QUA UNIKEY
+            if (const auto* keyEvent = event->getIf<sf::Event::KeyPressed>()) {
+                if (keyEvent->scancode == sf::Keyboard::Scancode::Left || keyEvent->scancode == sf::Keyboard::Scancode::A)
+                    dx = -1;
+                else if (keyEvent->scancode == sf::Keyboard::Scancode::Right || keyEvent->scancode == sf::Keyboard::Scancode::D)
+                    dx = 1;
+            }
+        }
+        // 2. XỬ LÝ SỰ KIỆN PHÍM ĐANG BỊ GIỮ (Cho việc rơi nhanh)
+        // Nếu đè mũi tên XUỐNG hoặc phím S, giảm delay xuống 0.05 giây để rơi vèo vèo
+        // Đổi phím S ở dòng này thành Scancode luôn
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Down) || sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::S)) {
+            delay = 0.05f;
+        }
+        else {
+            delay = 0.3f;
+        }
+        // ================= THỰC THI DI CHUYỂN =================
+        // A. Di chuyển ngang
+        if (dx != 0) {
+            for (int i = 0; i < 4; i++) { b[i] = a[i]; a[i].x += dx; } // Thử đi
+            if (!check()) { // Nếu đập tường
+                for (int i = 0; i < 4; i++) a[i] = b[i]; // Lùi lại
+            }
+            dx = 0; // Chạy xong thì reset lệnh di chuyển
         }
 
+        // B. Rơi tự động dọc theo trục Y
+        if (timer > delay) {
+            for (int i = 0; i < 4; i++) { b[i] = a[i]; a[i].y += 1; } // Thử rơi
+            if (!check()) { // Nếu chạm đáy
+                for (int i = 0; i < 4; i++) a[i] = b[i]; // Đứng im lại
+            }
+            timer = 0; // Reset bộ đếm thời gian
+        }
         // B. VẼ ĐỒ HỌA (Render Pipeline)
         // B1. Xóa sạch khung hình cũ và đổ màu xám đậm (màu nền của app)
         window.clear(sf::Color(40, 40, 40));
