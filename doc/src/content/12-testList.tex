@@ -53,8 +53,243 @@ Dưới đây là các lệnh build độc lập qua terminal để tạo file t
 \begin{itemize}
     \item \textbf{Test Input Lưới:} Truyền input qua Terminal (W/A/S/D) để kiểm tra luồng di chuyển trên lưới.
     \item \textbf{Test Xóa Hàng:} Nhét mock-data (1 hàng đầy) vào ma trận $\rightarrow$ Nhập lệnh cập nhật vòng lặp $\rightarrow$ Expected: Hàng bị xóa, trả về điểm số tương ứng.
+    \item \textbf{Test removeLine:} Thiết lập một hàng đầy trong bảng, gọi hàm \texttt{removeLine()} và kiểm tra trạng thái ma trận sau khi xoá. $\rightarrow$ Expected: dòng đầy biến mất, các dòng phía trên trượt xuống một vị trí, dòng đầu tiên trên cùng được điền bằng khoảng trắng và các cạnh tường `#` không thay đổi.
+    \item \textbf{Test tốc độ rơi tăng sau removeLine:} Thực hiện một hoặc nhiều lần xoá hàng đầy và quan sát tốc độ rơi của block tiếp theo. $\rightarrow$ Expected: sau mỗi lần gọi \texttt{removeLine()} thành công, tốc độ rơi tăng nhanh hơn so với tốc độ trước đó.
+    \item \textbf{Test giao diện viền và block vuông:} Kiểm tra hiển thị khung màn hình và khối rơi ở chế độ GUI/console, đảm bảo mỗi ô có tỉ lệ 1:1, không bị dãn méo thành hình chữ nhật. $\rightarrow$ Expected: khung và block hiển thị đồng nhất, các ô vuông, góc vuông rõ ràng và không có hiện tượng kéo dãn bất thường.
+    \item \textbf{Test Xoay Block:} Đặt block vào nhiều vị trí khác nhau, bao gồm vị trí trung tâm, sát tường và sát đáy, sau đó nhấn phím xoay. $\rightarrow$ Expected: block xoay đúng hình dạng mong đợi, không bị biến dạng, không chồng lên biên và không vượt quá ranh giới ma trận.
     \item \textbf{Test Xoay Chặn (Wall Kick):} Đặt khối sát tường (biên ma trận) $\rightarrow$ Nhấn lệnh Xoay $\rightarrow$ Expected: Khối không bị xoay vượt ra ngoài index của ma trận lưới.
 \end{itemize}
+
+\subsection{Mô tả kỹ thuật chi tiết kiểm thử chức năng Game Core}
+
+Kiểm thử chức năng Game Core phải tập trung vào việc xác nhận toàn bộ luồng xử lý ma trận, đặc biệt là thuật toán loại bỏ dòng đầy trong hàm \texttt{removeLine()}. Với bản mã hiện tại, bảng chơi được lưu trong mảng hai chiều \texttt{board[H][W]}; hàng trên cùng và hàng dưới cùng, cùng hai cột ngoài cùng, được dùng làm biên tường cố định chứa ký tự \texttt{'#'}. Các ô nội bộ có thể chứa khoảng trắng hoặc ký tự khối gạch. Vì vậy, test cần đảm bảo rằng khi một hàng chơi được xác định là đầy, thuật toán chỉ thay đổi chính hàng đó và các hàng phía trên chứ không can thiệp vào biên tường hay phát sinh ký tự lạ.
+
+Mục tiêu kiểm thử bao gồm các khía cạnh sau:
+
+\begin{itemize}
+    \item Xác thực độ chính xác của nhận biết hàng đầy: mọi ô trong hàng phải khác khoảng trắng, không kể biên tường hai bên. Hàng được coi là đầy chỉ khi tất cả vị trí có thể chứa khối nội bộ đều bị lấp đầy.
+    \item Xác nhận hành vi dịch chuyển: khi một hàng đầy bị xóa, tất cả các hàng phía trên nó phải trượt xuống đúng một vị trí, trong khi hàng trên cùng được lấp đầy bằng ô trống. Việc dịch chuyển phải bảo toàn trạng thái biên tường, tức không có ký tự khác thay thế cho ký tự \texttt{'#'} ở viền.
+    \item Kiểm tra hiệu ứng nhiều hàng liên tiếp: khi có hai hoặc nhiều hàng đầy trong một lượt, hàm cần xoá từng hàng đúng thứ tự từ dưới lên trên và giữ nguyên thứ tự tương đối của các hàng phía trên.
+    \item Đảm bảo không thay đổi khối đang rơi: hàm \texttt{removeLine()} chỉ được gọi sau khi khối đã được ghi vào bảng; do đó test phải đảm bảo rằng trạng thái khối vừa đặt không bị ảnh hưởng hoặc bị xoá sai khi xử lý hàng đầy.
+    \item Xác minh khả năng chịu lỗi với điều kiện biên: hàng đầy ở hàng gần đáy nhất, ở hàng cạnh trên hoặc khi bảng chỉ còn lại một hàng trống trên cùng phải được xử lý đúng.
+\end{itemize}
+
+Kiểm thử chi tiết cần được thực hiện thông qua cả hai phương thức sau:
+
+\begin{enumerate}
+    \item \textbf{Kiểm thử thủ công dựa trên console:} bằng cách dựng bảng mẫu và quan sát kết quả của hàm \texttt{removeLine()} sau mỗi lần gọi. Đây là cách phù hợp khi chưa có hạ tầng test tự động, giúp đánh giá trực quan mã thực thi có khớp với luồng trò chơi hay không.
+    \item \textbf{Kiểm thử tự động lý thuyết:} xây dựng trường hợp kiểm thử giả lập với dữ liệu bảng trong file test, gọi trực tiếp \texttt{removeLine()} và so sánh trạng thái ma trận với dữ liệu mong đợi. Nếu tương lai mở rộng thêm framework unit test, đây sẽ là test thích hợp nhất để bảo đảm tính bền vững của hàm.
+\end{enumerate}
+
+\paragraph{Mô tả chi tiết kịch bản kiểm thử \texttt{removeLine()}}
+
+1. \textbf{Khởi tạo môi trường test:}
+    \begin{itemize}
+        \item Tạo bảng chơi mới bằng hàm \texttt{initBoard()}. Kết quả ban đầu phải có biên \texttt{'#'} cố định ở hàng đầu tiên, hàng cuối cùng, cột trái và cột phải.
+        \item Gán giá trị char cho các ô trong một hàng nội bộ (không tính biên) thành ký tự gạch như \texttt{'I'}, \texttt{'T'} hoặc \texttt{'O'} để tạo thành một hàng đầy. Các hàng khác phía trên hoặc phía dưới có thể giữ nguyên trạng thái ban đầu hoặc được gán giá trị động để kiểm tra dịch chuyển.
+    \end{itemize}
+
+2. \textbf{Thiết lập dữ liệu kiểm thử:}
+    \begin{itemize}
+        \item Trường hợp cơ bản: điền đầy toàn bộ một hàng nội bộ ở vị trí giữa bảng (ví dụ hàng \texttt{i = H-2}). Phía trên hàng này, thiết lập một số ký tự giả định trong hàng tiếp theo để quan sát hiệu quả trượt.
+        \item Trường hợp đa dòng: điền đầy hai hoặc ba hàng liên tiếp phía dưới, đảm bảo \texttt{removeLine()} có thể phát hiện và xử lý từng hàng theo thứ tự từ dưới lên.
+        \item Trường hợp giáp cạnh: điền đầy hàng ngay trên cạnh đáy bảng (không tính biên cuối) và hàng ngay dưới cạnh trên cùng để kiểm tra công thức so sánh ô trống và phần biên tường.
+        \item Trường hợp không có dòng đầy: gọi \texttt{removeLine()} khi bảng chỉ chứa các ô trống bên trong và biên tường. Kết quả mong đợi là bảng giữ nguyên nguyên vẹn.
+    \end{itemize}
+
+3. \textbf{Thực thi hàm và quan sát kết quả:}
+    \begin{itemize}
+        \item Gọi \texttt{removeLine()} một lần sau khi đã dựng xong bảng mẫu.
+        \item Quan sát dữ liệu bảng bằng cách in ra console hoặc so sánh biểu diễn ký tự của bảng với một bảng kỳ vọng đã chuẩn bị sẵn.
+        \item Với từng hàng đầy đã tạo, xác nhận rằng nó biến mất hoàn toàn, không để lại ký tự gạch nào trên hàng đó.
+        \item Với mỗi hàng phía trên, xác nhận rằng nội dung ban đầu của hàng phía trên đó đã chuyển xuống đúng một vị trí bên dưới.
+        \item Dòng đầu tiên trong nội bộ sau khi xử lý phải trở thành hoàn toàn khoảng trắng, ngoại trừ biên tường giữ nguyên \texttt{'#'}. Nếu dòng này không được điền đúng, thuật toán đã dịch chuyển sai chiều hoặc quên khởi tạo hàng trên cùng.
+    \end{itemize}
+
+4. \textbf{Xác minh biên tường và trạng thái lạ:}
+    \begin{itemize}
+        \item Kiểm tra rằng các ký tự \texttt{'#'} ở cột trái và cột phải không bị ghi đè, cả ở các hàng vừa dịch chuyển và ở hàng trên cùng.
+        \item Kiểm tra tất cả các ô nội bộ để đảm bảo không còn ký tự lạ như ký tự ASCII không in được hoặc số không mong muốn.
+        \item Kiểm tra rằng các ô trống dùng ký tự khoảng trắng \texttt{' '} chứ không sử dụng giá trị rác hay ký tự null.
+    \end{itemize}
+
+5. \textbf{Đánh giá hiệu suất và tính ổn định:}
+    \begin{itemize}
+        \item Hàm \texttt{removeLine()} hiện tại duyệt từ dưới lên trên và sau khi xoá một hàng sẽ tăng chỉ số \texttt{i} để kiểm tra lại hàng mới được dịch chuyển xuống. Test phải xác minh logic này không bỏ sót hàng đầy liên tiếp. Nếu tồn tại hai hàng đầy liên tiếp, việc tăng \texttt{i} trở lại sau khi xoá sẽ tiếp tục kiểm tra hàng vừa kéo xuống.
+        \item Kiểm tra thêm với bảng có nhiều dòng đầy rải rác để xác thực không có hành vi không mong muốn khi một dòng đầy mới được tạo sau khi các hàng phía trên trượt xuống.
+    \end{itemize}
+
+\subsubsection*{Kịch bản kiểm thử chi tiết cho chức năng removeLine}
+
+Để mô tả chi tiết hơn, test case mẫu có thể bao gồm các bước sau đây:
+
+\begin{enumerate}
+    \item Khởi tạo bảng mẫu với kích thước chuẩn \texttt{H = 20}, \texttt{W = 15}.
+    \item Thiết lập hàng \texttt{i = 17} (hàng thứ hai tính từ đáy) với giá trị đầy đủ: mọi cột từ \texttt{j = 1} đến \texttt{j = W-2} đều chứa ký tự ghép khối.
+    \item Thiết lập hàng \texttt{i = 16} phía trên với một mẫu không đầy, ví dụ ô \texttt{j = 2} chứa \texttt{'I'}, ô \texttt{j = 4} chứa \texttt{'T'}, các ô còn lại là khoảng trắng, để kiểm tra dịch chuyển chính xác.
+    \item Gọi \texttt{removeLine()}. Sau khi hàm chạy hoàn tất, xác minh các điều kiện sau:
+        \begin{itemize}
+            \item Hàng \texttt{i = 17} phải trở thành một hàng trống hoàn chỉnh, ngoại trừ biên tường hai bên.
+            \item Nội dung ban đầu của hàng \texttt{i = 16} phải nằm ở hàng \texttt{i = 17} sau khi dịch chuyển.
+            \item Hàng \texttt{i = 16} phải trở thành một hàng trống bên trong (ngoại trừ hai ô biên), vì các hàng phía trên tiếp tục dịch xuống.
+            \item Các dòng biên \texttt{i = 0} và \texttt{i = H-1} vẫn phải chứa ký tự \texttt{'#'} ở toàn bộ các vị trí biên, không bị biến đổi.
+        \end{itemize}
+    \item Lặp lại test với hai hàng đầy liên tiếp ở \texttt{i = 17} và \texttt{i = 16}. Kỳ vọng: cả hai hàng đều bị xoá và hàng \texttt{i = 15} dịch xuống tới hàng \texttt{i = 17}, sau đó hàng \texttt{i = 16} cũng trở thành trống.
+    \item Thực hiện kiểm thử biên với hàng đầy tại \texttt{i = 1} (gần biên trên cùng). Sau khi hàm chạy, hàng tiếp theo phải dịch xuống chính xác và hàng \texttt{i = 1} trở thành trống.
+    \item Thực hiện kiểm thử trường hợp không có hàng đầy, xác nhận bảng không đổi để tránh lỗi xóa sai.
+\end{enumerate}
+
+\subsubsection*{Những điều cần kiểm tra khi xây dựng test tự động}
+
+\begin{itemize}
+    \item Tạo một hàm hỗ trợ riêng trong file test để khởi tạo ma trận mẫu và chuyển đổi nó thành chuỗi văn bản dễ so sánh.
+    \item So sánh toàn bộ bảng sau khi gọi \texttt{removeLine()} với một bảng kỳ vọng đã chuẩn bị sẵn, thay vì chỉ kiểm tra một vài ô cục bộ.
+    \item Nếu codebase mở rộng, cân nhắc tạo thêm hàm \texttt{isLineFull(int row)} để tách riêng việc xác định hàng đầy, giúp kiểm thử unit dễ dàng hơn.
+    \item Phân tách các trường hợp: test "đơn" (single line clear), test "dồn" (multiple line clear), test "giáp đáy" và test "giáp trên".
+\end{itemize}
+
+\subsubsection*{Các chỉ tiêu kiểm thử số lượng và chất lượng}
+
+Bên cạnh việc kiểm tra đúng / sai, cần đánh giá thêm các tiêu chí sau:
+
+\begin{itemize}
+    \item \textbf{Tính lặp lại}: kết quả test phải nhất quán khi chạy nhiều lần với cùng dữ liệu input.
+    \item \textbf{Tính độc lập}: test \texttt{removeLine()} nên không phụ thuộc vào trạng thái khối rơi hiện tại; nếu cần, khối đang rơi có thể được gỡ khỏi bảng trước khi test.
+    \item \textbf{Tính minh bạch}: kết quả kỳ vọng được mô tả rõ ràng, có thể đối chiếu bằng cách so sánh từng dòng ASCII, thay vì đánh giá cảm quan.
+    \item \textbf{Hiệu suất}: hàm cần xử lý bảng kích thước 20x15 trong vòng thời gian ngắn, vì nó được gọi mỗi khi một khối cố định một lần. Mặc dù test không cần đo thời gian chính xác, nhưng nên chú ý đến việc không dùng vòng lặp vô hạn hoặc xử lý thừa phức tạp.
+\end{itemize}
+
+\subsection{Mô tả kiểm thử tốc độ rơi tăng nhanh sau removeLine}
+
+Phần kiểm thử này tập trung vào việc xác nhận cơ chế tăng tốc độ rơi mỗi khi một hay nhiều hàng được xoá thành công bằng hàm \texttt{removeLine()}. Trong gameplay Tetris, đây là một cảnh báo lối chơi quan trọng để tăng độ khó và tạo động lực cho người chơi. Test cần kiểm tra rằng tốc độ rơi khối sau khi xoá dòng đầy sẽ thực sự nhanh hơn so với tốc độ ban đầu và tốc độ trước đó.
+
+Các trường hợp kiểm thử đề xuất:
+
+\begin{itemize}
+    \item Bắt đầu với tốc độ rơi mặc định, sau đó xoá một hàng đầy và đo tốc độ rơi mới của block hiện tại hoặc block kế tiếp.
+    \item Thực hiện nhiều lần xoá hàng đầy liên tiếp, kiểm tra xem tốc độ có tăng dần theo từng lần xoá hay không.
+    \item Kiểm tra điều kiện không xoá được hàng đầy: nếu \texttt{removeLine()} không được gọi, tốc độ rơi không thay đổi.
+    \item Kiểm tra rằng tốc độ tăng không vượt quá mức tối đa cho phép hoặc gây lỗi khi giá trị tốc độ trở nên quá nhỏ.
+\end{itemize}
+
+Kịch bản kiểm thử chi tiết:
+
+\begin{enumerate}
+    \item Thiết lập trò chơi ở tốc độ rơi mặc định. Xác định giá trị thời gian trễ mỗi lần rơi ban đầu (ví dụ 300ms).
+    \item Tạo dữ liệu sao cho ít nhất một hàng đầy sẽ được xoá bởi hàm \texttt{removeLine()}.
+    \item Gọi \texttt{removeLine()} và ghi lại tốc độ rơi ngay sau khi xoá. So sánh với giá trị tốc độ trước đó.
+    \    
+    \item Lặp lại với hai hoặc ba lần xoá hàng đầy liên tiếp để kiểm tra tốc độ có tiếp tục tăng dần một cách hợp lý.
+    \    
+    \item Thực hiện kiểm thử khi không có hàng đầy, xác nhận tốc độ rơi không thay đổi và hàm không làm tăng nhầm tốc độ.
+\end{enumerate}
+
+Tiêu chí pass/fail:
+
+\begin{itemize}
+    \item Pass: sau mỗi lần xoá thành công bằng \texttt{removeLine()}, thời gian giữa hai lần rơi liên tiếp giảm, biểu thị tốc độ rơi tăng lên.
+    \item Fail: tốc độ rơi giữ nguyên hoặc giảm sau khi xoá dòng, hoặc tốc độ tăng vượt quá giới hạn vận hành bình thường.
+\end{itemize}
+
+\subsection{Mô tả kiểm thử giao diện viền và block vuông}
+
+Phần kiểm thử này tập trung vào hiển thị cấu trúc lưới và các block rơi sao cho mỗi ô vuông, không bị kéo giãn thành hình chữ nhật. Với hiện trạng hình chữ nhật (HCN) ở viền và block, test cần xác định liệu các đối tượng trên lưới có giữ tỉ lệ 1:1 ở cả chiều ngang và chiều dọc hay không. Test còn phải kiểm tra góc kết nối giữa viền và ô block để đảm bảo các góc vuông sắc nét, không bị bo hoặc kéo dài.
+
+\subsection{Mô tả kiểm thử chức năng xoay block}
+
+Kiểm thử xoay block là một phần quan trọng của module Game Core vì nó xác định tính chính xác của cơ chế biến đổi hình dạng khối khi nhận lệnh người chơi. Mục tiêu của phần này là kiểm tra chắc chắn rằng, sau mỗi lần xoay, block giữ nguyên kích thước hợp lý, không bị ảnh hưởng bởi vị trí xung quanh và không vượt ra ngoài ranh giới ma trận hay chồng chéo với biên tường.
+
+Các yếu tố kiểm thử chính:
+
+\begin{itemize}
+    \item Xác thực xoay ở vị trí trung tâm: đặt block vào vị trí trung tâm của bảng và xoay khối nhiều lần, kiểm tra xem hình dạng của block có đổi đúng theo quy tắc xoay mong đợi.
+    \item Xác nhận xoay sát tường: đặt block sát tường trái, phải và sát đáy, sau đó xoay. Kiểm tra xem block có bị cắt mất phần đầu, không chạm vào biên tường và không vượt ra khỏi ma trận.
+    \item Xác minh xoay ở gần block khác: nếu hiện trạng có các ô đã cố định bên cạnh block đang xoay, kiểm tra xem xoay không làm khối chồng lên ô đã có.
+    \item Kiểm tra tính ổn định sau nhiều xoay: thực hiện chuỗi xoay liên tiếp (ví dụ 4 lần) để đảm bảo block trở lại hình dạng ban đầu hoặc dạng chuyển tiếp hợp lệ mà không lỗi hình học.
+\end{itemize}
+
+Kịch bản kiểm thử xoay block nên bao gồm:
+
+\begin{enumerate}
+    \item Thiết lập bảng với một block ở vị trí trung tâm. Xoay block và kiểm tra hình dạng, số lượng ô block và chuyển động của các ô có đúng không.
+    \item Đặt block sát tường trái, thực hiện xoay, và kiểm tra xem phần block có quá ra khỏi biên hay không. Nếu hệ thống có wall kick, ghi nhận hành vi điều chỉnh vị trí.
+    \item Đặt block sát tường phải và sát đáy, xoay mỗi lần để kiểm tra trường hợp góc, cạnh và hình dáng khối không bị sai.
+    \item Đặt các khối cố định làm chướng ngại ở gần block xoay, thực hiện xoay và kiểm tra xem block xoay có chuyển vào vị trí hợp lệ hay bị chồng chéo.
+\end{enumerate}
+
+Tiêu chí pass/fail:
+
+\begin{itemize}
+    \item Pass: block xoay đúng hình dạng, không bị biến dạng, không chồng lên biên hoặc vùng đã được cố định, và vẫn nằm trong giới hạn ma trận.
+    \item Fail: block bị cắt mất, chồng chéo với biên tường hoặc phần tử đã được cố định, hoặc không xoay đúng hình dạng mong đợi.
+\end{itemize}
+
+\subsubsection*{Lưu ý khi kiểm thử}
+
+\begin{itemize}
+    \item Nếu game implement wall kick, kiểm tra rằng block có thể điều chỉnh vị trí nhỏ để vừa vặn khi xoay sát biên.
+    \item Ghi lại phím xoay sử dụng trong test và đảm bảo input map đúng với hành vi game hiện tại.
+    \item Với mỗi lần xoay, kiểm tra cả trạng thái trước và sau xoay để xác định sai sót ở bước chuyển đổi.
+\end{itemize}
+
+\subsubsection*{Kết nối với các test khác}
+
+Phần test xoay block nên được chạy song song với test removeLine và test giao diện block vuông, vì việc xoay có thể ảnh hưởng trực quan đến vị trí hiển thị và trạng thái bảng sau khi block cố định.
+
+\subsection{Mô tả kiểm thử giao diện viền và block vuông}
+
+Các bước kiểm thử đề xuất:
+
+\begin{enumerate}
+    \item Chạy ứng dụng ở chế độ hiện tại và quan sát khung hiển thị cùng các block trong khu vực chơi.
+    
+    \item Xác thực từng ô trong lưới có kích thước bằng nhau theo cả chiều ngang và chiều dọc. Nếu sử dụng GUI, kiểm tra thước đo pixel hoặc lưới hỗ trợ để đảm bảo tỷ lệ là chính xác. Nếu sử dụng console, kiểm tra font chữ và cỡ ký tự để đảm bảo ô hiển thị vuông.
+    
+    \item Kiểm tra viền màn hình: đường biên ngoài cùng phải tạo thành hình chữ nhật cân đối với các góc 90 độ và cạnh dọc/ngang có cùng tỷ lệ so với lưới nội bộ.
+    
+    \item Kiểm tra khối: mỗi block phải được hiển thị trong các ô vuông đồng nhất. Các phần tử block lân cận nên có cùng chiều cao và chiều rộng, không bị kéo dài theo một chiều.
+    
+    \item Kiểm tra điều kiện thay đổi kích thước: nếu ứng dụng hỗ trợ thay đổi kích thước cửa sổ hoặc chế độ màn hình khác nhau, đảm bảo hiển thị vẫn duy trì ô vuông trên mọi kích thước.
+    
+    \item Kiểm tra mô tả trực quan: ghi nhận nếu viền hoặc block xuất hiện như hình chữ nhật dẹt/chữ nhật kéo dài. Nếu phát hiện HCN, note cụ thể vị trí và trạng thái điều kiện để sửa.
+\end{enumerate}
+
+\paragraph{Tiêu chí pass/fail}
+
+\begin{itemize}
+    \item Pass: tất cả ô lưới và block hiển thị với tỉ lệ 1:1, viền rõ ràng, góc vuông sắc nét và không có biến dạng HCN.
+    \item Fail: có sự khác biệt rõ ràng giữa chiều ngang và chiều dọc của các ô/block, viền bị kéo dài hoặc không tạo góc vuông chính xác.
+\end{itemize}
+
+\subsubsection*{Khuyến nghị kiểm thử mở rộng}
+
+\begin{itemize}
+    \item Thực hiện kiểm thử trên tối thiểu hai chế độ hiển thị khác nhau nếu có: console và GUI hoặc các độ phân giải khác nhau.
+    \item Nếu game dùng bộ đếm pixel cố định, kiểm tra rằng hệ số tỷ lệ của khung vẽ luôn giữ 1:1 cho từng ô.
+    \item Kiểm tra phím điều khiển hoặc tùy chọn cấu hình hiển thị nếu có, đảm bảo các thay đổi vẫn giữ cho mỗi ô vuông.
+\end{itemize}
+
+\subsubsection*{Liên hệ với nâng cấp giao diện}
+
+Đánh giá góc hiển thị viền và block vuông có thể liên quan trực tiếp tới việc tái thiết kế khung hiển thị hoặc chỉnh lại chiều cao/chiều rộng của đối tượng render. Do vậy, phần test này nên được chạy cùng với phát triển giao diện và tích hợp vào bản demo hình dạng block mới.
+
+\subsubsection*{Tại sao test giao diện viền và block vuông quan trọng}
+
+Giao diện lưới vuông giúp game cảm nhận đúng tỷ lệ Tetris, tránh tình trạng khung và block bị méo mó làm giảm độ chính xác chơi và cảm giác thị giác. Phần kiểm thử này giúp đảm bảo rằng các nguyên tắc hình học của lưới được duy trì, tạo ra trải nghiệm trực quan đồng đều và chuyên nghiệp hơn.
+
+\subsubsection*{Kết luận}
+
+Phần kiểm thử giao diện viền và block vuông phải được cộng vào danh sách kiểm thử Module Game Core/Giao diện vì đây là một lỗi trực quan lõi, ảnh hưởng tới trải nghiệm người chơi ngay lập tức. Mô tả kiểm thử nên ghi lại rõ ràng các điều kiện khởi tạo, bước quan sát và tiêu chí pass/fail.
+Trong logic Tetris, loại bỏ hàng đầy là một hành vi lõi quyết định trải nghiệm người chơi. Nếu hàm này hoạt động sai, hậu quả có thể là:
+
+\begin{itemize}
+    \item Bảng chơi không thay đổi đúng khi một hàng được xóa, dẫn tới điểm số và trạng thái game sai lệch.
+    \item Các khối phía trên không dịch xuống đúng, gây ra lỗi nhảy dòng, tạo ra những ô trống lỗ hoặc xuất hiện khối chồng chéo.
+    \item Viền tường bị xóa hoặc ghi đè, khiến bảng bị phá vỡ và game bị crash hoặc chạy sai.
+    \item Khi nhiều hàng đầy xảy ra cùng lúc, nếu thuật toán không xử lý theo thứ tự đúng, kết quả có thể mất một hàng hoặc không xóa hàng đúng.
+\end{itemize}
+
+Kết luận: phần kiểm thử này nên chiếm trọng tâm trong tài liệu test module Game Core và cần được mô tả kỹ càng. Mục tiêu không chỉ là xác định test case mà còn là giải thích rõ ràng từng bước thực hiện, điều kiện đầu vào, kết quả mong đợi và cách kiểm tra từng điểm quan trọng.
 
 \label{LastPageTestList}
 \end{document}
