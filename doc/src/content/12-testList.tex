@@ -55,6 +55,7 @@ Dưới đây là các lệnh build độc lập qua terminal để tạo file t
     \item \textbf{Test Xóa Hàng:} Nhét mock-data (1 hàng đầy) vào ma trận $\rightarrow$ Nhập lệnh cập nhật vòng lặp $\rightarrow$ Expected: Hàng bị xóa, trả về điểm số tương ứng.
     \item \textbf{Test removeLine:} Thiết lập một hàng đầy trong bảng, gọi hàm \texttt{removeLine()} và kiểm tra trạng thái ma trận sau khi xoá. $\rightarrow$ Expected: dòng đầy biến mất, các dòng phía trên trượt xuống một vị trí, dòng đầu tiên trên cùng được điền bằng khoảng trắng và các cạnh tường `#` không thay đổi.
     \item \textbf{Test giao diện viền và block vuông:} Kiểm tra hiển thị khung màn hình và khối rơi ở chế độ GUI/console, đảm bảo mỗi ô có tỉ lệ 1:1, không bị dãn méo thành hình chữ nhật. $\rightarrow$ Expected: khung và block hiển thị đồng nhất, các ô vuông, góc vuông rõ ràng và không có hiện tượng kéo dãn bất thường.
+    \item \textbf{Test Xoay Block:} Đặt block vào nhiều vị trí khác nhau, bao gồm vị trí trung tâm, sát tường và sát đáy, sau đó nhấn phím xoay. $\rightarrow$ Expected: block xoay đúng hình dạng mong đợi, không bị biến dạng, không chồng lên biên và không vượt quá ranh giới ma trận.
     \item \textbf{Test Xoay Chặn (Wall Kick):} Đặt khối sát tường (biên ma trận) $\rightarrow$ Nhấn lệnh Xoay $\rightarrow$ Expected: Khối không bị xoay vượt ra ngoài index của ma trận lưới.
 \end{itemize}
 
@@ -160,6 +161,49 @@ Bên cạnh việc kiểm tra đúng / sai, cần đánh giá thêm các tiêu c
 \subsection{Mô tả kiểm thử giao diện viền và block vuông}
 
 Phần kiểm thử này tập trung vào hiển thị cấu trúc lưới và các block rơi sao cho mỗi ô vuông, không bị kéo giãn thành hình chữ nhật. Với hiện trạng hình chữ nhật (HCN) ở viền và block, test cần xác định liệu các đối tượng trên lưới có giữ tỉ lệ 1:1 ở cả chiều ngang và chiều dọc hay không. Test còn phải kiểm tra góc kết nối giữa viền và ô block để đảm bảo các góc vuông sắc nét, không bị bo hoặc kéo dài.
+
+\subsection{Mô tả kiểm thử chức năng xoay block}
+
+Kiểm thử xoay block là một phần quan trọng của module Game Core vì nó xác định tính chính xác của cơ chế biến đổi hình dạng khối khi nhận lệnh người chơi. Mục tiêu của phần này là kiểm tra chắc chắn rằng, sau mỗi lần xoay, block giữ nguyên kích thước hợp lý, không bị ảnh hưởng bởi vị trí xung quanh và không vượt ra ngoài ranh giới ma trận hay chồng chéo với biên tường.
+
+Các yếu tố kiểm thử chính:
+
+\begin{itemize}
+    \item Xác thực xoay ở vị trí trung tâm: đặt block vào vị trí trung tâm của bảng và xoay khối nhiều lần, kiểm tra xem hình dạng của block có đổi đúng theo quy tắc xoay mong đợi.
+    \item Xác nhận xoay sát tường: đặt block sát tường trái, phải và sát đáy, sau đó xoay. Kiểm tra xem block có bị cắt mất phần đầu, không chạm vào biên tường và không vượt ra khỏi ma trận.
+    \item Xác minh xoay ở gần block khác: nếu hiện trạng có các ô đã cố định bên cạnh block đang xoay, kiểm tra xem xoay không làm khối chồng lên ô đã có.
+    \item Kiểm tra tính ổn định sau nhiều xoay: thực hiện chuỗi xoay liên tiếp (ví dụ 4 lần) để đảm bảo block trở lại hình dạng ban đầu hoặc dạng chuyển tiếp hợp lệ mà không lỗi hình học.
+\end{itemize}
+
+Kịch bản kiểm thử xoay block nên bao gồm:
+
+\begin{enumerate}
+    \item Thiết lập bảng với một block ở vị trí trung tâm. Xoay block và kiểm tra hình dạng, số lượng ô block và chuyển động của các ô có đúng không.
+    \item Đặt block sát tường trái, thực hiện xoay, và kiểm tra xem phần block có quá ra khỏi biên hay không. Nếu hệ thống có wall kick, ghi nhận hành vi điều chỉnh vị trí.
+    \item Đặt block sát tường phải và sát đáy, xoay mỗi lần để kiểm tra trường hợp góc, cạnh và hình dáng khối không bị sai.
+    \item Đặt các khối cố định làm chướng ngại ở gần block xoay, thực hiện xoay và kiểm tra xem block xoay có chuyển vào vị trí hợp lệ hay bị chồng chéo.
+\end{enumerate}
+
+Tiêu chí pass/fail:
+
+\begin{itemize}
+    \item Pass: block xoay đúng hình dạng, không bị biến dạng, không chồng lên biên hoặc vùng đã được cố định, và vẫn nằm trong giới hạn ma trận.
+    \item Fail: block bị cắt mất, chồng chéo với biên tường hoặc phần tử đã được cố định, hoặc không xoay đúng hình dạng mong đợi.
+\end{itemize}
+
+\subsubsection*{Lưu ý khi kiểm thử}
+
+\begin{itemize}
+    \item Nếu game implement wall kick, kiểm tra rằng block có thể điều chỉnh vị trí nhỏ để vừa vặn khi xoay sát biên.
+    \item Ghi lại phím xoay sử dụng trong test và đảm bảo input map đúng với hành vi game hiện tại.
+    \item Với mỗi lần xoay, kiểm tra cả trạng thái trước và sau xoay để xác định sai sót ở bước chuyển đổi.
+\end{itemize}
+
+\subsubsection*{Kết nối với các test khác}
+
+Phần test xoay block nên được chạy song song với test removeLine và test giao diện block vuông, vì việc xoay có thể ảnh hưởng trực quan đến vị trí hiển thị và trạng thái bảng sau khi block cố định.
+
+\subsection{Mô tả kiểm thử giao diện viền và block vuông}
 
 Các bước kiểm thử đề xuất:
 
