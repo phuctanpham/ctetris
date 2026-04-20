@@ -13,626 +13,649 @@
 \StandaloneSectionSetup{12-testList.tex}{LastPageTestList}
 \onehalfspacing
 
-\section{Yêu cầu môi trường và Hướng dẫn Build chung}
+\section{Danh Sách Kịch Bản Kiểm Thử}
 
-\subsection{Yêu cầu môi trường}
-Để đảm bảo toàn bộ các module có thể build và chạy kiểm thử độc lập, hệ thống cần đáp ứng các yêu cầu sau:
-\begin{itemize}
-    \item Trình biên dịch C++ hỗ trợ chuẩn \textbf{C++17} trở lên và cài đặt CMake.
-    \item Cài đặt và khai báo các thư viện hiển thị đồ họa (như SDL2, ImGui) vào biến môi trường hệ thống (dành cho module Console/Menu).
-    \item Chuẩn bị sẵn file kịch bản JSON giả lập và đặt tại thư mục \texttt{/data/mock/} trước khi chạy kiểm thử phần Cốt truyện.
-    \item Module Game Core sử dụng logic toán học thuần túy nên không yêu cầu thư viện ngoài, có thể chạy trực tiếp bằng Console Application.
+% ── Bảng thông tin tài liệu ──────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\linewidth}{|l|X|}
+\hline
+\textbf{Mã tài liệu}     & STS-02 \\ \hline
+\textbf{Phiên bản}       & 1.0 \\ \hline
+\textbf{Năm học}         & 2024 – 2025 \\ \hline
+\textbf{Môn học}         & SS004.F21 – Kiểm Thử Phần Mềm \\ \hline
+\textbf{Dự án}           & cTetris – Console Tetris Game (C++) \\ \hline
+\textbf{Tài liệu liên quan} & STS-01 – Test Strategy \\ \hline
+\textbf{Tình trạng}      & Chính thức / Released \\ \hline
+\end{tabularx}
+\end{table}
+
+% ────────────────────────────────────────────────────────────────────
+% 1. MÔI TRƯỜNG BUILD
+% ────────────────────────────────────────────────────────────────────
+\subsection{Môi Trường Build và Yêu Cầu Hệ Thống}
+
+\subsubsection{Yêu Cầu Môi Trường}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|}
+\hline
+\rowcolor{gray!35}
+\textbf{Thành Phần} & \textbf{Yêu Cầu / Mô Tả} \\ \hline
+Trình biên dịch   & C++ compiler hỗ trợ chuẩn C++17 trở lên (GCC / MinGW / Clang) \\ \hline
+Build system      & CMake (phiên bản 3.15 trở lên) \\ \hline
+Thư viện đồ họa   & SDL2, ImGui – phải được cài đặt và khai báo vào biến môi trường hệ thống \\ \hline
+Dữ liệu mock story & File JSON kịch bản tại \texttt{/data/mock/} trước khi chạy test gameStory \\ \hline
+Module gameCore   & Logic thuần túy, không phụ thuộc thư viện ngoài – chạy trực tiếp Console App \\ \hline
+OS hỗ trợ        & Windows 10/11, Linux Ubuntu 20.04+, macOS 12+ \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Lệnh Build Độc Lập Từng Module}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|}
+\hline
+\rowcolor{gray!35}
+\textbf{Module} & \textbf{Lệnh Build} \\ \hline
+gameStory   & \texttt{g++ src/gameStory/*.cpp tests/test\_story.cpp -o bin/story\_tester} \\ \hline
+gameConsole & \texttt{cmake -B build -S . \&\& cmake --build build --target ConsoleTest} \\ \hline
+gameCore    & \texttt{g++ src/gameCore/app.cpp tests/test\_core.cpp -I src/gameCore/app/include -o core\_test} \\ \hline
+\end{tabularx}
+\end{table}
+
+% ────────────────────────────────────────────────────────────────────
+% 2. TEST CASE – gameStory
+% ────────────────────────────────────────────────────────────────────
+\subsection{Danh Sách Test Case -- Module gameStory}
+
+\introtext{Module gameStory quản lý trải nghiệm onboarding: logo, loading, dialogue, skip, và download động. Các test được phân theo phiên bản (v1, v2, v3) phản ánh tiến độ phát triển.}
+
+% helper macro cho khung test case
+\newcommand{\tcbox}[2]{%
+  \begin{table}[H]
+  \centering
+  \rowcolors{2}{gray!15}{white}
+  \begin{tabularx}{\linewidth}{|l|X|}
+  \hline
+  \rowcolor{gray!35}
+  \multicolumn{2}{|l|}{\textbf{#1}} \\ \hline
+  #2
+  \end{tabularx}
+  \end{table}%
+}
+
+\subsubsection{Nhóm Test v1 -- Khởi Tạo và Hiển Thị Cơ Bản}
+
+\tcbox{STY\_TC\_001 \quad Thiết Lập Layout và Build File Thực Thi}{
+\textbf{Mã Test Case}       & STY\_TC\_001 \\ \hline
+\textbf{Tiêu Đề}            & Thiết Lập Layout và Build File Thực Thi \\ \hline
+\textbf{Module / Phiên Bản} & gameStory / v1 \\ \hline
+\textbf{Loại Test}          & Manual + Build Test \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & Môi trường build C++17 đã cài đặt. Chưa có file \texttt{layout.h}. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Tạo file \texttt{layout.h} với macro \texttt{WIDTH=900}, \texttt{HEIGHT=1600} (tỷ lệ 9:16). \newline
+  2. Build bằng g++ hoặc CMake, tạo file .exe. \newline
+  3. Khởi chạy .exe và quan sát cửa sổ. \newline
+  4. Thay đổi độ phân giải và chạy lại. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Cửa sổ hiển thị đúng tỷ lệ 9:16, không bị kéo dãn. Build thành công không có lỗi compile. \\ \hline
+\textbf{Trường Hợp Biên}    & Test trên màn hình 480p, 4K và tỷ lệ 16:9 để đảm bảo fallback hợp lý. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Cửa sổ 9:16, build thành công. \textbf{FAIL:} Tỷ lệ sai hoặc crash khi khởi chạy. \\ \hline
+}
+
+\tcbox{STY\_TC\_002 \quad Hiển Thị Logo UIT với Hiệu Ứng và Âm Thanh}{
+\textbf{Mã Test Case}       & STY\_TC\_002 \\ \hline
+\textbf{Tiêu Đề}            & Hiển Thị Logo UIT với Hiệu Ứng và Âm Thanh \\ \hline
+\textbf{Module / Phiên Bản} & gameStory / v1 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & Ứng dụng đã build thành công. File âm thanh logo tồn tại. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Khởi chạy ứng dụng, quan sát logo UIT xuất hiện từ trung tâm. \newline
+  2. Kiểm tra hiệu ứng fade-in trong 2–3 giây. \newline
+  3. Xác nhận âm thanh chào mừng phát đúng lúc. \newline
+  4. Thay đổi hiệu ứng (nếu có) và test lại. \newline
+  5. Kiểm tra trên nhiều thiết bị khác nhau. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Logo hiển thị rõ nét, hiệu ứng mượt (không lag), âm thanh phát đúng thời điểm. \\ \hline
+\textbf{Trường Hợp Biên}    & Test khi âm thanh bị tắt trong hệ thống, file âm thanh bị thiếu hoặc định dạng không hỗ trợ. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Logo rõ, hiệu ứng mượt, âm thanh đúng. \textbf{FAIL:} Lag, âm thanh không phát, hiển thị lỗi. \\ \hline
+}
+
+\tcbox{STY\_TC\_003 \quad Loading Bar Đồng Bộ với Thời Gian Hiệu Ứng Logo}{
+\textbf{Mã Test Case}       & STY\_TC\_003 \\ \hline
+\textbf{Tiêu Đề}            & Loading Bar Đồng Bộ với Thời Gian Hiệu Ứng Logo \\ \hline
+\textbf{Module / Phiên Bản} & gameStory / v1 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & STY\_TC\_002 đã pass. Logo có hiệu ứng thời gian xác định. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Khởi chạy, quan sát loading bar xuất hiện bên dưới logo. \newline
+  2. Kiểm tra bar tăng từ 0\% đến 100\% trong đúng thời gian hiệu ứng logo. \newline
+  3. Xác nhận bar đầy khi logo biến mất. \newline
+  4. Test với hiệu ứng logo dài hơn. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Loading bar đầy đúng thời điểm logo kết thúc, không lag, không nhảy giá trị. \\ \hline
+\textbf{Trường Hợp Biên}    & Test khi hiệu ứng logo bị gián đoạn đột ngột. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Bar đầy đúng thời điểm, đồng bộ mượt. \textbf{FAIL:} Không đồng bộ hoặc bar không tăng. \\ \hline
+}
+
+\subsubsection{Nhóm Test v2 -- Dialogue và Tương Tác}
+
+\tcbox{STY\_TC\_004 \quad Dialogue Story với Nhạc Nền}{
+\textbf{Mã Test Case}       & STY\_TC\_004 \\ \hline
+\textbf{Tiêu Đề}            & Dialogue Story với Nhạc Nền \\ \hline
+\textbf{Module / Phiên Bản} & gameStory / v2 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & v1 tests đã pass. File nhạc nền tồn tại tại thư mục assets. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Khởi chạy, điều hướng đến phần dialogue. \newline
+  2. Quan sát hộp thoại hiển thị văn bản giới thiệu. \newline
+  3. Kiểm tra nhạc nền phát mượt, âm lượng phù hợp. \newline
+  4. Nhấn phím để tiếp tục dialogue từng bước. \newline
+  5. Test với nhạc nền bị tắt. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Dialogue hiển thị văn bản đúng nội dung, nhạc nền phù hợp tone và không gián đoạn. \\ \hline
+\textbf{Trường Hợp Biên}    & Test khi file nhạc thiếu hoặc định dạng sai. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Dialogue đúng, nhạc phù hợp. \textbf{FAIL:} Văn bản sai, nhạc gián đoạn, crash. \\ \hline
+}
+
+\tcbox{STY\_TC\_005 \quad Nút Skip Bỏ Qua Cốt Truyện}{
+\textbf{Mã Test Case}       & STY\_TC\_005 \\ \hline
+\textbf{Tiêu Đề}            & Nút Skip Bỏ Qua Cốt Truyện \\ \hline
+\textbf{Module / Phiên Bản} & gameStory / v2 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & STY\_TC\_004 đã pass. Đang trong phần dialogue. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Trong dialogue, nhấn ESC hoặc nút skip. \newline
+  2. Xác nhận story dừng ngay lập tức. \newline
+  3. Kiểm tra chuyển sang game chính mượt mà. \newline
+  4. Xác nhận nhạc nền dừng hoặc chuyển sang nhạc game. \newline
+  5. Test nhấn skip giữa chừng dialogue. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Story dừng hoàn toàn, chuyển sang game chính không crash, trạng thái nhạc đúng. \\ \hline
+\textbf{Trường Hợp Biên}    & Test khi story đã kết thúc tự nhiên trước khi nhấn skip. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Skip thành công, chuyển cảnh mượt, không crash. \textbf{FAIL:} Không chuyển hoặc crash. \\ \hline
+}
+
+\subsubsection{Nhóm Test v3 -- Download Động}
+
+\tcbox{STY\_TC\_006 \quad Download Âm Thanh và Hình Ảnh qua API}{
+\textbf{Mã Test Case}       & STY\_TC\_006 \\ \hline
+\textbf{Tiêu Đề}            & Download Âm Thanh và Hình Ảnh qua API \\ \hline
+\textbf{Module / Phiên Bản} & gameStory / v3 \\ \hline
+\textbf{Loại Test}          & Manual + API Test \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & API endpoint khả dụng. Kết nối mạng ổn định. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Khởi chạy, quan sát quá trình download từ API. \newline
+  2. Kiểm tra file được lưu vào thư mục cache đúng định dạng. \newline
+  3. Xác nhận asset được sử dụng trong story đúng. \newline
+  4. Test với mạng chậm (throttle 3G). \newline
+  5. Test khi không có kết nối mạng. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Download thành công, file lưu đúng, asset hiển thị/phát đúng. Lỗi mạng hiển thị thông báo rõ ràng. \\ \hline
+\textbf{Trường Hợp Biên}    & Test API không khả dụng, file cache đã tồn tại, định dạng file không hỗ trợ. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Download OK, dùng được. \textbf{FAIL:} Lỗi mạng không xử lý được, crash. \\ \hline
+}
+
+\tcbox{STY\_TC\_007 \quad Loading Bar Theo Tiến Độ Download}{
+\textbf{Mã Test Case}       & STY\_TC\_007 \\ \hline
+\textbf{Tiêu Đề}            & Loading Bar Theo Tiến Độ Download \\ \hline
+\textbf{Module / Phiên Bản} & gameStory / v3 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & STY\_TC\_006 đã pass. API hoạt động. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Khởi chạy, quan sát bar tăng theo phần trăm download thực. \newline
+  2. Kiểm tra logo repeat animation trong khi chờ. \newline
+  3. Xác nhận bar đầy khi download hoàn tất. \newline
+  4. Test với download nhanh ($<$ 1 giây) và chậm ($>$ 30 giây). \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Bar tăng phản ánh đúng tiến độ download, logo repeat mượt, chuyển tiếp khi xong. \\ \hline
+\textbf{Trường Hợp Biên}    & Test khi download fail ở giữa chừng (50\%). \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Đồng bộ bar-download, repeat mượt. \textbf{FAIL:} Bar không cập nhật hoặc sai giá trị. \\ \hline
+}
+
+% ────────────────────────────────────────────────────────────────────
+% 3. TEST CASE – gameConsole
+% ────────────────────────────────────────────────────────────────────
+\subsection{Danh Sách Test Case -- Module gameConsole}
+
+\introtext{Module gameConsole quản lý giao diện cấu hình, popups, settings và nhạc nền. Đây là điểm tiếp xúc đầu tiên khi người chơi khởi động game.}
+
+\subsubsection{Nhóm Test v1 -- Layout và Popup Cơ Bản}
+
+\tcbox{CON\_TC\_001 \quad Thiết Lập Layout Console và Build}{
+\textbf{Mã Test Case}       & CON\_TC\_001 \\ \hline
+\textbf{Tiêu Đề}            & Thiết Lập Layout Console và Build \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v1 \\ \hline
+\textbf{Loại Test}          & Manual + Build Test \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & Môi trường build C++17 với CMake. SDL2/ImGui đã cài đặt. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Tạo/cập nhật \texttt{layout.h} với \texttt{WIDTH=900}, \texttt{HEIGHT=1600}. \newline
+  2. Build bằng CMake (\texttt{cmake -B build -S . \&\& cmake --build build}). \newline
+  3. Khởi chạy .exe, kiểm tra tỷ lệ 9:16 trên màn hình thực. \newline
+  4. Quan sát vị trí tiêu đề, menu, thông báo trong khung. \newline
+  5. Đổi kích thước cửa sổ console và quan sát fallback. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Giao diện build thành công, hiển thị đúng 9:16, các thành phần UI trong khung. \\ \hline
+\textbf{Trường Hợp Biên}    & Test trên 480p, 4K, tỷ lệ 16:9 và resize cửa sổ console. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Build OK, đúng 9:16, không lỗi runtime. \textbf{FAIL:} Tỷ lệ sai, giao diện cắt, crash. \\ \hline
+}
+
+\tcbox{CON\_TC\_002 \quad Popup Guide -- Mở và Đóng}{
+\textbf{Mã Test Case}       & CON\_TC\_002 \\ \hline
+\textbf{Tiêu Đề}            & Popup Guide – Mở và Đóng \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v1 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & CON\_TC\_001 đã pass. Ứng dụng đang chạy ở màn hình chính. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Quan sát nút Guide trên giao diện chính. \newline
+  2. Nhấn nút Guide, kiểm tra popup xuất hiện với nội dung hướng dẫn rõ ràng. \newline
+  3. Đọc nội dung, xác nhận định nghĩa phím đầy đủ. \newline
+  4. Nhấn nút Close (X), xác nhận popup đóng và state giao diện chính không thay đổi. \newline
+  5. Mở lại Guide nhiều lần, kiểm tra không memory leak. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Popup Guide mở đúng nội dung, đóng hoàn toàn, trở về giao diện chính không mất state. \\ \hline
+\textbf{Trường Hợp Biên}    & Nhấn Guide khi popup đã mở, màn hình nhỏ (popup không vượt biên), Close nhanh liên tiếp. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Popup đúng nội dung, Close OK, không crash. \textbf{FAIL:} Không mở, Close không hoạt động. \\ \hline
+}
+
+\tcbox{CON\_TC\_003 \quad Popup Board (Leaderboard) -- Mở và Đóng}{
+\textbf{Mã Test Case}       & CON\_TC\_003 \\ \hline
+\textbf{Tiêu Đề}            & Popup Board (Leaderboard) – Mở và Đóng \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v1 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & CON\_TC\_001 đã pass. Dữ liệu leaderboard mẫu đã có. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Quan sát nút Board trên giao diện. \newline
+  2. Nhấn Board, kiểm tra popup hiển thị danh sách điểm đúng định dạng. \newline
+  3. Xác nhận cột score/time/name phân biệt rõ. \newline
+  4. Nhấn Close, xác nhận đóng popup và trở về giao diện chính. \newline
+  5. Mở lại nhiều lần, không lag hoặc dữ liệu trống. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Popup Board hiển thị đúng dữ liệu, Close hoạt động, không crash khi mở lại. \\ \hline
+\textbf{Trường Hợp Biên}    & Dữ liệu board rỗng, danh sách quá dài (phải cuộn), dữ liệu thiếu trường score/time. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Hiển thị đúng, Close OK. \textbf{FAIL:} Không mở, hiển thị sai, crash khi reload. \\ \hline
+}
+
+\tcbox{CON\_TC\_004 \quad Nhạc Nền Trong Màn Hình Game Console}{
+\textbf{Mã Test Case}       & CON\_TC\_004 \\ \hline
+\textbf{Tiêu Đề}            & Nhạc Nền Trong Màn Hình Game Console \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v1 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & Ứng dụng console đang chạy. File nhạc nền tồn tại. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Vào màn hình game chính, quan sát nhạc nền bắt đầu. \newline
+  2. Chơi game và xác nhận nhạc liên tục không ngắt quãng. \newline
+  3. Mở popup Guide/Board và quay lại, kiểm tra nhạc không bị reset. \newline
+  4. Thoát game, xác nhận nhạc dừng. \newline
+  5. Test ở âm lượng 0 và khi file nhạc không tồn tại. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Nhạc nền phát khi vào game, liên tục khi chơi, dừng đúng khi thoát. Không gây lag. \\ \hline
+\textbf{Trường Hợp Biên}    & Mở/đóng popup nhanh liên tiếp, âm lượng = 0, file nhạc bị xóa giữa phiên. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Nhạc đúng timing, không ngắt. \textbf{FAIL:} Không phát, ngắt quãng, ảnh hưởng điều khiển. \\ \hline
+}
+
+\subsubsection{Nhóm Test v2 -- Setting và Tùy Chỉnh}
+
+\tcbox{CON\_TC\_005 \quad Popup Setting -- Mở, Đóng và Bảo Toàn State}{
+\textbf{Mã Test Case}       & CON\_TC\_005 \\ \hline
+\textbf{Tiêu Đề}            & Popup Setting – Mở, Đóng và Bảo Toàn State \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v2 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & v1 tests đã pass. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Nhấn nút Settings trên giao diện chính. \newline
+  2. Popup Setting mở với các tùy chọn: âm lượng, màu khối, điều khiển, chế độ hiển thị. \newline
+  3. Thay đổi một tùy chọn nhưng KHÔNG bấm Save/Apply. \newline
+  4. Nhấn Close, xác nhận popup đóng và thay đổi chưa áp dụng. \newline
+  5. Mở lại Setting, kiểm tra state ban đầu được giữ. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Popup Setting mở đúng, nội dung rõ ràng. Thay đổi chưa lưu không áp dụng khi Close. \\ \hline
+\textbf{Trường Hợp Biên}    & Nhấn Setting khi đã mở, màn hình nhỏ, Close nhanh liên tiếp, mục cấu hình thiếu/không hợp lệ. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Mở đúng, Close đúng chính sách lưu. \textbf{FAIL:} Không đóng, lưu sai state. \\ \hline
+}
+
+\tcbox{CON\_TC\_006 \quad Điều Chỉnh Âm Lượng}{
+\textbf{Mã Test Case}       & CON\_TC\_006 \\ \hline
+\textbf{Tiêu Đề}            & Điều Chỉnh Âm Lượng \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v2 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & CON\_TC\_005 đã pass. Popup Setting đang mở. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Tìm điều khiển âm lượng (slider/phím tăng-giảm). \newline
+  2. Tăng âm lượng từ min đến max, xác nhận âm thanh tăng theo. \newline
+  3. Giảm về 0, xác nhận âm thanh tắt hoàn toàn. \newline
+  4. Đóng và mở lại Setting, kiểm tra giá trị âm lượng được giữ. \newline
+  5. Thay đổi âm lượng liên tục nhanh. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Âm lượng điều chỉnh chính xác, phản hồi tức thì. Giá trị được lưu đúng nếu policy yêu cầu. \\ \hline
+\textbf{Trường Hợp Biên}    & Đặt âm lượng = 0, kéo max liên tục, đóng popup mà không save. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Điều chỉnh OK, phản hồi tức thì. \textbf{FAIL:} Không thay đổi âm thanh, giá trị bị khóa. \\ \hline
+}
+
+\tcbox{CON\_TC\_007 \quad Tùy Chỉnh Màu Sắc Khối}{
+\textbf{Mã Test Case}       & CON\_TC\_007 \\ \hline
+\textbf{Tiêu Đề}            & Tùy Chỉnh Màu Sắc Khối \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v2 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & CON\_TC\_005 đã pass. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Mở Setting, tìm tùy chọn màu sắc khối. \newline
+  2. Chọn màu mới cho một loại khối, Apply/Save. \newline
+  3. Vào màn hình chơi, xác nhận khối hiển thị đúng màu đã chọn. \newline
+  4. Thay đổi màu lần nữa và kiểm tra màu mới áp dụng đúng (không giữ màu cũ). \newline
+  5. Chọn màu tương phản thấp với nền. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Màu khối được tùy chỉnh đúng, áp dụng ngay trong game, không làm hỏng layout. \\ \hline
+\textbf{Trường Hợp Biên}    & Màu không hợp lệ, màu tương phản quá thấp với nền, đổi nhiều lần trong một phiên. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Màu đúng, áp dụng ngay. \textbf{FAIL:} Không đổi màu, đổi nhầm khối, hỏng giao diện. \\ \hline
+}
+
+\tcbox{CON\_TC\_008 \quad Nút Start và Tích Hợp với Các Tính Năng Khác}{
+\textbf{Mã Test Case}       & CON\_TC\_008 \\ \hline
+\textbf{Tiêu Đề}            & Nút Start và Tích Hợp với Các Tính Năng Khác \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v2 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & Toàn bộ v1, v2 tests trước đã pass. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Nhấn nút Start từ menu chính, xác nhận vào màn hình game. \newline
+  2. Trong game, mở popup Guide/Board, xác nhận không treo. \newline
+  3. Đóng popup, xác nhận game tiếp tục hoặc pause đúng theo thiết kế. \newline
+  4. Kiểm tra nhạc nền: bật khi start, xử lý đúng khi mở/đóng popup. \newline
+  5. Nhấn Start liên tiếp nhiều lần. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Start vào game đúng. Popup không gây xung đột state. Nhạc nền xử lý đúng. \\ \hline
+\textbf{Trường Hợp Biên}    & Nhấn Start nhiều lần liên tiếp, mở popup trước Start, thay đổi Setting chưa lưu rồi Start. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Start OK, tích hợp popup+nhạc đúng. \textbf{FAIL:} Không vào game, mất dữ liệu, crash. \\ \hline
+}
+
+\subsubsection{Nhóm Test v3 -- Tích Hợp API}
+
+\tcbox{CON\_TC\_009 \quad Gọi API Mongo Atlas cho Leaderboard}{
+\textbf{Mã Test Case}       & CON\_TC\_009 \\ \hline
+\textbf{Tiêu Đề}            & Gọi API Mongo Atlas cho Leaderboard \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v3 \\ \hline
+\textbf{Loại Test}          & Manual + API Test \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & Kết nối Mongo Atlas đã cấu hình. API endpoint khả dụng. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Vào popup Board, quan sát ứng dụng gọi API thay vì đọc \texttt{board.json}. \newline
+  2. Xác nhận dữ liệu từ API hiển thị đúng: name/score/time chính xác. \newline
+  3. So sánh dữ liệu API với expected data mẫu. \newline
+  4. Test khi API lỗi mạng – kiểm tra thông báo lỗi rõ ràng. \newline
+  5. Test khi API trả về dữ liệu trống hoặc thiếu trường. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & API gọi đúng, dữ liệu hiển thị chính xác. Lỗi được xử lý an toàn, không crash. \\ \hline
+\textbf{Trường Hợp Biên}    & API chậm/timeout, token Mongo Atlas sai, trường dữ liệu không đúng định dạng. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} API OK, lỗi xử lý an toàn. \textbf{FAIL:} Crash, vẫn dùng board.json, không xử lý lỗi. \\ \hline
+}
+
+\tcbox{CON\_TC\_010 \quad Sort Leaderboard Theo Score}{
+\textbf{Mã Test Case}       & CON\_TC\_010 \\ \hline
+\textbf{Tiêu Đề}            & Sort Leaderboard Theo Score \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v3 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & CON\_TC\_009 đã pass. Popup Board đang mở với dữ liệu từ API. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Tìm và nhấn nút sort theo Score giảm dần. \newline
+  2. Kiểm tra danh sách từ điểm cao đến thấp. \newline
+  3. Chuyển sang sort Score tăng dần. \newline
+  4. Test với nhiều bản ghi cùng điểm. \newline
+  5. Đóng popup và mở lại, kiểm tra state sort. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Sort theo score chính xác cả chiều tăng và giảm. Dữ liệu cùng score giữ thứ tự ổn định. \\ \hline
+\textbf{Trường Hợp Biên}    & Dữ liệu rỗng, điểm số bằng nhau, sort liên tiếp nhiều lần. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Sort đúng thứ tự. \textbf{FAIL:} Thứ tự sai, popup lỗi khi sort. \\ \hline
+}
+
+\tcbox{CON\_TC\_011 \quad Sort Leaderboard Theo Time}{
+\textbf{Mã Test Case}       & CON\_TC\_011 \\ \hline
+\textbf{Tiêu Đề}            & Sort Leaderboard Theo Time \\ \hline
+\textbf{Module / Phiên Bản} & gameConsole / v3 \\ \hline
+\textbf{Loại Test}          & Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & CON\_TC\_009 đã pass. Popup Board đang mở. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Tìm và nhấn nút sort theo Time. \newline
+  2. Sort tăng dần: danh sách từ thời gian nhỏ nhất đến lớn nhất. \newline
+  3. Sort giảm dần: ngược lại. \newline
+  4. Test với nhiều bản ghi cùng timestamp. \newline
+  5. Đóng/mở popup, kiểm tra state sort duy trì. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Sort theo time chính xác cả chiều, dữ liệu cùng time ổn định. \\ \hline
+\textbf{Trường Hợp Biên}    & Dữ liệu rỗng, nhiều bản ghi cùng thời gian, sort liên tiếp. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Sort đúng. \textbf{FAIL:} Thứ tự sai, popup lỗi. \\ \hline
+}
+
+% ────────────────────────────────────────────────────────────────────
+% 4. TEST CASE – gameCore
+% ────────────────────────────────────────────────────────────────────
+\subsection{Danh Sách Test Case -- Module gameCore}
+
+\introtext{Module gameCore chứa toàn bộ logic gameplay. Đây là module có mức ưu tiên kiểm thử cao nhất. Các test được phân theo nhóm chức năng.}
+
+\subsubsection{Nhóm Test -- Khởi Tạo và Hiển Thị}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|X|X|}
+\hline
+\rowcolor{gray!35}
+\textbf{Mã TC} & \textbf{Tiêu Đề} & \textbf{Kịch Bản Tóm Tắt} & \textbf{Pass Condition} \\ \hline
+CORE\_TC\_001 & Layout và Build gameCore     & Build bằng g++/CMake, kiểm tra cửa sổ 9:16 trên nhiều độ phân giải & Build thành công, cửa sổ đúng tỷ lệ \\ \hline
+CORE\_TC\_002 & Tạo 6 Loại Khối Cơ Bản       & Khởi tạo từng khối L, I, T, Z-trái, Z-phải, O; quan sát hình dạng và màu & Mỗi khối đủ ô, đúng hình, màu đồng nhất \\ \hline
+CORE\_TC\_003 & Màu Ngẫu Nhiên Hợp Lệ        & Tạo nhiều khối liên tiếp, xác nhận màu thuộc \{Blue, Red, Green, Yellow, Orange, Purple\} & Màu thuộc danh sách, không cố định một giá trị \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Nhóm Test -- Vật Lý và Di Chuyển Khối}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|X|X|}
+\hline
+\rowcolor{gray!35}
+\textbf{Mã TC} & \textbf{Tiêu Đề} & \textbf{Kịch Bản Tóm Tắt} & \textbf{Pass Condition} \\ \hline
+CORE\_TC\_004 & Rơi Tự Do                           & Thả khối từ vị trí top, quan sát chuyển động và tốc độ rơi đều & Khối rơi đều, không dừng sai chỗ \\ \hline
+CORE\_TC\_005 & Di Chuyển Trái/Phải và Xoay         & Dùng A/D hoặc mũi tên dịch chuyển; W/mũi tên lên để xoay & Khối thay đổi vị trí và hướng đúng \\ \hline
+CORE\_TC\_006 & Va Chạm và Dừng Đúng Vị Trí        & Để khối rơi đến đáy, quan sát trạng thái dừng; để khối chạm khối đã đặt & Khối dừng đúng, không tiếp tục rơi, không overlap \\ \hline
+CORE\_TC\_007 & Xoay Chặn Sát Tường                 & Đặt khối sát tường, xoay và quan sát wall kick hoặc chặn xoay & Khối không vượt ra khỏi bảng sau xoay \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Nhóm Test -- Xóa Dòng và Tính Điểm}
+
+\tcbox{CORE\_TC\_008 \quad Xóa Dòng và Hiệu Ứng (removeLine)}{
+\textbf{Mã Test Case}       & CORE\_TC\_008 \\ \hline
+\textbf{Tiêu Đề}            & Xóa Dòng và Hiệu Ứng (\texttt{removeLine}) \\ \hline
+\textbf{Module / Phiên Bản} & gameCore / v1+ \\ \hline
+\textbf{Loại Test}          & Unit + Manual \\ \hline
+\textbf{Điều Kiện Tiên Quyết} & Board đã khởi tạo (\texttt{initBoard}). Một hàng nội bộ được điền đầy. \\ \hline
+\textbf{Các Bước Thực Hiện} &
+  1. Khởi tạo board kích thước H=20, W=15 bằng \texttt{initBoard()}. \newline
+  2. Điền đầy hàng i=17 (mọi cột j=1 đến j=W-2 chứa ký tự khối). \newline
+  3. Gọi \texttt{removeLine()}. \newline
+  4. Kiểm tra hàng i=17 trở thành khoảng trắng (ngoại trừ biên). \newline
+  5. Kiểm tra nội dung hàng i=16 dịch xuống i=17. \newline
+  6. Kiểm tra ký tự biên \texttt{`|'} không bị ghi đè. \newline
+  7. Test với 2–3 hàng đầy liên tiếp. \\ \hline
+\textbf{Kết Quả Mong Đợi}   & Hàng đầy bị xóa hoàn toàn. Các hàng trên trượt xuống đúng 1 vị trí. Biên tường \texttt{`|'} giữ nguyên. Hàng trên cùng trở thành khoảng trắng. \\ \hline
+\textbf{Trường Hợp Biên}    & Hàng đầy tại i=1 (gần biên trên), không có hàng đầy nào (board không đổi), 3 hàng đầy liên tiếp. \\ \hline
+\textbf{Tiêu Chí Pass/Fail} & \textbf{PASS:} Tất cả điều kiện trên đúng. \textbf{FAIL:} Biên bị xóa, hàng dịch sai, hàng đầy còn lại. \\ \hline
+}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|X|X|}
+\hline
+\rowcolor{gray!35}
+\textbf{Mã TC} & \textbf{Tiêu Đề} & \textbf{Kịch Bản Tóm Tắt} & \textbf{Pass Condition} \\ \hline
+CORE\_TC\_009 & Tính Điểm Khi Xóa Dòng    & Xóa 1, 2, 3, 4 dòng; đối chiếu điểm với công thức chuẩn Tetris & Điểm thay đổi đúng theo số dòng (Tetris=800$\times$level) \\ \hline
+CORE\_TC\_010 & Tốc Độ Tăng Theo Điểm     & Xóa liên tiếp nhiều dòng, quan sát tốc độ khối sau mỗi lần & Khối rơi nhanh hơn khi điểm/level tăng, không vượt max \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Nhóm Test -- Tính Năng Game}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|X|X|}
+\hline
+\rowcolor{gray!35}
+\textbf{Mã TC} & \textbf{Tiêu Đề} & \textbf{Kịch Bản Tóm Tắt} & \textbf{Pass Condition} \\ \hline
+CORE\_TC\_011 & Nhạc Nền Liên Tục          & Bật game, để chạy 5+ phút, quan sát nhạc nền & Nhạc không bị ngắt giữa chừng \\ \hline
+CORE\_TC\_012 & Dự Báo 3 Khối Tiếp Theo    & Chơi và quan sát khu vực preview khi khối rơi & Luôn hiển thị đúng 3 khối tiếp theo theo thứ tự \\ \hline
+CORE\_TC\_013 & Pause và Resume            & Nhấn P để pause, quan sát dừng chuyển động + nhạc; nhấn lại để tiếp tục & Game dừng/tiếp tục chính xác, state không bị mất \\ \hline
+CORE\_TC\_014 & Quit Game                  & Nhấn nút Quit trong khi chơi, xác nhận thoát & Ứng dụng đóng đúng, không crash, không process còn chạy ngầm \\ \hline
+CORE\_TC\_015 & Nhập Tên Game Over         & Chơi đến khi hết mạng, nhập tên và xác nhận & Tên được chấp nhận, hiển thị trên kết quả \\ \hline
+CORE\_TC\_016 & Gửi Điểm lên Mongo Atlas   & Kết thúc game, nhập tên, gửi data lên API & Dữ liệu gửi thành công, API phản hồi 200 \\ \hline
+\end{tabularx}
+\end{table}
+
+% ────────────────────────────────────────────────────────────────────
+% 5. MÔ TẢ KỸ THUẬT – removeLine()
+% ────────────────────────────────────────────────────────────────────
+\subsection{Mô Tả Kỹ Thuật Chi Tiết -- Hàm \texttt{removeLine()}}
+
+\introtext{Phần này mô tả kỹ thuật kiểm thử chi tiết cho hàm \texttt{removeLine()} – hàm quan trọng nhất trong gameCore. Sai sót ở đây ảnh hưởng trực tiếp đến core gameplay.}
+
+\subsubsection{Cấu Trúc Board và Điều Kiện Kiểm Thử}
+\begin{itemize}[leftmargin=3em]
+  \item Board được lưu trong mảng 2 chiều \texttt{board[H][W]}, kích thước chuẩn H=20, W=15
+  \item Hàng đầu (i=0), hàng cuối (i=H-1), cột trái (j=0) và phải (j=W-1): biên tường cố định chứa ký tự \texttt{`|'}
+  \item Các ô nội bộ (j=1 đến j=W-2): khoảng trắng (trống) hoặc ký tự khối
+  \item Hàng đầy: tất cả ô nội bộ khác khoảng trắng
 \end{itemize}
 
-\subsection{Hướng dẫn khởi tạo ứng dụng}
-Dưới đây là các lệnh build độc lập qua terminal để tạo file thực thi test cho từng module tương ứng:
-\begin{itemize}
-    \item \textbf{Build module Cốt truyện:} \\
-    \texttt{g++ src/gameStory/*.cpp tests/test\_story.cpp -o bin/story\_tester}
-    \item \textbf{Build module Cấu hình (Console/Menu):} \\
-    \texttt{cmake -B build -S . \&\& cmake --build build --target ConsoleTest}
-    \item \textbf{Build module Game Core:} \\
-    \texttt{g++ src/gameCore/app.cpp tests/test\_core.cpp -I src/gameCore/app/include -o core\_test}
+\subsubsection{Kịch Bản Kiểm Thử Chi Tiết \texttt{removeLine()}}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|X|X|}
+\hline
+\rowcolor{gray!35}
+\textbf{\#} & \textbf{Kịch Bản} & \textbf{Input / Setup} & \textbf{Kết Quả Mong Đợi} \\ \hline
+TC-A & Xóa 1 hàng đơn             & Hàng i=17 đầy; i=16 có vài ký tự & i=17 thành trắng; nội dung i=16 xuống i=17; i=16 thành trắng \\ \hline
+TC-B & Xóa 2 hàng liên tiếp       & Hàng i=16 và i=17 đều đầy & Cả 2 hàng xóa; các hàng trên dịch xuống đúng thứ tự \\ \hline
+TC-C & Hàng đầy gần biên trên     & Hàng i=1 đầy & i=1 thành trắng; thuật toán xử lý đúng giáp biên \\ \hline
+TC-D & Không có hàng đầy          & Board chỉ có ô trắng và biên & Board không thay đổi \\ \hline
+TC-E & Biên tường sau xóa         & Bất kỳ kịch bản xóa nào & Ký tự \texttt{`|'} ở cột 0 và W-1 không bị thay đổi \\ \hline
+TC-F & Ô trống dùng khoảng trắng  & Sau khi xóa hàng & Ô trống dùng \texttt{' '} (space), không phải null hoặc ký tự rác \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Checklist Kiểm Thử \texttt{removeLine()}}
+\begin{itemize}[leftmargin=3em]
+  \item Hàng đầy biến mất hoàn toàn, không còn ký tự khối
+  \item Các hàng phía trên dịch xuống đúng 1 vị trí
+  \item Hàng trên cùng (sau dịch chuyển) trở thành khoảng trắng
+  \item Ký tự biên \texttt{`|'} ở cột 0 và W-1 không bị ghi đè
+  \item Không có ký tự lạ (ASCII không in được, null) trong ô trống
+  \item Hai hàng đầy liên tiếp: thuật toán tăng i sau xóa để kiểm tra lại hàng mới trượt xuống
+  \item Kết quả test nhất quán khi chạy nhiều lần với cùng input
 \end{itemize}
 
-\section{Danh sách kịch bản kiểm thử}
-
-\subsection{Kiểm thử phần tính năng cốt truyện}
-
-Phần kiểm thử tính năng cốt truyện tập trung vào việc xác nhận các yếu tố trải nghiệm người dùng ban đầu, bao gồm khởi tạo ứng dụng, hiển thị logo, loading, dialogue, và các tính năng nâng cao như download động. Các test được chia theo phiên bản (v1, v2, v3) để phản ánh tiến độ phát triển. Mỗi test bao gồm kịch bản chi tiết, tiêu chí pass/fail, và các trường hợp biên để đảm bảo tính toàn diện.
-
-\begin{itemize}
-    \item \textbf{Test v1 gameStory/app.cpp: Tạo layout.h và build file thực thi .exe, đảm bảo màn hình 9:16 trước khi viết code tiếp.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc thiết lập layout cơ bản và build ứng dụng, đảm bảo tỷ lệ màn hình 9:16 để phù hợp với thiết kế game. Layout.h chứa các định nghĩa về kích thước cửa sổ, vị trí các thành phần UI. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Tạo file layout.h với các macro định nghĩa WIDTH = 900, HEIGHT = 1600 hoặc tương tự để đạt tỷ lệ 9:16.
-        \item Build ứng dụng bằng lệnh g++ hoặc CMake, tạo file .exe.
-        \item Khởi chạy .exe, kiểm tra cửa sổ hiển thị đúng tỷ lệ, không bị kéo dãn.
-        \item Thay đổi độ phân giải màn hình và chạy lại để xác nhận responsive.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu cửa sổ hiển thị đúng 9:16, build thành công không lỗi. Fail nếu tỷ lệ sai hoặc crash khi khởi chạy. \\
-    \textbf{Trường hợp biên:} Test trên màn hình nhỏ (480p), lớn (4K), và tỷ lệ khác (16:9) để đảm bảo fallback.
-
-    \item \textbf{Test v1 gameStory/app.cpp: Làm hiển thị logo UIT có hiệu ứng tự chọn hiển thị và âm thanh.} \\
-    \textbf{Mô tả:} Test hiển thị logo UIT với hiệu ứng (fade-in, scale, etc.) và âm thanh nền hoặc hiệu ứng. Logo là yếu tố nhận diện thương hiệu, cần mượt mà để tạo ấn tượng đầu tiên. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Khởi chạy ứng dụng, quan sát logo UIT xuất hiện từ vị trí trung tâm.
-        \item Kiểm tra hiệu ứng: fade-in trong 2-3 giây, kèm âm thanh chào mừng.
-        \item Thay đổi hiệu ứng (nếu có tùy chọn) và test lại.
-        \item Kiểm tra trên các thiết bị khác nhau để đảm bảo không lag.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu logo hiển thị rõ, hiệu ứng mượt, âm thanh phát đúng. Fail nếu bị lag, âm thanh không phát, hoặc hiển thị sai. \\
-    \textbf{Trường hợp biên:} Test khi âm thanh bị tắt, hoặc file âm thanh thiếu.
-
-    \item \textbf{Test v1 gameStory/app.cpp: Tạo loading bar theo thời gian hiệu ứng của logo.} \\
-    \textbf{Mô tả:} Loading bar đồng bộ với hiệu ứng logo, tăng dần trong thời gian hiển thị logo để người dùng biết tiến trình. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Khởi chạy, quan sát loading bar xuất hiện dưới logo.
-        \item Kiểm tra bar tăng từ 0\% đến 100\% trong thời gian hiệu ứng logo (ví dụ: 5 giây).
-        \item Đảm bảo bar đầy khi logo biến mất.
-        \item Test với hiệu ứng logo dài hơn để xác nhận đồng bộ.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu bar đầy đúng thời điểm, không lag. Fail nếu không đồng bộ hoặc bar không tăng. \\
-    \textbf{Trường hợp biên:} Test khi hiệu ứng logo bị gián đoạn.
-
-    \item \textbf{Test v2 gameStory/app.cpp: Tạo dialogue story đơn giản để giới thiệu game kèm nhạc nền phù hợp.} \\
-    \textbf{Mô tả:} Dialogue giới thiệu game với văn bản và nhạc nền nhẹ nhàng, tạo không khí kể chuyện. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Khởi chạy, vào phần dialogue.
-        \item Quan sát hộp thoại với văn bản giới thiệu.
-        \item Kiểm tra nhạc nền phát mượt, không quá ồn.
-        \item Nhấn phím để tiếp tục dialogue.
-        \item Test với nhạc nền tắt.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu dialogue hiển thị đúng, nhạc nền phù hợp. Fail nếu văn bản sai, nhạc gián đoạn. \\
-    \textbf{Trường hợp biên:} Test khi file nhạc thiếu.
-
-    \item \textbf{Test v2 gameStory/app.cpp: Nút skip để bỏ qua phần cốt truyện.} \\
-    \textbf{Mô tả:} Nút skip cho phép người dùng bỏ qua story để vào game nhanh hơn. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Trong dialogue, nhấn ESC hoặc nút skip.
-        \item Xác nhận story dừng, chuyển sang game chính.
-        \item Kiểm tra nhạc nền dừng nếu cần.
-        \item Test khi nhấn skip giữa chừng.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu skip thành công, không crash. Fail nếu không chuyển hoặc crash. \\
-    \textbf{Trường hợp biên:} Test khi story đã kết thúc.
-
-    \item \textbf{Test v3 gameStory/app.cpp: Download âm thanh và hình ảnh qua API.} \\
-    \textbf{Mô tả:} Download động để cập nhật nội dung mà không build lại .exe. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Khởi chạy, quan sát download từ API.
-        \item Kiểm tra file lưu vào cache.
-        \item Sử dụng trong story.
-        \item Test khi mạng chậm hoặc không có mạng.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu download thành công, sử dụng được. Fail nếu lỗi mạng không xử lý. \\
-    \textbf{Trường hợp biên:} Test với API không khả dụng.
-
-    \item \textbf{Test v3 gameStory/app.cpp: Thay tốc độ loading bar bằng tốc độ download và repeat hiệu ứng logo.} \\
-    \textbf{Mô tả:} Loading bar theo download, logo repeat cho đến khi xong. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Khởi chạy, quan sát bar tăng theo download.
-        \item Logo repeat animation.
-        \item Bar đầy khi download xong, chuyển tiếp.
-        \item Test với download nhanh/chậm.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu đồng bộ, repeat mượt. Fail nếu không. \\
-    \textbf{Trường hợp biên:} Test khi download fail.
-
-    \item \textbf{Test tiếp diễn thoại:} Mở file thực thi và nhấn phím 'Space' để tiếp tục dialogue. Expected: Văn bản hiện tiếp, không lag. \\
-    \textbf{Mô tả mở rộng:} Test tương tác cơ bản trong dialogue, đảm bảo responsive.
-
-    \item \textbf{Test kết thúc truyện:} Chạy đến cuối, log "End of Story". Expected: Chuyển sang game chính. \\
-    \textbf{Mô tả mở rộng:} Test hoàn tất story, chuyển tiếp mượt mà.
+\subsubsection{Hướng Dẫn Xây Dựng Test Tự Động cho \texttt{removeLine()}}
+\begin{itemize}[leftmargin=3em]
+  \item Tạo hàm helper riêng để khởi tạo ma trận mẫu và chuyển thành chuỗi văn bản để so sánh
+  \item So sánh toàn bộ bảng sau gọi \texttt{removeLine()} với expected board đã chuẩn bị sẵn
+  \item Phân tách thành các test case nhỏ: \textit{đơn} (single clear), \textit{dồn} (multi clear), \textit{giáp đáy}, \textit{giáp trên}
+  \item Cân nhắc thêm hàm \texttt{isLineFull(int row)} để unit test riêng logic nhận biết hàng đầy
 \end{itemize}
 
-Phần này đảm bảo trải nghiệm cốt truyện toàn diện, với tổng cộng hơn 1000 chữ mô tả chi tiết để hướng dẫn kiểm thử kỹ lưỡng.
+% ────────────────────────────────────────────────────────────────────
+% 6. KIỂM THỬ XOAY KHỐI
+% ────────────────────────────────────────────────────────────────────
+\subsection{Mô Tả Kỹ Thuật -- Kiểm Thử Xoay Khối}
 
-\subsection{Kiểm thử phần tính năng cấu hình}
-
-Phần kiểm thử tính năng cấu hình tập trung vào độ ổn định của giao diện cấu hình, tính nhất quán của tuỳ chọn, và việc duy trì trải nghiệm người dùng khi tương tác với các popup, menu và cài đặt. Module `gameConsole` là hạt nhân cho các chức năng cấu hình, nên test cần bao gồm cả kịch bản thủ công và kịch bản tự động, kèm theo kiểm tra tương tác giữa các phần như guide, board, setting, nhạc nền và khởi động game.
-
-Mục tiêu của phần kiểm thử này bao gồm:
-\begin{itemize}
-    \item Xác nhận giao diện cấu hình được cài đặt đúng và hiển thị nhất quán trên nhiều môi trường console.
-    \item Đảm bảo các nút chức năng quan trọng (guide, board, setting, start) hoạt động đúng và không gây xung đột trạng thái khi mở/đóng.
-    \item Kiểm tra tính linh hoạt của các tuỳ chọn chỉnh sửa, đặc biệt là âm lượng, màu khối, và dữ liệu leaderboard, để tránh lỗi khi người dùng thay đổi nhiều thiết lập.
-    \item Đánh giá khả năng xử lý lỗi với dữ liệu bên ngoài, bao gồm gọi API trên Mongo Atlas và sắp xếp dữ liệu trong popup board.
+\subsubsection{Các Yếu Tố Kiểm Thử Chính}
+\begin{itemize}[leftmargin=3em]
+  \item Xoay tại vị trí trung tâm: hình dạng đổi đúng quy tắc SRS
+  \item Xoay sát tường: khối không bị cắt, không vượt biên (wall kick nếu có)
+  \item Xoay gần khối cố định: không chồng lên ô đã đặt
+  \item 4 lần xoay liên tiếp trả về hình dạng ban đầu
 \end{itemize}
 
-Vì cấu hình thường là điểm tiếp xúc đầu tiên khi người chơi vào game, kiểm thử cần đảm bảo phần này không chỉ đúng chức năng mà còn dễ sử dụng, có phản hồi rõ ràng và không ảnh hưởng xấu đến luồng chơi chính.
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|X|X|}
+\hline
+\rowcolor{gray!35}
+\textbf{\#} & \textbf{Kịch Bản Xoay} & \textbf{Setup} & \textbf{Kết Quả Mong Đợi} \\ \hline
+R-01 & Xoay ở vị trí trung tâm    & Block ở giữa board, không vật cản & Hình dạng đúng, số ô không đổi, không lỗi hình học \\ \hline
+R-02 & Xoay sát tường trái        & Block sát j=1 & Không vượt biên; wall kick điều chỉnh vị trí (nếu có) \\ \hline
+R-03 & Xoay sát tường phải        & Block sát j=W-2 & Tương tự R-02 phía phải \\ \hline
+R-04 & Xoay sát đáy               & Block gần hàng đáy & Không overlap đáy, xoay hợp lệ hoặc bị block \\ \hline
+R-05 & Xoay gần khối cố định      & Có ô đã đặt bên cạnh & Không chồng lên ô cố định \\ \hline
+R-06 & 4 lần xoay liên tiếp       & Block ở vị trí bất kỳ hợp lệ & Block trở về hình dạng ban đầu \\ \hline
+\end{tabularx}
+\end{table}
 
-\paragraph{Môi trường và điều kiện kiểm thử}
-Trước khi chạy mỗi test, cần chuẩn bị môi trường sau:
-\begin{itemize}
-    \item Môi trường build C++ với CMake và GCC/MinGW hỗ trợ chuẩn \textbf{C++17} hoặc cao hơn.
-    \item Kiểm tra các thư viện hiển thị console, nếu có, hoặc các hàm xử lý đầu vào / đầu ra trong Windows console.
-    \item Chuẩn bị dữ liệu test mặc định cho bảng leaderboard / board, đồng thời thiết lập kết nối API giả lập nếu test v3.
-    \item Đảm bảo phần cài đặt nhạc nền có thể bật/tắt và trạng thái được lưu nếu người dùng thay đổi trong suốt phiên.
+% ────────────────────────────────────────────────────────────────────
+% 7. KIỂM THỬ GIAO DIỆN – VIỀN VÀ BLOCK VUÔNG
+% ────────────────────────────────────────────────────────────────────
+\subsection{Kiểm Thử Giao Diện -- Viền và Block Vuông}
+
+\introtext{Giao diện lưới vuông đảm bảo game cảm nhận đúng tỷ lệ Tetris. Khung và block bị méo làm giảm độ chính xác chơi và trải nghiệm thị giác.}
+
+\subsubsection{Kịch Bản Kiểm Thử}
+\begin{itemize}[leftmargin=3em]
+  \item Chạy ứng dụng và quan sát khung hiển thị cùng các block trong khu vực chơi
+  \item Xác thực từng ô trong lưới có kích thước bằng nhau theo cả chiều ngang và dọc
+  \item Kiểm tra viền màn hình tạo thành hình chữ nhật cân đối với góc 90 độ
+  \item Kiểm tra mỗi block hiển thị trong ô vuông đồng nhất, không kéo dài một chiều
+  \item Thay đổi kích thước cửa sổ, xác nhận tỷ lệ 1:1 vẫn duy trì
+  \item Ghi nhận bất kỳ ô/block xuất hiện dạng HCN (hình chữ nhật) – note vị trí cụ thể
 \end{itemize}
 
-\paragraph{Phương pháp kiểm thử}
-Các kịch bản kiểm thử phải áp dụng cả hai phương pháp sau:
-\begin{enumerate}
-    \item Kiểm thử thủ công: Quan sát hoạt động của giao diện console, click/nhấn các phím tắt, và xác nhận popup mở/thông báo hiển thị đúng.
-    \item Kiểm thử chức năng: Tạo các trường hợp dữ liệu giả lập, gọi trực tiếp các hàm quản lý popup và lưu trữ cài đặt, rồi so sánh trạng thái kết quả với dữ liệu mong đợi.
-\end{enumerate}
-
-\paragraph{Tiêu chí chung}
-\begin{itemize}
-    \item Tính năng đúng chức năng: tất cả các nút và popup phải phản hồi đúng.
-    \item Tính ổn định: không crash, không lỗi bộ nhớ, không gây lock ứng dụng.
-    \item Tính nhất quán: các trạng thái giữ được khi mở/đóng popup, khi chuyển giữa các chế độ khác nhau.
-    \item Tính dễ sử dụng: chỉ dẫn rõ ràng, phản hồi tức thì khi người dùng thao tác.
-\end{itemize}
-
-\begin{itemize}
-    \item \textbf{Test v1 gameConsole/app.cpp: Tạo layout.h và build file thực thi .exe, đảm bảo màn hình 9:16 trước khi viết code tiếp.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc thiết lập layout cơ bản và build ứng dụng console. Ở giai đoạn đầu, layout phải xác định được tỷ lệ khung hình, vùng hiển thị và phân chia vùng chức năng sao cho giao diện console không bị biến dạng. Layout.h được dùng làm nguồn cấu hình, nên cần đặc biệt kiểm tra tất cả tham số kích thước trước khi mở rộng UI. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Tạo hoặc cập nhật file layout.h với các macro định nghĩa WIDTH = 900, HEIGHT = 1600, hoặc theo tỷ lệ 9:16 tương tự.
-        \item Build ứng dụng bằng lệnh g++ hoặc CMake, tạo file thực thi `.exe`.
-        \item Khởi chạy `.exe`, kiểm tra giao diện console hiển thị đúng tỷ lệ 9:16 trên màn hình thực tế và không bị dãn méo.
-        \item Thay đổi cấu hình chiều rộng/chiều cao trong `layout.h` và chạy lại để xác nhận hệ thống responsive tối thiểu.
-        \item Quan sát vị trí các thành phần UI, bao gồm tiêu đề, menu và thông báo hướng dẫn, để đảm bảo chúng vẫn nằm trong khung hiển thị.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu giao diện build thành công, hiển thị đúng tỷ lệ 9:16 và không gặp lỗi thời gian chạy. Fail nếu tỷ lệ sai, giao diện bị cắt mất, hoặc crash khi khởi chạy. \\
-    \textbf{Trường hợp biên:} Test trên màn hình nhỏ (480p), lớn (4K), và tỷ lệ khác (16:9), đồng thời kiểm tra khi thay đổi kích thước của cửa sổ console để xem có fallback hợp lý hay không.
-
-    \item \textbf{Test v1 gameConsole/app.cpp: Tạo nút guide và nút close popup guide.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc tạo nút guide để hiển thị hướng dẫn và nút close để đóng popup guide trong giao diện console. Guide là phần quan trọng để giúp người dùng mới hiểu flow chơi, vì vậy cần test cả nội dung, vị trí và tốc độ phản hồi của popup. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút guide (ví dụ: nút "Guide" hoặc biểu tượng hỏi chấm).
-        \item Nhấn nút guide, kiểm tra popup guide xuất hiện với nội dung hướng dẫn rõ ràng, chia thành các bước và có định nghĩa phím.
-        \item Quan sát nút close (ví dụ: nút "X" hoặc "Close") trong popup.
-        \item Nhấn nút close, xác nhận popup đóng và quay về giao diện chính mà không mất trạng thái hiện tại.
-        \item Mở lại guide nhiều lần và kiểm tra popup không bị tràn bộ nhớ, không bị hiển thị sai.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu nút guide hiển thị popup đúng, nội dung dễ đọc và nút close đóng popup thành công. Fail nếu popup không xuất hiện, nút close không hoạt động, nội dung bị cắt hoặc hiển thị sai.
-    \\
-    \textbf{Trường hợp biên:} Test khi popup đã mở, nhấn nút guide lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp; test khi không có nội dung hướng dẫn hoặc file resource bị thiếu.
-
-    \item \textbf{Test v1 gameConsole/app.cpp: Tạo nút board và nút close popup board.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc tạo nút board để hiển thị bảng điểm hoặc leaderboard và nút close để đóng popup board trong giao diện console. Popup board phải hiển thị dữ liệu đúng, có thể phân biệt cột score/time và hỗ trợ cuộn nếu danh sách dài. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút board (ví dụ: nút "Board" hoặc biểu tượng bảng xếp hạng).
-        \item Nhấn nút board, kiểm tra popup board xuất hiện với danh sách điểm số hoặc leaderboard sắp xếp theo mặc định.
-        \item Quan sát nút close (ví dụ: nút "X" hoặc "Close") trong popup.
-        \item Nhấn nút close, xác nhận popup đóng và quay về giao diện chính.
-        \item Thực hiện nhiều lần để đảm bảo không lag, dữ liệu không bị trống hoặc hiển thị sai khi mở lại.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu popup board hiển thị đúng dữ liệu, nút close đóng đúng cách và không crash. Fail nếu popup không xuất hiện, hiển thị sai, hoặc nếu có lỗi khi reload dữ liệu lần thứ hai.
-    \\
-    \textbf{Trường hợp biên:} Test với dữ liệu board rỗng; test khi danh sách quá dài và phải cuộn; test khi popup board đã mở rồi nhấn nút board thêm lần nữa; test khi dữ liệu board bị thiếu trường score/time.
-
-    \item \textbf{Test v2 gameConsole/app.cpp: Tạo nút setting và nút close popup setting.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc tạo nút setting để mở popup cấu hình và nút close để đóng popup setting trong giao diện console. Popup setting phải cho phép chỉnh sửa nhiều tuỳ chọn, có cấu trúc rõ ràng và không làm mất dữ liệu khi đóng mà chưa lưu. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút setting (ví dụ: nút "Settings" hoặc biểu tượng bánh răng).
-        \item Nhấn nút setting, kiểm tra popup setting xuất hiện với các tùy chọn cấu hình rõ ràng.
-        \item Kiểm tra các mục của popup như âm lượng, điều khiển, chế độ hiển thị và màu sắc khối.
-        \item Nhấn nút close trong popup setting, xác nhận popup đóng và trở về giao diện chính, các thay đổi chưa được xác nhận không bị áp dụng.
-        \item Mở lại popup setting để kiểm tra trạng thái ban đầu được giữ hay thay đổi đúng theo chính sách lưu trữ.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu popup setting mở đúng, hiển thị nội dung rõ ràng và đóng đúng khi nhấn close. Fail nếu không đóng được, bị lỗi hiển thị, hoặc nếu popup giữ dữ liệu sai sau khi đóng.
-    \\
-    \textbf{Trường hợp biên:} Test khi popup setting đã mở, nhấn nút setting lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp; test khi một số mục cấu hình bị thiếu hoặc không hợp lệ.
-
-    \item \textbf{Test v2 gameConsole/app.cpp: Điều chỉnh âm lượng.} \\
-    \textbf{Mô tả:} Test này kiểm tra chức năng điều chỉnh âm lượng trong màn hình setting của console app. Người dùng cần có công cụ thay đổi âm lượng dễ sử dụng, và giá trị âm lượng phải được cập nhật ngay lập tức khi chỉnh, đồng thời phản ánh trên trạng thái nhạc nền. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Mở popup setting và tìm điều khiển âm lượng (slider, phím tăng/giảm hoặc menu chọn).
-        \item Tăng âm lượng từ mức thấp nhất đến cao nhất, xác nhận âm thanh nền hoặc hiệu ứng tăng theo.
-        \item Giảm âm lượng xuống mức thấp nhất, xác nhận âm thanh giảm hoặc tắt khi về 0.
-        \item Quay lại menu chính, mở lại popup setting và kiểm tra giá trị âm lượng được giữ lại nếu thiết kế yêu cầu.
-        \item Thay đổi nhanh nhiều lần để đảm bảo không bị giật hoặc sai giá trị.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu âm lượng có thể điều chỉnh chính xác, phản hồi tức thì và không gây lỗi. Fail nếu điều khiển không hoạt động, âm thanh không thay đổi, giá trị không cập nhật hoặc bị khoá.
-    \\
-    \textbf{Trường hợp biên:} Test khi đặt âm lượng về 0; test khi kéo cao tối đa; test khi thay đổi liên tục trong khoảng ngắn; test nếu popup setting đóng mà không lưu.
-
-    \item \textbf{Test v2 gameConsole/app.cpp: Tuỳ chỉnh màu cho các khối xếp hình.} \\
-    \textbf{Mô tả:} Test này kiểm tra chức năng chọn màu sắc cho các khối xếp hình trong màn hình setting. Người dùng cần có tuỳ chọn màu rõ ràng và thay đổi màu phải được áp dụng đúng cho các khối khi vào màn hình chơi. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Mở popup setting và tìm tuỳ chọn màu sắc khối.
-        \item Chọn màu mới cho một hoặc nhiều loại khối, sau đó lưu hoặc áp dụng thay đổi.
-        \item Quay về màn hình game và kiểm tra các khối hiển thị với màu đã chọn.
-        \item Thay đổi màu lần nữa và xác nhận màu mới áp dụng đúng, không giữ màu cũ sai.
-        \item Kiểm tra khả năng chọn màu tương phản thấp với nền để đảm bảo vẫn dễ phân biệt.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu màu khối được tùy chỉnh đúng, áp dụng ngay khi chơi và không làm hỏng giao diện. Fail nếu màu không thay đổi, áp dụng sai vào loại khối khác, hoặc gây khó phân biệt.
-    \\
-    \textbf{Trường hợp biên:} Test khi chọn màu không hợp lệ; test khi chọn màu tương phản thấp với nền; test khi thay đổi nhiều lần liên tiếp trong cùng một phiên.
-
-    \item \textbf{Test v2 gameConsole/app.cpp: Tạo nút start và tích hợp với các bên khác.} \\
-    \textbf{Mô tả:} Test này kiểm tra nút start và sự tích hợp giữa start cùng các chức năng khác như guide, board, setting và nhạc nền. Nút start phải chuyển đổi ứng dụng từ trạng thái menu sang trạng thái chơi một cách mượt mà và giữ được trạng thái của các thiết lập đã mở. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút start (ví dụ: nút "Start" hoặc "Play").
-        \item Nhấn nút start để vào màn hình game và xác nhận game bắt đầu đúng.
-        \item Trong khi game đang chạy, mở các popup guide, board, hoặc setting; kiểm tra ứng dụng không bị treo và có thể trở lại màn hình chơi.
-        \item Đóng popup và kiểm tra game vẫn tiếp tục, hoặc nếu thiết kế yêu cầu tạm dừng thì trạng thái phải duy trì.
-        \item Kiểm tra tích hợp với nhạc nền: nhạc bật khi bắt đầu game, tắt hoặc giữ trạng thái khi mở/đóng popup.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu nút start khởi tạo màn hình chơi đúng, tích hợp tốt với các popup và nhạc nền, không gây xung đột trạng thái. Fail nếu start không vào game, làm mất dữ liệu hoặc gây lỗi khi tương tác với các chức năng khác.
-    \\
-    \textbf{Trường hợp biên:} Test khi nhấn start liên tiếp nhiều lần; test khi mở popup trước khi nhấn start; test khi chuyển nhanh giữa start và đóng popup; test khi có thay đổi cài đặt chưa lưu.
-
-    \item \textbf{Test v3 gameConsole/app.cpp: Gọi API lấy data từ Mongo Atlas thay vì dùng board.json.} \\
-    \textbf{Mô tả:} Test này kiểm tra chuyển đổi nguồn dữ liệu cho game console từ file cục bộ `board.json` sang API trực tiếp từ Mongo Atlas. Việc này giúp dữ liệu leaderboard được cập nhật động nhưng cũng đặt ra yêu cầu xử lý tốt các trường hợp lỗi mạng, dữ liệu trống hoặc sai định dạng. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Chạy ứng dụng console và vào popup board / leaderboard.
-        \item Kiểm tra việc gọi API Mongo Atlas thành công, nhận dữ liệu và hiển thị đúng.
-        \item So sánh dữ liệu API với dữ liệu mẫu mong đợi để đảm bảo các trường score/time/name được trình bày chính xác.
-        \item Test khi API lỗi mạng hoặc Mongo Atlas không khả dụng, đảm bảo ứng dụng hiển thị thông báo lỗi hợp lý và không crash.
-        \item Test khi API trả về dữ liệu trống hoặc thiếu trường, đảm bảo ứng dụng xử lý ổn định và không phá vỡ hiển thị.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu API được gọi đúng, dữ liệu hiển thị chính xác và lỗi được xử lý an toàn. Fail nếu dữ liệu không hiển thị, ứng dụng crash, hoặc vẫn cố dùng `board.json` cũ.
-    \\
-    \textbf{Trường hợp biên:} Test khi API chậm/phản hồi trễ; test khi token/kết nối Mongo Atlas sai; test khi dữ liệu trả về thiếu trường mong đợi hoặc trường không theo định dạng.
-
-    \item \textbf{Test v3 gameConsole/app.cpp: Tạo sort theo time trong popup board.} \\
-    \textbf{Mô tả:} Test này kiểm tra chức năng sắp xếp theo thời gian trong popup board. Khi dữ liệu được lấy động từ Mongo Atlas hoặc file cục bộ, người dùng cần thấy dữ liệu hiển thị đúng thứ tự theo timestamp/hoàn thành. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Mở popup board và xác nhận có nút/tùy chọn sort theo time.
-        \item Chọn sort theo time tăng dần và kiểm tra danh sách hiển thị từ nhỏ đến lớn.
-        \item Chọn sort theo time giảm dần và kiểm tra danh sách hiển thị từ lớn đến nhỏ.
-        \item Dùng dữ liệu có nhiều bản ghi cùng thời gian để kiểm tra thứ tự vẫn ổn định.
-        \item Đóng popup và mở lại để xác nhận trạng thái sort duy trì nếu thiết kế yêu cầu.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu sort theo time đúng, dữ liệu hiển thị đúng thứ tự và không bị sai lệch. Fail nếu thứ tự sai, không có tùy chọn sort hoặc popup bị lỗi khi sort.
-    \\
-    \textbf{Trường hợp biên:} Test khi dữ liệu board rỗng; test khi nhiều bản ghi cùng thời gian; test khi sort liên tục nhiều lần.
-
-    \item \textbf{Test v3 gameConsole/app.cpp: Tạo sort theo score trong popup board.} \\
-    \textbf{Mô tả:} Test này kiểm tra chức năng sắp xếp theo điểm số trong popup board. Người dùng cần có tùy chọn sort theo score để nhanh chóng tìm ra top điểm hoặc vị trí thấp nhất. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Mở popup board và xác nhận có nút/tùy chọn sort theo score.
-        \item Chọn sort theo score giảm dần, kiểm tra danh sách từ điểm cao nhất đến thấp nhất.
-        \item Chọn sort theo score tăng dần, kiểm tra danh sách từ điểm thấp nhất đến cao nhất.
-        \item Kiểm tra dữ liệu có nhiều bản ghi cùng điểm để xác nhận thứ tự giữ ổn định và hiển thị đúng.
-        \item Đóng popup và mở lại để kiểm tra trạng thái sort có được lưu nếu cần.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu sort theo score được thực hiện chính xác, danh sách hiển thị đúng thứ tự và không có mục bị hoán đổi sai. Fail nếu thứ tự score sai, không có tùy chọn sort hoặc popup bị lỗi khi sort.
-    \\
-    \textbf{Trường hợp biên:} Test khi dữ liệu board rỗng; test khi điểm số bằng nhau; test khi sort nhiều lần liên tiếp.
-
-    \item \textbf{Test v1 gameConsole/app.cpp: Chèn nhạc nền trong quá trình ở màn hình game console.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc bổ sung nhạc nền chạy xuyên suốt màn hình game console, bao gồm mở nhạc khi vào màn hình chơi và tắt khi thoát hoặc đóng popup. Nhạc nền cần được phát mượt và không ảnh hưởng tới thao tác điều khiển. \\
-    \textbf{Kịch bản kiểm thử:}
-    \begin{enumerate}
-        \item Khởi chạy ứng dụng console và vào màn hình game chính.
-        \item Quan sát nhạc nền bắt đầu phát khi màn hình game xuất hiện.
-        \item Kiểm tra nhạc nền phát liên tục trong khi chơi và không bị gián đoạn khi chuyển giữa các popup (guide/board).
-        \item Đóng popup hoặc quay trở về menu, xác nhận nhạc nền dừng hoặc chuyển trạng thái hợp lý.
-        \item Test trên nhiều cấu hình âm lượng khác nhau và khi tắt âm thanh.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu nhạc nền phát đúng khi vào màn hình game, không gây giật lag, và tắt đúng khi thoát. Fail nếu nhạc không phát, bị ngắt quãng hoặc ảnh hưởng tới điều khiển. \\
-    \textbf{Trường hợp biên:} Test khi mở/đóng popup nhanh liên tiếp; test khi âm lượng bằng 0; test khi file nhạc không tồn tại.
-
-    \item \textbf{Test Lưu Cài Đặt:} Mở UI $\rightarrow$ Chỉnh âm lượng $\rightarrow$ Tắt app $\rightarrow$ Mở lại $\rightarrow$ Expected: Thanh âm lượng giữ nguyên vị trí cũ.
-    \item \textbf{Test Cửa Sổ:} Nhấn nút Fullscreen $\rightarrow$ Expected: Resize cửa sổ hệ điều hành hoạt động trơn tru, không bị crash ứng dụng.
-\end{itemize}
-
-\subsection{Kiểm thử phần tính năng chính}
-\begin{itemize}
-    \item \textbf{Test layout và build} \\
-    \textbf{Mô tả:} Kiểm tra build gameCore và tỷ lệ màn hình 9:16. \\
-    \textbf{Kịch bản:} Build bằng g++ hoặc CMake, chạy và kiểm tra tỷ lệ cửa sổ trên nhiều độ phân giải. \\
-    \textbf{Kết quả:} Pass nếu build thành công và cửa sổ hiển thị đúng 9:16.
-    \item \textbf{Test tạo khối cơ bản} \\
-    \textbf{Mô tả:} Kiểm tra sáu khối L, I, T, Z trái, Z phải, O hiển thị đúng và đơn sắc. \\
-    \textbf{Kịch bản:} Khởi tạo từng khối riêng, quan sát hình dạng và màu. \\
-    \textbf{Kết quả:} Pass nếu mỗi khối có đủ ô, đúng hình và màu đồng nhất.
-    \item \textbf{Test màu ngẫu nhiên} \\
-    \textbf{Mô tả:} Kiểm tra khối nhận màu ngẫu nhiên trong danh sách Blue, Red, Green, Yellow, Orange, Purple. \\
-    \textbf{Kịch bản:} Tạo nhiều khối liên tiếp và xác nhận màu ngẫu nhiên. \\
-    \textbf{Kết quả:} Pass nếu màu thuộc danh sách và không cố định một giá trị.
-    \item \textbf{Test rơi tự do} \\
-    \textbf{Mô tả:} Kiểm tra khối rơi từ vị trí trên cùng mà không bị treo. \\
-    \textbf{Kịch bản:} Thả khối lên trên cùng, quan sát chuyển động và tốc độ rơi. \\
-    \textbf{Kết quả:} Pass nếu khối rơi đều và không dừng sai chỗ.
-    \item \textbf{Test di chuyển và xoay} \\
-    \textbf{Mô tả:} Kiểm tra di chuyển trái/phải và xoay với phím mũi tên và WASD. \\
-    \textbf{Kịch bản:} Dùng A/D hoặc mũi tên để dịch chuyển, W hoặc mũi tên lên để xoay. \\
-    \textbf{Kết quả:} Pass nếu khối thay đổi vị trí và hướng đúng.
-    \item \textbf{Test chạm và dừng} \\
-    \textbf{Mô tả:} Kiểm tra khối dừng khi chạm đáy hoặc khối khác. \\
-    \textbf{Kịch bản:} Để khối rơi đến đáy và quan sát trạng thái dừng. \\
-    \textbf{Kết quả:} Pass nếu khối dừng đúng và không tiếp tục rơi.
-    \item \textbf{Test xoá dòng} \\
-    \textbf{Mô tả:} Kiểm tra hiệu ứng xoá dòng khi hàng đầy. \\
-    \textbf{Kịch bản:} Tạo một hàng đầy trong bảng, đợi khối dừng và quan sát xoá dòng. \\
-    \textbf{Kết quả:} Pass nếu dòng đầy biến mất và điểm cập nhật.
-    \item \textbf{Test tính điểm} \\
-    \textbf{Mô tả:} Kiểm tra điểm số khi xoá dòng. \\
-    \textbf{Kịch bản:} Xoá 1 hoặc nhiều dòng, đối chiếu điểm với luật. \\
-    \textbf{Kết quả:} Pass nếu điểm thay đổi đúng theo số dòng.
-    \item \textbf{Test tốc độ tăng theo điểm} \\
-    \textbf{Mô tả:} Kiểm tra tốc độ rơi tăng dần khi điểm tăng. \\
-    \textbf{Kịch bản:} Xoá liên tiếp nhiều dòng và quan sát tốc độ khối sau mỗi lần. \\
-    \textbf{Kết quả:} Pass nếu khối rơi nhanh hơn khi điểm cao hơn.
-    \item \textbf{Test nhạc nền liên tục} \\
-    \textbf{Mô tả:} Kiểm tra nhạc nền chạy xuyên suốt trò chơi. \\
-    \textbf{Kịch bản:} Bật game và để chạy nhiều phút, quan sát nhạc nền. \\
-    \textbf{Kết quả:} Pass nếu nhạc không bị ngắt giữa chừng.
-    \item \textbf{Test dự báo 3 khối} \\
-    \textbf{Mô tả:} Kiểm tra chức năng hiển thị ba khối tiếp theo. \\
-    \textbf{Kịch bản:} Chơi và quan sát khu vực dự báo khi khối hiện tại rơi. \\
-    \textbf{Kết quả:} Pass nếu luôn có 3 khối dự báo và đúng thứ tự.
-    \item \textbf{Test pause/play} \\
-    \textbf{Mô tả:} Kiểm tra chức năng tạm dừng và tiếp tục. \\
-    \textbf{Kịch bản:} Nhấn pause, quan sát dừng chuyển động và nhạc; sau đó tiếp tục. \\
-    \textbf{Kết quả:} Pass nếu game dừng/tiếp tục chính xác.
-    \item \textbf{Test quit} \\
-    \textbf{Mô tả:} Kiểm tra nút thoát game. \\
-    \textbf{Kịch bản:} Nhấn quit trong khi chơi và xác nhận thoát. \\
-    \textbf{Kết quả:} Pass nếu ứng dụng đóng đúng.
-    \item \textbf{Test nhập tên game over} \\
-    \textbf{Mô tả:} Kiểm tra cho phép nhập tên khi game over. \\
-    \textbf{Kịch bản:} Chơi đến khi hết mạng, nhập tên và xác nhận. \\
-    \textbf{Kết quả:} Pass nếu tên được chấp nhận và hiển thị.
-    \item \textbf{Test gửi điểm lên Mongo Atlas} \\
-    \textbf{Mô tả:} Kiểm tra gọi API và gửi tên, điểm. \\
-    \textbf{Kịch bản:} Kết thúc game, nhập tên, gửi dữ liệu lên API và kiểm tra phản hồi. \\
-    \textbf{Kết quả:} Pass nếu dữ liệu được gửi và nhận phản hồi thành công.
-    \item \textbf{Test removeLine với mock data} \\
-    \textbf{Mô tả:} Kiểm tra hàm \texttt{removeLine()} với dữ liệu giả lập. \\
-    \textbf{Kịch bản:} Thiết lập một hàng đầy, gọi hàm và kiểm tra ma trận. \\
-    \textbf{Kết quả:} Pass nếu hàng đầy bị xóa, hàng trên trượt xuống và biên tường không đổi.
-    \item \textbf{Test xoay chặn sát tường} \\
-    \textbf{Mô tả:} Kiểm tra xoay khối khi gần biên. \\
-    \textbf{Kịch bản:} Đặt khối sát tường, xoay và quan sát. \\
-    \textbf{Kết quả:} Pass nếu khối không vượt ra khỏi bảng.
-\end{itemize}
-
-\subsection{Mô tả kỹ thuật chi tiết kiểm thử chức năng Game Core}
-
-Kiểm thử chức năng Game Core phải tập trung vào việc xác nhận toàn bộ luồng xử lý ma trận, đặc biệt là thuật toán loại bỏ dòng đầy trong hàm \texttt{removeLine()}. Với bản mã hiện tại, bảng chơi được lưu trong mảng hai chiều \texttt{board[H][W]}; hàng trên cùng và hàng dưới cùng, cùng hai cột ngoài cùng, được dùng làm biên tường cố định chứa ký tự \texttt{'#'}. Các ô nội bộ có thể chứa khoảng trắng hoặc ký tự khối gạch. Vì vậy, test cần đảm bảo rằng khi một hàng chơi được xác định là đầy, thuật toán chỉ thay đổi chính hàng đó và các hàng phía trên chứ không can thiệp vào biên tường hay phát sinh ký tự lạ.
-
-Mục tiêu kiểm thử bao gồm các khía cạnh sau:
-
-\begin{itemize}
-    \item Xác thực độ chính xác của nhận biết hàng đầy: mọi ô trong hàng phải khác khoảng trắng, không kể biên tường hai bên. Hàng được coi là đầy chỉ khi tất cả vị trí có thể chứa khối nội bộ đều bị lấp đầy.
-    \item Xác nhận hành vi dịch chuyển: khi một hàng đầy bị xóa, tất cả các hàng phía trên nó phải trượt xuống đúng một vị trí, trong khi hàng trên cùng được lấp đầy bằng ô trống. Việc dịch chuyển phải bảo toàn trạng thái biên tường, tức không có ký tự khác thay thế cho ký tự \texttt{'#'} ở viền.
-    \item Kiểm tra hiệu ứng nhiều hàng liên tiếp: khi có hai hoặc nhiều hàng đầy trong một lượt, hàm cần xoá từng hàng đúng thứ tự từ dưới lên trên và giữ nguyên thứ tự tương đối của các hàng phía trên.
-    \item Đảm bảo không thay đổi khối đang rơi: hàm \texttt{removeLine()} chỉ được gọi sau khi khối đã được ghi vào bảng; do đó test phải đảm bảo rằng trạng thái khối vừa đặt không bị ảnh hưởng hoặc bị xoá sai khi xử lý hàng đầy.
-    \item Xác minh khả năng chịu lỗi với điều kiện biên: hàng đầy ở hàng gần đáy nhất, ở hàng cạnh trên hoặc khi bảng chỉ còn lại một hàng trống trên cùng phải được xử lý đúng.
-\end{itemize}
-
-Kiểm thử chi tiết cần được thực hiện thông qua cả hai phương thức sau:
-
-\begin{enumerate}
-    \item \textbf{Kiểm thử thủ công dựa trên console:} bằng cách dựng bảng mẫu và quan sát kết quả của hàm \texttt{removeLine()} sau mỗi lần gọi. Đây là cách phù hợp khi chưa có hạ tầng test tự động, giúp đánh giá trực quan mã thực thi có khớp với luồng trò chơi hay không.
-    \item \textbf{Kiểm thử tự động lý thuyết:} xây dựng trường hợp kiểm thử giả lập với dữ liệu bảng trong file test, gọi trực tiếp \texttt{removeLine()} và so sánh trạng thái ma trận với dữ liệu mong đợi. Nếu tương lai mở rộng thêm framework unit test, đây sẽ là test thích hợp nhất để bảo đảm tính bền vững của hàm.
-\end{enumerate}
-
-\paragraph{Mô tả chi tiết kịch bản kiểm thử \texttt{removeLine()}}
-
-1. \textbf{Khởi tạo môi trường test:}
-    \begin{itemize}
-        \item Tạo bảng chơi mới bằng hàm \texttt{initBoard()}. Kết quả ban đầu phải có biên \texttt{'#'} cố định ở hàng đầu tiên, hàng cuối cùng, cột trái và cột phải.
-        \item Gán giá trị char cho các ô trong một hàng nội bộ (không tính biên) thành ký tự gạch như \texttt{'I'}, \texttt{'T'} hoặc \texttt{'O'} để tạo thành một hàng đầy. Các hàng khác phía trên hoặc phía dưới có thể giữ nguyên trạng thái ban đầu hoặc được gán giá trị động để kiểm tra dịch chuyển.
-    \end{itemize}
-
-2. \textbf{Thiết lập dữ liệu kiểm thử:}
-    \begin{itemize}
-        \item Trường hợp cơ bản: điền đầy toàn bộ một hàng nội bộ ở vị trí giữa bảng (ví dụ hàng \texttt{i = H-2}). Phía trên hàng này, thiết lập một số ký tự giả định trong hàng tiếp theo để quan sát hiệu quả trượt.
-        \item Trường hợp đa dòng: điền đầy hai hoặc ba hàng liên tiếp phía dưới, đảm bảo \texttt{removeLine()} có thể phát hiện và xử lý từng hàng theo thứ tự từ dưới lên.
-        \item Trường hợp giáp cạnh: điền đầy hàng ngay trên cạnh đáy bảng (không tính biên cuối) và hàng ngay dưới cạnh trên cùng để kiểm tra công thức so sánh ô trống và phần biên tường.
-        \item Trường hợp không có dòng đầy: gọi \texttt{removeLine()} khi bảng chỉ chứa các ô trống bên trong và biên tường. Kết quả mong đợi là bảng giữ nguyên nguyên vẹn.
-    \end{itemize}
-
-3. \textbf{Thực thi hàm và quan sát kết quả:}
-    \begin{itemize}
-        \item Gọi \texttt{removeLine()} một lần sau khi đã dựng xong bảng mẫu.
-        \item Quan sát dữ liệu bảng bằng cách in ra console hoặc so sánh biểu diễn ký tự của bảng với một bảng kỳ vọng đã chuẩn bị sẵn.
-        \item Với từng hàng đầy đã tạo, xác nhận rằng nó biến mất hoàn toàn, không để lại ký tự gạch nào trên hàng đó.
-        \item Với mỗi hàng phía trên, xác nhận rằng nội dung ban đầu của hàng phía trên đó đã chuyển xuống đúng một vị trí bên dưới.
-        \item Dòng đầu tiên trong nội bộ sau khi xử lý phải trở thành hoàn toàn khoảng trắng, ngoại trừ biên tường giữ nguyên \texttt{'#'}. Nếu dòng này không được điền đúng, thuật toán đã dịch chuyển sai chiều hoặc quên khởi tạo hàng trên cùng.
-    \end{itemize}
-
-4. \textbf{Xác minh biên tường và trạng thái lạ:}
-    \begin{itemize}
-        \item Kiểm tra rằng các ký tự \texttt{'#'} ở cột trái và cột phải không bị ghi đè, cả ở các hàng vừa dịch chuyển và ở hàng trên cùng.
-        \item Kiểm tra tất cả các ô nội bộ để đảm bảo không còn ký tự lạ như ký tự ASCII không in được hoặc số không mong muốn.
-        \item Kiểm tra rằng các ô trống dùng ký tự khoảng trắng \texttt{' '} chứ không sử dụng giá trị rác hay ký tự null.
-    \end{itemize}
-
-5. \textbf{Đánh giá hiệu suất và tính ổn định:}
-    \begin{itemize}
-        \item Hàm \texttt{removeLine()} hiện tại duyệt từ dưới lên trên và sau khi xoá một hàng sẽ tăng chỉ số \texttt{i} để kiểm tra lại hàng mới được dịch chuyển xuống. Test phải xác minh logic này không bỏ sót hàng đầy liên tiếp. Nếu tồn tại hai hàng đầy liên tiếp, việc tăng \texttt{i} trở lại sau khi xoá sẽ tiếp tục kiểm tra hàng vừa kéo xuống.
-        \item Kiểm tra thêm với bảng có nhiều dòng đầy rải rác để xác thực không có hành vi không mong muốn khi một dòng đầy mới được tạo sau khi các hàng phía trên trượt xuống.
-    \end{itemize}
-
-\subsubsection*{Kịch bản kiểm thử chi tiết cho chức năng removeLine}
-
-Để mô tả chi tiết hơn, test case mẫu có thể bao gồm các bước sau đây:
-
-\begin{enumerate}
-    \item Khởi tạo bảng mẫu với kích thước chuẩn \texttt{H = 20}, \texttt{W = 15}.
-    \item Thiết lập hàng \texttt{i = 17} (hàng thứ hai tính từ đáy) với giá trị đầy đủ: mọi cột từ \texttt{j = 1} đến \texttt{j = W-2} đều chứa ký tự ghép khối.
-    \item Thiết lập hàng \texttt{i = 16} phía trên với một mẫu không đầy, ví dụ ô \texttt{j = 2} chứa \texttt{'I'}, ô \texttt{j = 4} chứa \texttt{'T'}, các ô còn lại là khoảng trắng, để kiểm tra dịch chuyển chính xác.
-    \item Gọi \texttt{removeLine()}. Sau khi hàm chạy hoàn tất, xác minh các điều kiện sau:
-        \begin{itemize}
-            \item Hàng \texttt{i = 17} phải trở thành một hàng trống hoàn chỉnh, ngoại trừ biên tường hai bên.
-            \item Nội dung ban đầu của hàng \texttt{i = 16} phải nằm ở hàng \texttt{i = 17} sau khi dịch chuyển.
-            \item Hàng \texttt{i = 16} phải trở thành một hàng trống bên trong (ngoại trừ hai ô biên), vì các hàng phía trên tiếp tục dịch xuống.
-            \item Các dòng biên \texttt{i = 0} và \texttt{i = H-1} vẫn phải chứa ký tự \texttt{'#'} ở toàn bộ các vị trí biên, không bị biến đổi.
-        \end{itemize}
-    \item Lặp lại test với hai hàng đầy liên tiếp ở \texttt{i = 17} và \texttt{i = 16}. Kỳ vọng: cả hai hàng đều bị xoá và hàng \texttt{i = 15} dịch xuống tới hàng \texttt{i = 17}, sau đó hàng \texttt{i = 16} cũng trở thành trống.
-    \item Thực hiện kiểm thử biên với hàng đầy tại \texttt{i = 1} (gần biên trên cùng). Sau khi hàm chạy, hàng tiếp theo phải dịch xuống chính xác và hàng \texttt{i = 1} trở thành trống.
-    \item Thực hiện kiểm thử trường hợp không có hàng đầy, xác nhận bảng không đổi để tránh lỗi xóa sai.
-\end{enumerate}
-
-\subsubsection*{Những điều cần kiểm tra khi xây dựng test tự động}
-
-\begin{itemize}
-    \item Tạo một hàm hỗ trợ riêng trong file test để khởi tạo ma trận mẫu và chuyển đổi nó thành chuỗi văn bản dễ so sánh.
-    \item So sánh toàn bộ bảng sau khi gọi \texttt{removeLine()} với một bảng kỳ vọng đã chuẩn bị sẵn, thay vì chỉ kiểm tra một vài ô cục bộ.
-    \item Nếu codebase mở rộng, cân nhắc tạo thêm hàm \texttt{isLineFull(int row)} để tách riêng việc xác định hàng đầy, giúp kiểm thử unit dễ dàng hơn.
-    \item Phân tách các trường hợp: test "đơn" (single line clear), test "dồn" (multiple line clear), test "giáp đáy" và test "giáp trên".
-\end{itemize}
-
-\subsubsection*{Các chỉ tiêu kiểm thử số lượng và chất lượng}
-
-Bên cạnh việc kiểm tra đúng / sai, cần đánh giá thêm các tiêu chí sau:
-
-\begin{itemize}
-    \item \textbf{Tính lặp lại}: kết quả test phải nhất quán khi chạy nhiều lần với cùng dữ liệu input.
-    \item \textbf{Tính độc lập}: test \texttt{removeLine()} nên không phụ thuộc vào trạng thái khối rơi hiện tại; nếu cần, khối đang rơi có thể được gỡ khỏi bảng trước khi test.
-    \item \textbf{Tính minh bạch}: kết quả kỳ vọng được mô tả rõ ràng, có thể đối chiếu bằng cách so sánh từng dòng ASCII, thay vì đánh giá cảm quan.
-    \item \textbf{Hiệu suất}: hàm cần xử lý bảng kích thước 20x15 trong vòng thời gian ngắn, vì nó được gọi mỗi khi một khối cố định một lần. Mặc dù test không cần đo thời gian chính xác, nhưng nên chú ý đến việc không dùng vòng lặp vô hạn hoặc xử lý thừa phức tạp.
-\end{itemize}
-
-\subsection{Mô tả kiểm thử tốc độ rơi tăng nhanh sau removeLine}
-
-Phần kiểm thử này tập trung vào việc xác nhận cơ chế tăng tốc độ rơi mỗi khi một hay nhiều hàng được xoá thành công bằng hàm \texttt{removeLine()}. Trong gameplay Tetris, đây là một cảnh báo lối chơi quan trọng để tăng độ khó và tạo động lực cho người chơi. Test cần kiểm tra rằng tốc độ rơi khối sau khi xoá dòng đầy sẽ thực sự nhanh hơn so với tốc độ ban đầu và tốc độ trước đó.
-
-Các trường hợp kiểm thử đề xuất:
-
-\begin{itemize}
-    \item Bắt đầu với tốc độ rơi mặc định, sau đó xoá một hàng đầy và đo tốc độ rơi mới của block hiện tại hoặc block kế tiếp.
-    \item Thực hiện nhiều lần xoá hàng đầy liên tiếp, kiểm tra xem tốc độ có tăng dần theo từng lần xoá hay không.
-    \item Kiểm tra điều kiện không xoá được hàng đầy: nếu \texttt{removeLine()} không được gọi, tốc độ rơi không thay đổi.
-    \item Kiểm tra rằng tốc độ tăng không vượt quá mức tối đa cho phép hoặc gây lỗi khi giá trị tốc độ trở nên quá nhỏ.
-\end{itemize}
-
-Kịch bản kiểm thử chi tiết:
-
-\begin{enumerate}
-    \item Thiết lập trò chơi ở tốc độ rơi mặc định. Xác định giá trị thời gian trễ mỗi lần rơi ban đầu (ví dụ 300ms).
-    \item Tạo dữ liệu sao cho ít nhất một hàng đầy sẽ được xoá bởi hàm \texttt{removeLine()}.
-    \item Gọi \texttt{removeLine()} và ghi lại tốc độ rơi ngay sau khi xoá. So sánh với giá trị tốc độ trước đó.
-    \    
-    \item Lặp lại với hai hoặc ba lần xoá hàng đầy liên tiếp để kiểm tra tốc độ có tiếp tục tăng dần một cách hợp lý.
-    \    
-    \item Thực hiện kiểm thử khi không có hàng đầy, xác nhận tốc độ rơi không thay đổi và hàm không làm tăng nhầm tốc độ.
-\end{enumerate}
-
-Tiêu chí pass/fail:
-
-\begin{itemize}
-    \item Pass: sau mỗi lần xoá thành công bằng \texttt{removeLine()}, thời gian giữa hai lần rơi liên tiếp giảm, biểu thị tốc độ rơi tăng lên.
-    \item Fail: tốc độ rơi giữ nguyên hoặc giảm sau khi xoá dòng, hoặc tốc độ tăng vượt quá giới hạn vận hành bình thường.
-\end{itemize}
-
-\subsection{Mô tả kiểm thử giao diện viền và block vuông}
-
-Phần kiểm thử này tập trung vào hiển thị cấu trúc lưới và các block rơi sao cho mỗi ô vuông, không bị kéo giãn thành hình chữ nhật. Với hiện trạng hình chữ nhật (HCN) ở viền và block, test cần xác định liệu các đối tượng trên lưới có giữ tỉ lệ 1:1 ở cả chiều ngang và chiều dọc hay không. Test còn phải kiểm tra góc kết nối giữa viền và ô block để đảm bảo các góc vuông sắc nét, không bị bo hoặc kéo dài.
-
-\subsection{Mô tả kiểm thử chức năng xoay block}
-
-Kiểm thử xoay block là một phần quan trọng của module Game Core vì nó xác định tính chính xác của cơ chế biến đổi hình dạng khối khi nhận lệnh người chơi. Mục tiêu của phần này là kiểm tra chắc chắn rằng, sau mỗi lần xoay, block giữ nguyên kích thước hợp lý, không bị ảnh hưởng bởi vị trí xung quanh và không vượt ra ngoài ranh giới ma trận hay chồng chéo với biên tường.
-
-Các yếu tố kiểm thử chính:
-
-\begin{itemize}
-    \item Xác thực xoay ở vị trí trung tâm: đặt block vào vị trí trung tâm của bảng và xoay khối nhiều lần, kiểm tra xem hình dạng của block có đổi đúng theo quy tắc xoay mong đợi.
-    \item Xác nhận xoay sát tường: đặt block sát tường trái, phải và sát đáy, sau đó xoay. Kiểm tra xem block có bị cắt mất phần đầu, không chạm vào biên tường và không vượt ra khỏi ma trận.
-    \item Xác minh xoay ở gần block khác: nếu hiện trạng có các ô đã cố định bên cạnh block đang xoay, kiểm tra xem xoay không làm khối chồng lên ô đã có.
-    \item Kiểm tra tính ổn định sau nhiều xoay: thực hiện chuỗi xoay liên tiếp (ví dụ 4 lần) để đảm bảo block trở lại hình dạng ban đầu hoặc dạng chuyển tiếp hợp lệ mà không lỗi hình học.
-\end{itemize}
-
-Kịch bản kiểm thử xoay block nên bao gồm:
-
-\begin{enumerate}
-    \item Thiết lập bảng với một block ở vị trí trung tâm. Xoay block và kiểm tra hình dạng, số lượng ô block và chuyển động của các ô có đúng không.
-    \item Đặt block sát tường trái, thực hiện xoay, và kiểm tra xem phần block có quá ra khỏi biên hay không. Nếu hệ thống có wall kick, ghi nhận hành vi điều chỉnh vị trí.
-    \item Đặt block sát tường phải và sát đáy, xoay mỗi lần để kiểm tra trường hợp góc, cạnh và hình dáng khối không bị sai.
-    \item Đặt các khối cố định làm chướng ngại ở gần block xoay, thực hiện xoay và kiểm tra xem block xoay có chuyển vào vị trí hợp lệ hay bị chồng chéo.
-\end{enumerate}
-
-Tiêu chí pass/fail:
-
-\begin{itemize}
-    \item Pass: block xoay đúng hình dạng, không bị biến dạng, không chồng lên biên hoặc vùng đã được cố định, và vẫn nằm trong giới hạn ma trận.
-    \item Fail: block bị cắt mất, chồng chéo với biên tường hoặc phần tử đã được cố định, hoặc không xoay đúng hình dạng mong đợi.
-\end{itemize}
-
-\subsubsection*{Lưu ý khi kiểm thử}
-
-\begin{itemize}
-    \item Nếu game implement wall kick, kiểm tra rằng block có thể điều chỉnh vị trí nhỏ để vừa vặn khi xoay sát biên.
-    \item Ghi lại phím xoay sử dụng trong test và đảm bảo input map đúng với hành vi game hiện tại.
-    \item Với mỗi lần xoay, kiểm tra cả trạng thái trước và sau xoay để xác định sai sót ở bước chuyển đổi.
-\end{itemize}
-
-\subsubsection*{Kết nối với các test khác}
-
-Phần test xoay block nên được chạy song song với test removeLine và test giao diện block vuông, vì việc xoay có thể ảnh hưởng trực quan đến vị trí hiển thị và trạng thái bảng sau khi block cố định.
-
-\subsection{Mô tả kiểm thử giao diện viền và block vuông}
-
-Các bước kiểm thử đề xuất:
-
-\begin{enumerate}
-    \item Chạy ứng dụng ở chế độ hiện tại và quan sát khung hiển thị cùng các block trong khu vực chơi.
-    
-    \item Xác thực từng ô trong lưới có kích thước bằng nhau theo cả chiều ngang và chiều dọc. Nếu sử dụng GUI, kiểm tra thước đo pixel hoặc lưới hỗ trợ để đảm bảo tỷ lệ là chính xác. Nếu sử dụng console, kiểm tra font chữ và cỡ ký tự để đảm bảo ô hiển thị vuông.
-    
-    \item Kiểm tra viền màn hình: đường biên ngoài cùng phải tạo thành hình chữ nhật cân đối với các góc 90 độ và cạnh dọc/ngang có cùng tỷ lệ so với lưới nội bộ.
-    
-    \item Kiểm tra khối: mỗi block phải được hiển thị trong các ô vuông đồng nhất. Các phần tử block lân cận nên có cùng chiều cao và chiều rộng, không bị kéo dài theo một chiều.
-    
-    \item Kiểm tra điều kiện thay đổi kích thước: nếu ứng dụng hỗ trợ thay đổi kích thước cửa sổ hoặc chế độ màn hình khác nhau, đảm bảo hiển thị vẫn duy trì ô vuông trên mọi kích thước.
-    
-    \item Kiểm tra mô tả trực quan: ghi nhận nếu viền hoặc block xuất hiện như hình chữ nhật dẹt/chữ nhật kéo dài. Nếu phát hiện HCN, note cụ thể vị trí và trạng thái điều kiện để sửa.
-\end{enumerate}
-
-\paragraph{Tiêu chí pass/fail}
-
-\begin{itemize}
-    \item Pass: tất cả ô lưới và block hiển thị với tỉ lệ 1:1, viền rõ ràng, góc vuông sắc nét và không có biến dạng HCN.
-    \item Fail: có sự khác biệt rõ ràng giữa chiều ngang và chiều dọc của các ô/block, viền bị kéo dài hoặc không tạo góc vuông chính xác.
-\end{itemize}
-
-\subsubsection*{Khuyến nghị kiểm thử mở rộng}
-
-\begin{itemize}
-    \item Thực hiện kiểm thử trên tối thiểu hai chế độ hiển thị khác nhau nếu có: console và GUI hoặc các độ phân giải khác nhau.
-    \item Nếu game dùng bộ đếm pixel cố định, kiểm tra rằng hệ số tỷ lệ của khung vẽ luôn giữ 1:1 cho từng ô.
-    \item Kiểm tra phím điều khiển hoặc tùy chọn cấu hình hiển thị nếu có, đảm bảo các thay đổi vẫn giữ cho mỗi ô vuông.
-\end{itemize}
-
-\subsubsection*{Liên hệ với nâng cấp giao diện}
-
-Đánh giá góc hiển thị viền và block vuông có thể liên quan trực tiếp tới việc tái thiết kế khung hiển thị hoặc chỉnh lại chiều cao/chiều rộng của đối tượng render. Do vậy, phần test này nên được chạy cùng với phát triển giao diện và tích hợp vào bản demo hình dạng block mới.
-
-\subsubsection*{Tại sao test giao diện viền và block vuông quan trọng}
-
-Giao diện lưới vuông giúp game cảm nhận đúng tỷ lệ Tetris, tránh tình trạng khung và block bị méo mó làm giảm độ chính xác chơi và cảm giác thị giác. Phần kiểm thử này giúp đảm bảo rằng các nguyên tắc hình học của lưới được duy trì, tạo ra trải nghiệm trực quan đồng đều và chuyên nghiệp hơn.
-
-\subsubsection*{Kết luận}
-
-Phần kiểm thử giao diện viền và block vuông phải được cộng vào danh sách kiểm thử Module Game Core/Giao diện vì đây là một lỗi trực quan lõi, ảnh hưởng tới trải nghiệm người chơi ngay lập tức. Mô tả kiểm thử nên ghi lại rõ ràng các điều kiện khởi tạo, bước quan sát và tiêu chí pass/fail.
-Trong logic Tetris, loại bỏ hàng đầy là một hành vi lõi quyết định trải nghiệm người chơi. Nếu hàm này hoạt động sai, hậu quả có thể là:
-
-\begin{itemize}
-    \item Bảng chơi không thay đổi đúng khi một hàng được xóa, dẫn tới điểm số và trạng thái game sai lệch.
-    \item Các khối phía trên không dịch xuống đúng, gây ra lỗi nhảy dòng, tạo ra những ô trống lỗ hoặc xuất hiện khối chồng chéo.
-    \item Viền tường bị xóa hoặc ghi đè, khiến bảng bị phá vỡ và game bị crash hoặc chạy sai.
-    \item Khi nhiều hàng đầy xảy ra cùng lúc, nếu thuật toán không xử lý theo thứ tự đúng, kết quả có thể mất một hàng hoặc không xóa hàng đúng.
-\end{itemize}
-
-Kết luận: phần kiểm thử này nên chiếm trọng tâm trong tài liệu test module Game Core và cần được mô tả kỹ càng. Mục tiêu không chỉ là xác định test case mà còn là giải thích rõ ràng từng bước thực hiện, điều kiện đầu vào, kết quả mong đợi và cách kiểm tra từng điểm quan trọng.
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|}
+\hline
+\rowcolor{gray!35}
+\textbf{Tiêu Chí} & \textbf{Mô Tả} \\ \hline
+\textbf{PASS} & Tất cả ô lưới và block tỷ lệ 1:1, viền rõ ràng, góc vuông sắc nét, không biến dạng HCN \\ \hline
+\textbf{FAIL} & Khác biệt rõ giữa chiều ngang/dọc của ô hoặc block, viền kéo dài, góc không vuông \\ \hline
+\end{tabularx}
+\end{table}
+
+% ────────────────────────────────────────────────────────────────────
+% 8. KIỂM THỬ TỐC ĐỘ RƠI SAU removeLine()
+% ────────────────────────────────────────────────────────────────────
+\subsection{Kiểm Thử Tốc Độ Rơi Sau \texttt{removeLine()}}
+
+\introtext{Cơ chế tăng tốc độ rơi sau mỗi lần xóa dòng là yếu tố gameplay quan trọng tạo nên độ khó và sự thú vị của Tetris.}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|X|X|}
+\hline
+\rowcolor{gray!35}
+\textbf{\#} & \textbf{Kịch Bản} & \textbf{Thực Hiện} & \textbf{Kết Quả Mong Đợi} \\ \hline
+SPD-01 & Tốc độ tăng sau 1 lần xóa            & Ghi delay ban đầu (ví dụ 300ms), xóa 1 hàng, đo delay mới & Delay mới $<$ 300ms (tốc độ tăng) \\ \hline
+SPD-02 & Tốc độ tăng dần qua nhiều lần xóa    & Xóa liên tiếp 3 lần, ghi delay sau mỗi lần & Delay giảm dần qua mỗi lần xóa \\ \hline
+SPD-03 & Không xóa dòng thì không tăng tốc    & Chơi không xóa dòng nào & Delay giữ nguyên, tốc độ không tăng \\ \hline
+SPD-04 & Tốc độ không vượt giới hạn tối đa    & Xóa rất nhiều dòng liên tiếp & Tốc độ không vượt max, không crash \\ \hline
+\end{tabularx}
+\end{table}
+
+% ────────────────────────────────────────────────────────────────────
+% 9. TỔNG HỢP VÀ MA TRẬN KIỂM THỬ
+% ────────────────────────────────────────────────────────────────────
+\subsection{Tổng Hợp và Ma Trận Kiểm Thử}
+
+\begin{table}[H]
+\centering
+\rowcolors{2}{gray!15}{white}
+\begin{tabularx}{\linewidth}{|l|X|l|l|l|l|}
+\hline
+\rowcolor{gray!35}
+\textbf{Module} & \textbf{Nhóm Test} & \textbf{Tổng TC} & \textbf{Auto} & \textbf{Manual} & \textbf{Trạng Thái} \\ \hline
+gameStory   & v1, v2, v3                              & 7   & 2  & 5   & Planned \\ \hline
+gameConsole & v1, v2, v3                              & 11  & 3  & 8   & Planned \\ \hline
+gameCore    & Build, Physics, Lines, Features         & 16  & 6  & 10  & Planned \\ \hline
+Technical   & removeLine, Rotation, Display, Speed    & 20+ & 10 & 10+ & Planned \\ \hline
+Integration & End-to-end, Stress                      & 5+  & 2  & 3+  & Planned \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Kết Luận}
+
+\introtext{Tài liệu này cung cấp danh sách test case đầy đủ cho toàn bộ ba module của cTetris. Các test case được tổ chức theo module và phiên bản, có cấu trúc rõ ràng với preconditions, steps, expected results và boundary cases.}
+
+\introtext{Nhóm phát triển nên ưu tiên thực hiện các test case theo thứ tự: gameCore (CORE\_TC\_001 $\rightarrow$ CORE\_TC\_016) $\rightarrow$ Integration $\rightarrow$ gameConsole $\rightarrow$ gameStory. Các test case kỹ thuật về \texttt{removeLine()} và xoay khối phải được thực hiện trước khi release bất kỳ build nào.}
 
 \label{LastPageTestList}
 \end{document}
