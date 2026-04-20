@@ -177,6 +177,19 @@ Phần này đảm bảo trải nghiệm cốt truyện toàn diện, với tổ
     \textbf{Tiêu chí pass/fail:} Pass nếu nút board hiển thị popup đúng, nút close đóng popup thành công, không crash. Fail nếu popup không xuất hiện, nút close không hoạt động, hoặc có lỗi hiển thị. \\
     \textbf{Trường hợp biên:} Test khi popup đã mở, nhấn nút board lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp.
 
+    \item \textbf{Test v2 gameConsole/app.cpp: Tạo nút setting và nút close popup setting.} \\
+    \textbf{Mô tả:} Test này kiểm tra việc tạo nút setting để mở popup cấu hình và nút close để đóng popup setting trong giao diện console. Nút setting phải hiển thị rõ ràng, popup setting cần cho phép chỉnh các tuỳ chọn như âm thanh, điều khiển và hiển thị, và nút close phải đóng popup an toàn. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút setting (ví dụ: nút "Settings" hoặc biểu tượng bánh răng).
+        \item Nhấn nút setting, kiểm tra popup setting xuất hiện với các tùy chọn cấu hình rõ ràng.
+        \item Kiểm tra nội dung popup: âm lượng, điều khiển, chế độ hiển thị hoặc các tuỳ chọn mặc định.
+        \item Nhấn nút close trong popup setting, xác nhận popup đóng và trở về giao diện chính, các thay đổi chưa lưu không bị áp dụng nếu chưa có xác nhận.
+        \item Test lại nhiều lần để đảm bảo popup setting đóng đúng và không gây crash.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu nút setting mở popup đúng, nút close đóng popup thành công, popup hiển thị nội dung cấu hình hợp lý. Fail nếu popup không xuất hiện, không đóng được, hoặc ứng dụng bị lỗi. \\
+    \textbf{Trường hợp biên:} Test khi popup setting đã mở, nhấn nút setting lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp.
+
     \item \textbf{Test v1 gameConsole/app.cpp: Chèn nhạc nền trong quá trình ở màn hình game console.} \\
     \textbf{Mô tả:} Test này kiểm tra việc bổ sung nhạc nền chạy xuyên suốt màn hình game console, bao gồm mở nhạc khi vào màn hình chơi và tắt khi thoát hoặc đóng popup. Nhạc nền cần được phát mượt và không ảnh hưởng tới thao tác điều khiển. \\
     \textbf{Kịch bản kiểm thử:} 
