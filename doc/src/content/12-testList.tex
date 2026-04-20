@@ -333,6 +333,17 @@ Các kịch bản kiểm thử phải áp dụng cả hai phương pháp sau:
 
 \subsection{Kiểm thử phần tính năng chính}
 \begin{itemize}
+    \item \textbf{Test v1 gameCore/app.cpp: Tạo layout.h và build file thực thi .exe, đảm bảo màn hình 9:16 trước khi viết code tiếp.} \\
+    \textbf{Mô tả:} Test này kiểm tra việc thiết lập layout cơ bản và build ứng dụng, đảm bảo tỷ lệ màn hình 9:16 để phù hợp với thiết kế game. Layout.h chứa các định nghĩa về kích thước cửa sổ, vị trí các thành phần UI. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Tạo file layout.h với các macro định nghĩa WIDTH = 900, HEIGHT = 1600 hoặc tương tự để đạt tỷ lệ 9:16.
+        \item Build ứng dụng bằng lệnh g++ hoặc CMake, tạo file .exe.
+        \item Chạy ứng dụng và kiểm tra tỷ lệ màn hình.
+        \item Thay đổi độ phân giải màn hình và chạy lại để xác nhận responsive.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu cửa sổ hiển thị đúng 9:16, build thành công không lỗi. Fail nếu tỷ lệ sai hoặc crash khi khởi chạy. \\
+    \textbf{Trường hợp biên:} Test trên màn hình nhỏ (480p), lớn (4K), và tỷ lệ khác (16:9) để đảm bảo fallback.
     \item \textbf{Test Input Lưới:} Truyền input qua Terminal (W/A/S/D) để kiểm tra luồng di chuyển trên lưới.
     \item \textbf{Test Xóa Hàng:} Nhét mock-data (1 hàng đầy) vào ma trận $\rightarrow$ Nhập lệnh cập nhật vòng lặp $\rightarrow$ Expected: Hàng bị xóa, trả về điểm số tương ứng.
     \item \textbf{Test removeLine:} Thiết lập một hàng đầy trong bảng, gọi hàm \texttt{removeLine()} và kiểm tra trạng thái ma trận sau khi xoá. $\rightarrow$ Expected: dòng đầy biến mất, các dòng phía trên trượt xuống một vị trí, dòng đầu tiên trên cùng được điền bằng khoảng trắng và các cạnh tường `#` không thay đổi.
