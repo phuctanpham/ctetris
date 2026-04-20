@@ -362,6 +362,15 @@ Các kịch bản kiểm thử phải áp dụng cả hai phương pháp sau:
         \item Kiểm tra phân phối ngẫu nhiên.
     \end{enumerate}
     \textbf{Tiêu chí pass/fail:} Pass nếu màu ngẫu nhiên và trong danh sách. Fail nếu màu cố định hoặc ngoài danh sách.
+    \item \textbf{Test v1 gameCore/app.cpp: Cho khối rơi tự do ở 1 vị trí bất kỳ (on top).} \\
+    \textbf{Mô tả:} Test kiểm tra khối rơi tự do từ vị trí trên cùng xuống dưới theo thời gian. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Khởi tạo khối ở vị trí trên cùng.
+        \item Quan sát khối rơi xuống tự do mà không can thiệp.
+        \item Kiểm tra tốc độ rơi đều đặn.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu khối rơi mượt mà từ trên xuống. Fail nếu không rơi hoặc rơi không đều.
     \item \textbf{Test Input Lưới:} Truyền input qua Terminal (W/A/S/D) để kiểm tra luồng di chuyển trên lưới.
     \item \textbf{Test Xóa Hàng:} Nhét mock-data (1 hàng đầy) vào ma trận $\rightarrow$ Nhập lệnh cập nhật vòng lặp $\rightarrow$ Expected: Hàng bị xóa, trả về điểm số tương ứng.
     \item \textbf{Test removeLine:} Thiết lập một hàng đầy trong bảng, gọi hàm \texttt{removeLine()} và kiểm tra trạng thái ma trận sau khi xoá. $\rightarrow$ Expected: dòng đầy biến mất, các dòng phía trên trượt xuống một vị trí, dòng đầu tiên trên cùng được điền bằng khoảng trắng và các cạnh tường `#` không thay đổi.
