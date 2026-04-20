@@ -255,6 +255,19 @@ Phần này đảm bảo trải nghiệm cốt truyện toàn diện, với tổ
     \textbf{Tiêu chí pass/fail:} Pass nếu sort theo time được thực hiện chính xác, danh sách hiển thị theo thứ tự đúng và không có dữ liệu bị thay đổi sai. Fail nếu thứ tự sai, không có tùy chọn sort, hoặc popup bị lỗi khi sort. \\
     \textbf{Trường hợp biên:} Test khi dữ liệu board rỗng; test khi thời gian bằng nhau; test khi sort liên tục nhiều lần.
 
+    \item \textbf{Test v3 gameConsole/app.cpp: Tạo sort theo score trong popup board.} \\
+    \textbf{Mô tả:} Test này kiểm tra chức năng sắp xếp theo điểm số trong popup board của gameConsole. Người dùng cần có tùy chọn sort theo score, và danh sách hiển thị phải phản ánh đúng thứ tự điểm số cao/thấp. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Mở popup board và xác nhận có nút hoặc tùy chọn sort theo score.
+        \item Chọn sort theo score giảm dần, kiểm tra danh sách được sắp xếp từ điểm cao nhất đến thấp nhất.
+        \item Chọn sort theo score tăng dần, kiểm tra danh sách được sắp xếp từ điểm thấp nhất đến cao nhất.
+        \item Thử với dữ liệu có nhiều bản ghi cùng score để đảm bảo thứ tự giữ ổn định và không gây sai lệch kiểu dữ liệu.
+        \item Đóng popup và mở lại để xác nhận trạng thái sort được duy trì nếu thiết kế yêu cầu.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu sort theo score được thực hiện chính xác, danh sách hiển thị đúng thứ tự điểm số và không có mục bị hoán đổi sai. Fail nếu thứ tự điểm số sai, không có tùy chọn sort, hoặc popup bị lỗi khi sort. \\
+    \textbf{Trường hợp biên:} Test khi dữ liệu board rỗng; test khi điểm số bằng nhau; test khi sort nhiều lần liên tiếp.
+
     \item \textbf{Test v1 gameConsole/app.cpp: Chèn nhạc nền trong quá trình ở màn hình game console.} \\
     \textbf{Mô tả:} Test này kiểm tra việc bổ sung nhạc nền chạy xuyên suốt màn hình game console, bao gồm mở nhạc khi vào màn hình chơi và tắt khi thoát hoặc đóng popup. Nhạc nền cần được phát mượt và không ảnh hưởng tới thao tác điều khiển. \\
     \textbf{Kịch bản kiểm thử:} 
