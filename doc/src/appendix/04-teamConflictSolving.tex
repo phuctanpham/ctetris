@@ -1,4 +1,4 @@
-
+% !TEX TS-program = xelatex
 % !TEX encoding = UTF-8 Unicode
 \documentclass[12pt,a4paper]{article}
 
@@ -12,28 +12,59 @@
 \providecommand{\StandaloneSectionSetup}[2]{\ApplyStandardFooter{#1}{#2}}
 \StandaloneSectionSetup{04-teamConflictSolving.tex}{LastPageTeamConflictSolving}
 
+
 \begin{center}
     {\LARGE \textbf{MÔ TẢ QUÁ TRÌNH LÀM VIỆC NHÓM}} \\[10pt]
     {\large Dự án: ctetris}
 \end{center}
 
-% ===== SECTION 1 =====
-\textbf{1. Xử lí conflict khi trộn hai dòng phát triển giữa lập trình viên và kiểm thử viên (tester)}
+\section*{1. Xử lý xung đột khi trộn hai dòng phát triển giữa lập trình viên và kiểm thử viên (tester)}
 
-    \item \textbf{Thống kê conflict:}
-    \begin{itemize}
-        \item Trong quá trình phát triển dự án, có 1 conflict xảy ra khi merge nhánh main vào nhánh truongtm/bien-ban-hop-ngay-02.
-        \item File bị conflict: \texttt{doc/src/content/11-testStrategy.tex}.
-        \item Nguyên nhân: Lập trình viên (trên nhánh main) đã viết đầy đủ chiến lược kiểm thử, trong khi kiểm thử viên (trên nhánh truongtm) đã thay thế bằng phiên bản ngắn hơn với các ghi chú để tự viết thêm.
-        \item Cách xử lý: Resolve conflict bằng cách giữ phiên bản từ kiểm thử viên, vì phiên bản đó phù hợp hơn với quy trình phát triển của nhóm.
-    \end{itemize}
-    \item \textbf{Quy trình xử lý conflict:}
-    \begin{itemize}
-        \item Phát hiện conflict khi thực hiện merge.
-        \item Thảo luận giữa lập trình viên và kiểm thử viên để quyết định phiên bản nào được giữ.
-        \item Sử dụng công cụ Git để resolve và commit merge.
-    \end{itemize}
+\textbf{Bối cảnh:}
+\begin{itemize}
+    \item Trong quá trình phát triển dự án, nhóm có nhiều nhánh phát triển song song giữa các vai trò lập trình viên và kiểm thử viên.
+    \item Việc hợp nhất (merge) các nhánh này là cần thiết để đảm bảo tính nhất quán và hoàn thiện sản phẩm.
+    \item Tuy nhiên, sự khác biệt về nội dung và cách tiếp cận giữa các vai trò dẫn đến nguy cơ xung đột khi hợp nhất.
+\end{itemize}
+
+\textbf{Nguyên nhân:}
+\begin{itemize}
+    \item Cụ thể, khi merge nhánh main vào nhánh \texttt{truongtm/bien-ban-hop-ngay-02}, đã xảy ra xung đột tại file \texttt{doc/src/content/11-testStrategy.tex}.
+    \item Lập trình viên (trên nhánh main) đã viết đầy đủ chiến lược kiểm thử, trong khi kiểm thử viên (trên nhánh truongtm) thay thế bằng phiên bản ngắn hơn với các ghi chú để tự viết thêm.
+    \item Sự thiếu trao đổi trước khi chỉnh sửa và khác biệt về mục tiêu nội dung giữa các thành viên.
+\end{itemize}
+
+\textbf{Hướng giải quyết:}
+\begin{itemize}
+    \item Phát hiện conflict khi thực hiện merge.
+    \item Thảo luận giữa lập trình viên và kiểm thử viên để quyết định phiên bản nào được giữ, ưu tiên phương án phù hợp với quy trình phát triển chung.
+    \item Sử dụng công cụ Git để resolve và commit merge, đồng thời cập nhật lại quy tắc phối hợp khi chỉnh sửa tài liệu chung.
+    \item Đề xuất bổ sung quy trình review trước khi merge các nhánh có chỉnh sửa lớn liên quan đến tài liệu chung.
 \end{itemize}
 
 \label{LastPageTeamConflictSolving}
+% ===== SECTION 2 =====
+\section*{2. Xử lý xung đột giữa 2 vùng viết Overleaf và Github}
+
+\textbf{Bối cảnh:}
+\begin{itemize}
+    \item Nhóm sử dụng đồng thời hai nền tảng: Overleaf (soạn thảo trực tuyến, tiện lợi cho teamwork) và GitHub (quản lý mã nguồn, phân chia module tài liệu rõ ràng).
+    \item Các thành viên có thói quen cập nhật tài liệu trên cả hai nền tảng, đặc biệt khi cần chỉnh sửa nhanh hoặc làm việc từ xa.
+    \item Điều này dẫn đến việc mất đồng bộ, ghi đè hoặc bỏ sót các thay đổi quan trọng giữa hai vùng lưu trữ.
+\end{itemize}
+
+\textbf{Nguyên nhân:}
+\begin{itemize}
+    \item Không có quy định rõ ràng về thứ tự cập nhật và đồng bộ tài liệu giữa hai nền tảng.
+    \item Việc chỉnh sửa trực tiếp trên Overleaf mà không cập nhật lại lên GitHub, hoặc ngược lại, khiến nội dung bị phân tán và khó kiểm soát.
+    \item Thiếu một người chịu trách nhiệm tổng hợp, kiểm tra và đồng bộ hóa nội dung định kỳ.
+\end{itemize}
+
+\textbf{Hướng giải quyết:}
+\begin{itemize}
+    \item Quy hoạch lại quy trình làm việc: \textbf{Tất cả các cập nhật, chỉnh sửa tài liệu phải thực hiện trên GitHub trước}. Sau khi hoàn thiện và kiểm tra, mới đồng bộ nội dung sang Overleaf để đảm bảo tính nhất quán.
+    \item Chỉ định một thành viên chịu trách nhiệm tổng hợp và cập nhật từ GitHub sang Overleaf định kỳ, tránh chỉnh sửa trực tiếp trên Overleaf khi chưa có trên GitHub.
+    \item Sử dụng các công cụ so sánh (diff) để kiểm tra sự khác biệt giữa hai nền tảng trước khi đồng bộ, đảm bảo không bỏ sót thay đổi.
+    \item Thường xuyên nhắc nhở các thành viên tuân thủ quy trình để hạn chế phát sinh xung đột mới, đồng thời tổ chức các buổi review quy trình nếu cần.
+\end{itemize}
 \end{document}
