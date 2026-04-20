@@ -333,78 +333,74 @@ Các kịch bản kiểm thử phải áp dụng cả hai phương pháp sau:
 
 \subsection{Kiểm thử phần tính năng chính}
 \begin{itemize}
-    \item \textbf{Test v1 gameCore/app.cpp: Tạo layout.h và build file thực thi .exe, đảm bảo màn hình 9:16 trước khi viết code tiếp.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc thiết lập layout cơ bản và build ứng dụng, đảm bảo tỷ lệ màn hình 9:16 để phù hợp với thiết kế game. Layout.h chứa các định nghĩa về kích thước cửa sổ, vị trí các thành phần UI. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Tạo file layout.h với các macro định nghĩa WIDTH = 900, HEIGHT = 1600 hoặc tương tự để đạt tỷ lệ 9:16.
-        \item Build ứng dụng bằng lệnh g++ hoặc CMake, tạo file .exe.
-        \item Chạy ứng dụng và kiểm tra tỷ lệ màn hình.
-        \item Thay đổi độ phân giải màn hình và chạy lại để xác nhận responsive.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu cửa sổ hiển thị đúng 9:16, build thành công không lỗi. Fail nếu tỷ lệ sai hoặc crash khi khởi chạy. \\
-    \textbf{Trường hợp biên:} Test trên màn hình nhỏ (480p), lớn (4K), và tỷ lệ khác (16:9) để đảm bảo fallback.
-    \item \textbf{Test v1 gameCore/app.cpp: Tạo 1 trong 6 khối (L,I,T,Z left, Z right, O) đơn sắc.} \\
-    \textbf{Mô tả:} Test kiểm tra việc tạo và hiển thị một trong sáu loại khối Tetris cơ bản với màu đơn sắc. Khối phải có hình dạng đúng và màu đồng nhất. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Khởi tạo ứng dụng và tạo một khối ngẫu nhiên từ 6 loại.
-        \item Quan sát hình dạng và màu sắc của khối trên màn hình.
-        \item Kiểm tra với từng loại khối riêng biệt.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu khối hiển thị đúng hình dạng và màu đơn sắc. Fail nếu hình dạng sai hoặc màu không đồng nhất.
-    \item \textbf{Test v1 gameCore/app.cpp: Đổ màu ngẫu nhiên (Blue, Red, Green, Yellow, Orange, Purple).} \\
-    \textbf{Mô tả:} Test kiểm tra việc gán màu ngẫu nhiên cho khối từ danh sách màu được chỉ định. Mỗi khối phải có màu khác nhau khi tạo mới. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Tạo nhiều khối liên tiếp và quan sát màu sắc.
-        \item Đảm bảo màu nằm trong danh sách: Blue, Red, Green, Yellow, Orange, Purple.
-        \item Kiểm tra phân phối ngẫu nhiên.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu màu ngẫu nhiên và trong danh sách. Fail nếu màu cố định hoặc ngoài danh sách.
-    \item \textbf{Test v1 gameCore/app.cpp: Cho khối rơi tự do ở 1 vị trí bất kỳ (on top).} \\
-    \textbf{Mô tả:} Test kiểm tra khối rơi tự do từ vị trí trên cùng xuống dưới theo thời gian. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Khởi tạo khối ở vị trí trên cùng.
-        \item Quan sát khối rơi xuống tự do mà không can thiệp.
-        \item Kiểm tra tốc độ rơi đều đặn.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu khối rơi mượt mà từ trên xuống. Fail nếu không rơi hoặc rơi không đều.
-    \item \textbf{Test v1 gameCore/app.cpp: Điều khiển khối bằng các mũi tên và các phím chữ WASD.} \\
-    \textbf{Mô tả:} Test kiểm tra khả năng điều khiển khối di chuyển trái/phải và xoay bằng phím mũi tên và WASD. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Nhấn phím mũi tên trái/phải hoặc A/D để di chuyển khối.
-        \item Nhấn mũi tên lên hoặc W để xoay khối.
-        \item Kiểm tra phản hồi tức thì.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu khối di chuyển và xoay đúng. Fail nếu không phản hồi hoặc sai hướng.
-    \item \textbf{Test v1 gameCore/app.cpp: Hiệu ứng chạm và dừng rơi khối.} \\
-    \textbf{Mô tả:} Test kiểm tra khối dừng rơi khi chạm đáy hoặc khối khác, và hiệu ứng trực quan. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Để khối rơi đến đáy hoặc trên khối đã dừng.
-        \item Quan sát khối dừng và hiệu ứng (nếu có).
-        \item Kiểm tra không rơi thêm.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu khối dừng đúng lúc và hiệu ứng rõ. Fail nếu tiếp tục rơi hoặc không hiệu ứng.
-    \item \textbf{Test v1 gameCore/app.cpp: Hiệu ứng xoá dòng.} \\
-    \textbf{Mô tả:} Test kiểm tra hiệu ứng khi xoá dòng đầy, như làm mờ hoặc hiệu ứng trực quan. \\
-    \textbf{Kịch bản kiểm thử:} 
-    \begin{enumerate}
-        \item Tạo một dòng đầy và để khối dừng.
-        \item Quan sát hiệu ứng xoá dòng.
-        \item Kiểm tra dòng biến mất và điểm tăng.
-    \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu hiệu ứng mượt và dòng xoá đúng. Fail nếu không hiệu ứng hoặc xoá sai.
-    \item \textbf{Test Input Lưới:} Truyền input qua Terminal (W/A/S/D) để kiểm tra luồng di chuyển trên lưới.
-    \item \textbf{Test Xóa Hàng:} Nhét mock-data (1 hàng đầy) vào ma trận $\rightarrow$ Nhập lệnh cập nhật vòng lặp $\rightarrow$ Expected: Hàng bị xóa, trả về điểm số tương ứng.
-    \item \textbf{Test removeLine:} Thiết lập một hàng đầy trong bảng, gọi hàm \texttt{removeLine()} và kiểm tra trạng thái ma trận sau khi xoá. $\rightarrow$ Expected: dòng đầy biến mất, các dòng phía trên trượt xuống một vị trí, dòng đầu tiên trên cùng được điền bằng khoảng trắng và các cạnh tường `#` không thay đổi.
-    \item \textbf{Test tốc độ rơi tăng sau removeLine:} Thực hiện một hoặc nhiều lần xoá hàng đầy và quan sát tốc độ rơi của block tiếp theo. $\rightarrow$ Expected: sau mỗi lần gọi \texttt{removeLine()} thành công, tốc độ rơi tăng nhanh hơn so với tốc độ trước đó.
-    \item \textbf{Test giao diện viền và block vuông:} Kiểm tra hiển thị khung màn hình và khối rơi ở chế độ GUI/console, đảm bảo mỗi ô có tỉ lệ 1:1, không bị dãn méo thành hình chữ nhật. $\rightarrow$ Expected: khung và block hiển thị đồng nhất, các ô vuông, góc vuông rõ ràng và không có hiện tượng kéo dãn bất thường.
-    \item \textbf{Test Xoay Block:} Đặt block vào nhiều vị trí khác nhau, bao gồm vị trí trung tâm, sát tường và sát đáy, sau đó nhấn phím xoay. $\rightarrow$ Expected: block xoay đúng hình dạng mong đợi, không bị biến dạng, không chồng lên biên và không vượt quá ranh giới ma trận.
-    \item \textbf{Test Xoay Chặn (Wall Kick):} Đặt khối sát tường (biên ma trận) $\rightarrow$ Nhấn lệnh Xoay $\rightarrow$ Expected: Khối không bị xoay vượt ra ngoài index của ma trận lưới.
+    \item \textbf{Test layout và build} \\
+    \textbf{Mô tả:} Kiểm tra build gameCore và tỷ lệ màn hình 9:16. \\
+    \textbf{Kịch bản:} Build bằng g++ hoặc CMake, chạy và kiểm tra tỷ lệ cửa sổ trên nhiều độ phân giải. \\
+    \textbf{Kết quả:} Pass nếu build thành công và cửa sổ hiển thị đúng 9:16.
+    \item \textbf{Test tạo khối cơ bản} \\
+    \textbf{Mô tả:} Kiểm tra sáu khối L, I, T, Z trái, Z phải, O hiển thị đúng và đơn sắc. \\
+    \textbf{Kịch bản:} Khởi tạo từng khối riêng, quan sát hình dạng và màu. \\
+    \textbf{Kết quả:} Pass nếu mỗi khối có đủ ô, đúng hình và màu đồng nhất.
+    \item \textbf{Test màu ngẫu nhiên} \\
+    \textbf{Mô tả:} Kiểm tra khối nhận màu ngẫu nhiên trong danh sách Blue, Red, Green, Yellow, Orange, Purple. \\
+    \textbf{Kịch bản:} Tạo nhiều khối liên tiếp và xác nhận màu ngẫu nhiên. \\
+    \textbf{Kết quả:} Pass nếu màu thuộc danh sách và không cố định một giá trị.
+    \item \textbf{Test rơi tự do} \\
+    \textbf{Mô tả:} Kiểm tra khối rơi từ vị trí trên cùng mà không bị treo. \\
+    \textbf{Kịch bản:} Thả khối lên trên cùng, quan sát chuyển động và tốc độ rơi. \\
+    \textbf{Kết quả:} Pass nếu khối rơi đều và không dừng sai chỗ.
+    \item \textbf{Test di chuyển và xoay} \\
+    \textbf{Mô tả:} Kiểm tra di chuyển trái/phải và xoay với phím mũi tên và WASD. \\
+    \textbf{Kịch bản:} Dùng A/D hoặc mũi tên để dịch chuyển, W hoặc mũi tên lên để xoay. \\
+    \textbf{Kết quả:} Pass nếu khối thay đổi vị trí và hướng đúng.
+    \item \textbf{Test chạm và dừng} \\
+    \textbf{Mô tả:} Kiểm tra khối dừng khi chạm đáy hoặc khối khác. \\
+    \textbf{Kịch bản:} Để khối rơi đến đáy và quan sát trạng thái dừng. \\
+    \textbf{Kết quả:} Pass nếu khối dừng đúng và không tiếp tục rơi.
+    \item \textbf{Test xoá dòng} \\
+    \textbf{Mô tả:} Kiểm tra hiệu ứng xoá dòng khi hàng đầy. \\
+    \textbf{Kịch bản:} Tạo một hàng đầy trong bảng, đợi khối dừng và quan sát xoá dòng. \\
+    \textbf{Kết quả:} Pass nếu dòng đầy biến mất và điểm cập nhật.
+    \item \textbf{Test tính điểm} \\
+    \textbf{Mô tả:} Kiểm tra điểm số khi xoá dòng. \\
+    \textbf{Kịch bản:} Xoá 1 hoặc nhiều dòng, đối chiếu điểm với luật. \\
+    \textbf{Kết quả:} Pass nếu điểm thay đổi đúng theo số dòng.
+    \item \textbf{Test tốc độ tăng theo điểm} \\
+    \textbf{Mô tả:} Kiểm tra tốc độ rơi tăng dần khi điểm tăng. \\
+    \textbf{Kịch bản:} Xoá liên tiếp nhiều dòng và quan sát tốc độ khối sau mỗi lần. \\
+    \textbf{Kết quả:} Pass nếu khối rơi nhanh hơn khi điểm cao hơn.
+    \item \textbf{Test nhạc nền liên tục} \\
+    \textbf{Mô tả:} Kiểm tra nhạc nền chạy xuyên suốt trò chơi. \\
+    \textbf{Kịch bản:} Bật game và để chạy nhiều phút, quan sát nhạc nền. \\
+    \textbf{Kết quả:} Pass nếu nhạc không bị ngắt giữa chừng.
+    \item \textbf{Test dự báo 3 khối} \\
+    \textbf{Mô tả:} Kiểm tra chức năng hiển thị ba khối tiếp theo. \\
+    \textbf{Kịch bản:} Chơi và quan sát khu vực dự báo khi khối hiện tại rơi. \\
+    \textbf{Kết quả:} Pass nếu luôn có 3 khối dự báo và đúng thứ tự.
+    \item \textbf{Test pause/play} \\
+    \textbf{Mô tả:} Kiểm tra chức năng tạm dừng và tiếp tục. \\
+    \textbf{Kịch bản:} Nhấn pause, quan sát dừng chuyển động và nhạc; sau đó tiếp tục. \\
+    \textbf{Kết quả:} Pass nếu game dừng/tiếp tục chính xác.
+    \item \textbf{Test quit} \\
+    \textbf{Mô tả:} Kiểm tra nút thoát game. \\
+    \textbf{Kịch bản:} Nhấn quit trong khi chơi và xác nhận thoát. \\
+    \textbf{Kết quả:} Pass nếu ứng dụng đóng đúng.
+    \item \textbf{Test nhập tên game over} \\
+    \textbf{Mô tả:} Kiểm tra cho phép nhập tên khi game over. \\
+    \textbf{Kịch bản:} Chơi đến khi hết mạng, nhập tên và xác nhận. \\
+    \textbf{Kết quả:} Pass nếu tên được chấp nhận và hiển thị.
+    \item \textbf{Test gửi điểm lên Mongo Atlas} \\
+    \textbf{Mô tả:} Kiểm tra gọi API và gửi tên, điểm. \\
+    \textbf{Kịch bản:} Kết thúc game, nhập tên, gửi dữ liệu lên API và kiểm tra phản hồi. \\
+    \textbf{Kết quả:} Pass nếu dữ liệu được gửi và nhận phản hồi thành công.
+    \item \textbf{Test removeLine với mock data} \\
+    \textbf{Mô tả:} Kiểm tra hàm \texttt{removeLine()} với dữ liệu giả lập. \\
+    \textbf{Kịch bản:} Thiết lập một hàng đầy, gọi hàm và kiểm tra ma trận. \\
+    \textbf{Kết quả:} Pass nếu hàng đầy bị xóa, hàng trên trượt xuống và biên tường không đổi.
+    \item \textbf{Test xoay chặn sát tường} \\
+    \textbf{Mô tả:} Kiểm tra xoay khối khi gần biên. \\
+    \textbf{Kịch bản:} Đặt khối sát tường, xoay và quan sát. \\
+    \textbf{Kết quả:} Pass nếu khối không vượt ra khỏi bảng.
 \end{itemize}
 
 \subsection{Mô tả kỹ thuật chi tiết kiểm thử chức năng Game Core}
