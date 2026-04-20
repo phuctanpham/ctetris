@@ -17,5 +17,23 @@
     {\large Dự án: ctetris}
 \end{center}
 
+% ===== SECTION 1 =====
+\textbf{1. Xử lí conflict khi trộn hai dòng phát triển giữa lập trình viên và kiểm thử viên (tester)}
+\begin{itemize}
+    \item \textbf{Thống kê conflict:}
+    \begin{itemize}
+        \item Trong quá trình phát triển dự án, có 1 conflict xảy ra khi merge nhánh main vào nhánh truongtm/bien-ban-hop-ngay-02.
+        \item File bị conflict: \texttt{doc/src/content/11-testStrategy.tex}.
+        \item Nguyên nhân: Lập trình viên (trên nhánh main) đã viết đầy đủ chiến lược kiểm thử, trong khi kiểm thử viên (trên nhánh truongtm) đã thay thế bằng phiên bản ngắn hơn với các ghi chú để tự viết thêm.
+        \item Cách xử lý: Resolve conflict bằng cách giữ phiên bản từ kiểm thử viên, vì phiên bản đó phù hợp hơn với quy trình phát triển của nhóm.
+    \end{itemize}
+    \item \textbf{Quy trình xử lý conflict:}
+    \begin{itemize}
+        \item Phát hiện conflict khi thực hiện merge.
+        \item Thảo luận giữa lập trình viên và kiểm thử viên để quyết định phiên bản nào được giữ.
+        \item Sử dụng công cụ Git để resolve và commit merge.
+    \end{itemize}
+\end{itemize}
+
 \label{LastPageTeamConflictSolving}
 \end{document}
