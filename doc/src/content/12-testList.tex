@@ -190,6 +190,19 @@ Phần này đảm bảo trải nghiệm cốt truyện toàn diện, với tổ
     \textbf{Tiêu chí pass/fail:} Pass nếu nút setting mở popup đúng, nút close đóng popup thành công, popup hiển thị nội dung cấu hình hợp lý. Fail nếu popup không xuất hiện, không đóng được, hoặc ứng dụng bị lỗi. \\
     \textbf{Trường hợp biên:} Test khi popup setting đã mở, nhấn nút setting lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp.
 
+    \item \textbf{Test v2 gameConsole/app.cpp: Điều chỉnh âm lượng.} \\
+    \textbf{Mô tả:} Test này kiểm tra chức năng điều chỉnh âm lượng trong màn hình setting của console app. Người dùng cần có công cụ thay đổi âm lượng dễ sử dụng, và giá trị âm lượng phải được cập nhật ngay lập tức khi chỉnh. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Mở popup setting và tìm điều khiển âm lượng (slider, phím tăng/giảm hoặc menu chọn).
+        \item Tăng âm lượng từ mức thấp đến cao, xác nhận âm thanh nền hoặc hiệu ứng được tăng lên.
+        \item Giảm âm lượng xuống mức thấp nhất, xác nhận âm thanh giảm tương ứng hoặc tắt nếu về 0.
+        \item Thay đổi âm lượng và quay lại menu chính, kiểm tra giá trị âm lượng được giữ lại hoặc áp dụng theo chính sách thiết kế.
+        \item Test với thao tác nhanh và nhiều lần để đảm bảo không bị giật, không thay đổi sai giá trị.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu âm lượng có thể điều chỉnh chính xác, âm thanh thay đổi tương ứng và không gây lỗi. Fail nếu điều khiển không hoạt động, giá trị không cập nhật, hoặc áp dụng sai mức âm lượng. \\
+    \textbf{Trường hợp biên:} Test khi đặt âm lượng về 0, khi kéo cao tối đa, và khi thay đổi liên tục trong khoảng ngắn; test nếu popup setting đóng mà không lưu.
+
     \item \textbf{Test v1 gameConsole/app.cpp: Chèn nhạc nền trong quá trình ở màn hình game console.} \\
     \textbf{Mô tả:} Test này kiểm tra việc bổ sung nhạc nền chạy xuyên suốt màn hình game console, bao gồm mở nhạc khi vào màn hình chơi và tắt khi thoát hoặc đóng popup. Nhạc nền cần được phát mượt và không ảnh hưởng tới thao tác điều khiển. \\
     \textbf{Kịch bản kiểm thử:} 
