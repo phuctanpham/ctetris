@@ -14,14 +14,274 @@
 \onehalfspacing
 \section{Chiến lược kiểm thử}
 
-\subsection{Các chiến lược kiểm thử trò chơi điện tử}
-// tự viết thêm: 
+\subsection{Giới thiệu chung}
+Trong ngành phát triển game điện tử, kiểm thử đóng vai trò quan trọng để đảm bảo sản phẩm đạt chất lượng cao, đặc biệt với các game puzzle như Tetris – một trong những game cổ điển đòi hỏi logic chính xác, tương tác thời gian thực và trải nghiệm người dùng mượt mà. Dự án game xếp hình hiện tại, dựa trên cấu trúc module `gameCore`, `gameConsole` và `gameStory` như mô tả trong `app/appTree.md`, được thiết kế để hỗ trợ phát triển song song bởi nhiều lập trình viên.
 
-\subsection{Lợi thế của chiến lược lựa chọn}
-// tự viết thêm:  
-\subsection{Tác dụng phụ và các đánh đổi cần cân nhắc}
-// tự viết thêm: 
+Chiến lược kiểm thử được xây dựng dựa trên các phương pháp tiêu chuẩn trong ngành game dev, bao gồm kiểm thử đơn vị, tích hợp, hệ thống, hồi quy, hiệu năng và trải nghiệm người dùng. Chiến lược này không chỉ tập trung vào việc phát hiện lỗi kỹ thuật mà còn đảm bảo gameplay thú vị, cân bằng độ khó và tính công bằng, phù hợp với đặc thù của Tetris như xử lý khối Tetrimino, xóa dòng, tính điểm và quản lý trạng thái game.
 
+Ba nguyên tắc cốt lõi của chiến lược:
+- Tách bạch kiểm thử theo module để tối ưu hóa công việc nhóm và phát hiện lỗi sớm.
+- Tích hợp kiểm thử để đảm bảo các module hoạt động đồng bộ, tránh lỗi giao tiếp.
+- Duy trì kiểm thử hồi quy và hệ thống để bảo vệ tính ổn định khi codebase mở rộng.
+
+Chiến lược ưu tiên kiểm thử `gameCore` (logic lõi), sau đó `gameConsole` (giao diện) và `gameStory` (nội dung), với sự kết hợp giữa kiểm thử tự động và thủ công để phù hợp với quy trình phát triển game chuyên nghiệp.
+
+\subsection{Mục tiêu kiểm thử}
+Trong ngành phát triển game điện tử, chiến lược kiểm thử không chỉ dừng lại ở việc kiểm tra lỗi mà còn đảm bảo sản phẩm đáp ứng kỳ vọng người chơi. Mục tiêu chính của chiến lược kiểm thử cho dự án Tetris bao gồm:
+- Bảo đảm tính đúng đắn của luật chơi Tetris: xử lý chính xác các khối Tetrimino, xoay, di chuyển, va chạm và xóa dòng để duy trì tính công bằng và thú vị.
+- Đảm bảo tương tác thời gian thực: phản hồi nhanh chóng với đầu vào người chơi, tránh lag hoặc delay ảnh hưởng đến trải nghiệm.
+- Giảm thiểu lỗi tích hợp trong môi trường phát triển nhóm: đảm bảo các module `gameCore`, `gameConsole` và `gameStory` phối hợp mượt mà khi nhiều lập trình viên đóng góp.
+- Duy trì tính nhất quán và ổn định: hiển thị giao diện console chính xác, quản lý trạng thái game và tránh crash hoặc hành vi bất ngờ.
+- Phát hiện sớm lỗi hồi quy: khi thêm tính năng mới như tăng tốc độ rơi hoặc chế độ chơi, đảm bảo không phá vỡ chức năng cũ.
+- Đảm bảo hiệu năng và khả năng mở rộng: game chạy mượt trên nhiều cấu hình, hỗ trợ thêm chế độ chơi hoặc nội dung mà không giảm chất lượng.
+- Cung cấp nền tảng cho chuyển giao và bảo trì: test case rõ ràng giúp lập trình viên mới dễ dàng tiếp cận và duy trì codebase.
+
+Những mục tiêu này được thực hiện qua các loại kiểm thử ngành: unit testing, integration testing, system testing, regression testing, performance testing, usability testing, alpha/beta testing và các phương pháp bổ sung như fuzz testing.
+
+\subsection{Phạm vi kiểm thử}
+Trong ngành phát triển game điện tử, phạm vi kiểm thử phải bao quát toàn bộ vòng đời game, từ logic cốt lõi đến trải nghiệm người chơi. Đối với Tetris, một game puzzle đòi hỏi độ chính xác cao, phạm vi kiểm thử tập trung vào các yếu tố then chốt như luật chơi, tương tác và hiệu năng.
+
+\subsubsection{Kiểm thử `gameCore`}
+Là trái tim của game Tetris, `gameCore` xử lý logic gameplay. Phạm vi kiểm thử bao gồm:
+- Tạo và quản lý 7 loại Tetrimino (I, O, T, S, Z, J, L) theo thứ tự ngẫu nhiên nhưng công bằng (bag randomizer).
+- Di chuyển và xoay khối theo quy tắc Super Rotation System (SRS): kiểm tra xoay 0°, 90°, 180°, 270° và wall kicks khi chạm biên.
+- Phát hiện va chạm chính xác: khối dừng khi chạm đáy, thành bên hoặc khối đã đặt, không cho phép overlap.
+- Xóa dòng và tính điểm: xóa 1-4 dòng cùng lúc (single, double, triple, Tetris), cập nhật điểm theo công thức chuẩn (ví dụ: Tetris = 800 điểm ở level 1), và dịch chuyển khối phía trên xuống.
+- Quản lý trạng thái game: chuyển từ playing sang paused, game over khi board đầy, và restart.
+- Tiến trình level và tốc độ: tăng level mỗi 10 dòng, tốc độ rơi tăng dần, đảm bảo tính thách thức và cân bằng.
+- Điều kiện biên: xoay ở góc, xóa dòng ở đáy, game over khi không gian spawn bị chặn.
+
+Kiểm thử sử dụng dữ liệu cố định (fixed board states) và kịch bản động để bao phủ các trường hợp edge case, đảm bảo logic Tetris chính thống.
+
+\subsubsection{Kiểm thử `gameConsole`}
+`gameConsole` quản lý giao diện console, một phần quan trọng trong trải nghiệm Tetris cổ điển. Phạm vi kiểm thử bao gồm:
+- Xử lý đầu vào bàn phím chuẩn: mũi tên trái/phải/xuống cho di chuyển, lên cho xoay, space cho rơi nhanh, P cho pause.
+- Hiển thị ASCII art của board 10x20, Tetrimino hiện tại, next piece, score, level và lines cleared.
+- Vòng lặp game loop: cập nhật mỗi frame (ví dụ 60 FPS), vẽ lại màn hình mà không flicker hoặc lag.
+- Quản lý trạng thái UI: hiển thị menu pause, game over screen, high score, và chuyển tiếp mượt mà.
+- Tương thích terminal: đảm bảo hiển thị đúng trên các emulator khác nhau, không bị wrap text hoặc color issues nếu có.
+- Phản hồi đầu vào: không delay, không miss input, xử lý hold keys cho di chuyển liên tục.
+
+Kiểm thử phân chia thành logic rendering (chuỗi ký tự chính xác) và input handling (event processing).
+
+\subsubsection{Kiểm thử `gameStory`}
+Nếu Tetris có yếu tố story (như chế độ campaign hoặc narrative), `gameStory` quản lý nội dung. Phạm vi kiểm thử bao gồm:
+- Kích hoạt events dựa trên tiến trình: ví dụ unlock level mới sau đạt điểm cao, hoặc hiển thị tips khi stuck.
+- Hiển thị text và transitions: không gián đoạn gameplay, có thể skip hoặc pause.
+- Tương thích trạng thái: story không interfere với core logic, chỉ trigger khi phù hợp.
+- Cập nhật dynamic content: thay đổi story dựa trên performance người chơi.
+
+Nếu story chưa phát triển, kiểm thử tập trung vào placeholder và scalability.
+
+\subsubsection{Kiểm thử tích hợp}
+Trong game dev, integration testing đảm bảo các subsystem hoạt động như một thể. Phạm vi bao gồm:
+- Đồng bộ `gameCore` và `gameConsole`: trạng thái board và piece được render chính xác, input từ console cập nhật logic đúng.
+- Tích hợp `gameStory`: events từ core trigger story elements mà không lag.
+- End-to-end scenarios: chơi full game từ spawn đến game over, bao gồm pause/resume, scoring, level up.
+- Stress testing: chơi lâu để kiểm tra memory leaks, performance degradation.
+
+Kiểm thử này sử dụng mock objects cho isolated testing và real runs cho full integration.
+
+\subsection{Chiến lược kiểm thử theo lớp}
+Trong ngành game dev, chiến lược kiểm thử được phân lớp để phù hợp với quy trình production pipeline, từ pre-alpha đến release. Đối với Tetris, chiến lược tập trung vào gameplay loop và user engagement.
+
+\subsubsection{Kiểm thử đơn vị}
+Là nền tảng, unit testing kiểm tra các component nhỏ.
+- `gameCore`: Test hàm rotate Tetrimino, collision detection, line clear logic.
+- `gameConsole`: Test input parsing, rendering functions.
+- `gameStory`: Test event triggers.
+
+Sử dụng frameworks như Google Test để automate, đảm bảo code quality từ early stages.
+
+\subsubsection{Kiểm thử tích hợp}
+Kiểm tra interactions giữa modules.
+- Test `gameCore` + `gameConsole`: Input từ console cập nhật board đúng, display phản ánh logic.
+- Test với `gameStory`: Events như level up trigger story elements.
+- Sử dụng stubs/mocks để isolate, focus on interfaces.
+
+\subsubsection{Kiểm thử hệ thống}
+End-to-end testing cho full game experience.
+- Playthrough scenarios: Spawn, move, rotate, clear lines, game over.
+- Stress testing: Long sessions để check stability, memory usage.
+- Compatibility testing: Run trên different terminals, OS versions.
+
+\subsubsection{Kiểm thử hồi quy}
+Automated regression suite chạy sau mỗi change.
+- Cover core mechanics: Tetrimino spawning, scoring, state transitions.
+- Use CI/CD để trigger, prevent regressions in Tetris logic.
+
+\subsubsection{Kiểm thử hiệu năng}
+Critical cho real-time games như Tetris.
+- Frame rate testing: Ensure 60 FPS, no drops during fast play.
+- Input latency: Measure response time for key presses.
+- Load testing: Simulate high-speed gameplay, check CPU/memory.
+- Benchmarking: Compare performance across builds.
+
+\subsubsection{Kiểm thử trải nghiệm người dùng (Playtesting)}
+Focus on fun factor và usability.
+- Usability testing: Players navigate menus, controls feel intuitive.
+- Balance testing: Difficulty curves, scoring feels fair.
+- Accessibility: Game playable for different skill levels.
+- Feedback loops: Collect player input on engagement, frustration points.
+
+Trong Tetris, playtesting đảm bảo game addictive, not frustrating due to bugs.
+
+
+
+\subsection{Chiến lược kiểm thử phù hợp với nhiều lập trình viên}
+Khi nhiều lập trình viên cùng làm việc, yếu tố quy trình kiểm thử và phối hợp trở nên quan trọng.
+
+\subsubsection{Phân chia trách nhiệm rõ ràng}
+Mỗi module phải có người chịu trách nhiệm chính:
+- `gameCore`: chịu trách nhiệm về toàn bộ logic xử lý game.
+- `gameConsole`: chịu trách nhiệm về giao diện và tương tác người dùng.
+- `gameStory`: chịu trách nhiệm về nội dung và quy trình truyện.
+
+Phân chia trách nhiệm rõ ràng giúp giảm xung đột và tạo ra điểm kiểm soát cụ thể khi đưa ra review hoặc sửa lỗi.
+
+\subsubsection{Giao thức kiểm thử chung}
+Cần thiết lập giao thức kiểm thử chung:
+- Quy ước đặt tên test case và thư mục lưu trữ.
+- Mô tả rõ input, output và hành vi mong đợi.
+- Định nghĩa rõ ràng các ranh giới giữa module.
+- Yêu cầu mọi commit liên quan đến feature đều kèm theo kết quả kiểm thử đã chạy.
+
+\subsubsection{Tài liệu hóa API và interface}
+Đối với mỗi module, cần tài liệu hóa giao diện công khai:
+- Với `gameCore`, liệt kê các hàm, cấu trúc dữ liệu và sự kiện trả về.
+- Với `gameConsole`, liệt kê các phương thức nhận đầu vào và phản hồi trạng thái.
+- Với `gameStory`, liệt kê các sự kiện kích hoạt và thông tin cần nhận.
+
+Tài liệu hóa giúp lập trình viên khác dễ dàng viết kiểm thử liên quan mà không cần hiểu toàn bộ mã nguồn.
+
+\subsubsection{Quy trình pull request và kiểm thử}
+Chiến lược kiểm thử phải gắn chặt với quy trình quản lý mã nguồn:
+- Mỗi PR cần nêu rõ kiểm thử đã thực hiện.
+- Yêu cầu chạy test đơn vị và test tích hợp trước khi merge.
+- Nếu có CI, tích hợp test tự động để kiểm tra mỗi PR.
+- Reviewer cần xác minh tên test case, phạm vi kiểm thử và kết quả.
+
+\subsection{Kiểm thử tự động}
+Kiểm thử tự động là thành phần quan trọng để đảm bảo phát triển hiệu quả.
+
+\subsubsection{Lựa chọn framework}
+Nên sử dụng các framework kiểm thử phù hợp với C++ như Google Test hoặc Catch2. Các framework này cho phép viết test case rõ ràng, dễ đọc và tích hợp vào pipeline build.
+
+\subsubsection{Chiến lược viết test}
+Viết test theo nguyên tắc:
+- Test đơn vị cho các hàm xử lý lõi.
+- Test tích hợp cho luồng gửi lệnh và nhận trạng thái giữa module.
+- Test hệ thống cho luồng toàn bộ từ `main.cpp`.
+- Test hồi quy cho các tính năng quan trọng.
+
+\subsubsection{Tách logic xử lý khỏi hiển thị}
+Để kiểm thử tự động hiệu quả, cần tách logic lõi khỏi hiển thị console:
+- `gameCore` chỉ thao tác với dữ liệu, không in ra màn hình.
+- `gameConsole` chuyển dữ liệu sang chuỗi ký tự và chỉ chịu trách nhiệm hiển thị.
+
+Cách tách này giúp viết test tự động cho `gameCore` mà không cần bắt chước terminal.
+
+\subsubsection{Đo độ bao phủ}
+Theo dõi độ bao phủ giúp đánh giá mức độ hoàn chỉnh của bộ test tự động. Ưu tiên đạt độ bao phủ cao ở các phần:
+- Xử lý va chạm và xoay khối.
+- Xử lý xóa dòng và cập nhật điểm.
+- Chuyển trạng thái game.
+
+\subsection{Kiểm thử thủ công}
+Một số tình huống vẫn phải kiểm thử thủ công, đặc biệt là phần giao diện console và trải nghiệm người dùng.
+
+\subsubsection{Thiết kế ca kiểm thử thủ công}
+Cần xây dựng danh sách ca kiểm thử chi tiết. Mỗi ca nên nêu rõ:
+- Các bước thực hiện.
+- Kết quả mong đợi.
+- Ghi chú điều kiện ngoại lệ.
+
+Ví dụ các ca kiểm thử:
+- Chơi game đến khi xóa 1 dòng, 2 dòng, 3 dòng và 4 dòng.
+- Thực hiện xoay khối khi chạm cạnh trái, cạnh phải, và trên đỉnh cao.
+- Nhấn giữ phím để di chuyển khối và quan sát phản hồi.
+- Tạm dừng và tiếp tục, xem thông tin trạng thái có giữ nguyên.
+- Chơi đến khi game over và bắt đầu lại.
+- Kích hoạt sự kiện `gameStory` nếu có.
+
+\subsubsection{Kiểm thử khám phá}
+Kiểm thử khám phá nên được thực hiện bởi các thành viên QA hoặc lập trình viên khác:
+- Chơi game với cách sử dụng bất thường.
+- Thử nhập phím khi game đang tạm dừng.
+- Thay đổi tốc độ rơi khi đang chơi.
+- Chạy game lâu để kiểm tra ổn định.
+
+\subsubsection{Phản hồi người dùng và tính dễ dùng}
+Kiểm thử thủ công còn nhằm kiểm tra cảm nhận người dùng:
+- Các phím điều khiển có dễ nhớ không.
+- Thông tin hiển thị có rõ ràng, dễ hiểu không.
+- Thời gian phản hồi phím có trực tiếp và không bị delay.
+- Các thông báo như pause, game over có dễ phân biệt không.
+
+\subsection{Quản lý tài liệu và báo cáo kiểm thử}
+Chiến lược kiểm thử cần đi đôi với tài liệu rõ ràng và quy trình báo cáo.
+
+\subsubsection{Tài liệu test case}
+Mỗi test case cần ghi chép:
+- Tiêu đề.
+- Mục tiêu kiểm thử.
+- Điều kiện ban đầu.
+- Các bước thực hiện.
+- Kết quả dự kiến.
+- Kết quả thực tế và ghi chú.
+
+Tài liệu này nên được lưu trữ tập trung và cập nhật mỗi khi logic thay đổi.
+
+\subsubsection{Báo cáo lỗi}
+Khi phát hiện lỗi, cần ghi báo cáo chi tiết:
+- Mô tả rõ hành vi sai.
+- Trình bày cách tái tạo lỗi.
+- Chỉ rõ module liên quan.
+- Gắn thẻ mức độ ưu tiên.
+- Kèm theo test case đã chạy.
+
+\subsection{Đánh giá rủi ro và ưu tiên kiểm thử}
+Chiến lược kiểm thử phải dựa trên đánh giá rủi ro để phân bổ nguồn lực phù hợp.
+
+\subsubsection{Rủi ro cao}
+- Lỗi logic `gameCore` làm sai quy tắc xếp khối hoặc xóa dòng.
+- Lỗi tương tác giữa `gameCore` và `gameConsole` khiến thông tin hiển thị sai.
+- Lỗi game over hoặc khởi động lại không đúng.
+
+\subsubsection{Rủi ro trung bình}
+- Lỗi hiển thị thông tin điểm, trạng thái hoặc bảng chơi.
+- Lỗi trong `gameStory` khiến sự kiện kích hoạt sai lúc chơi.
+
+\subsubsection{Rủi ro thấp}
+- Lỗi về thẩm mỹ hiển thị như ký tự viền.
+- Lỗi ở các chức năng mở rộng không ảnh hưởng đến gameplay cơ bản.
+
+
+
+\subsection{Lý do chọn chiến lược kiểm thử hiện tại}
+Chiến lược kiểm thử hiện tại được chọn vì phù hợp với cấu trúc module của dự án và môi trường phát triển nhiều lập trình viên, đồng thời cân bằng giữa hiệu quả và chi phí.
+
+- Phù hợp với kiến trúc module: Chiến lược tập trung vào kiểm thử từng module riêng biệt (`gameCore`, `gameConsole`, `gameStory`) giúp dễ dàng phân chia công việc và phát hiện lỗi sớm trong từng phần, thay vì kiểm thử toàn bộ hệ thống ngay từ đầu.
+- Hỗ trợ phát triển song song: Với nhiều lập trình viên, chiến lược này cho phép mỗi người tự kiểm thử module của mình, giảm xung đột và tăng hiệu quả phối hợp thông qua kiểm thử tích hợp và hệ thống.
+- Cân bằng giữa tự động và thủ công: Kết hợp kiểm thử tự động cho logic lõi và thủ công cho trải nghiệm người dùng, đảm bảo độ tin cậy mà không tốn quá nhiều tài nguyên.
+- Tập trung vào rủi ro cao: Ưu tiên kiểm thử `gameCore` và tích hợp, nơi lỗi có thể ảnh hưởng lớn nhất đến gameplay, trong khi vẫn bao phủ các phần khác.
+- Dễ mở rộng và bảo trì: Chiến lược này dễ dàng thêm các chiến lược bổ sung như fuzzing hoặc model-based testing khi dự án phát triển, và có thể tích hợp với CI/CD để tự động hóa quy trình.
+- Tránh các chiến lược quá phức tạp: Không chọn các phương pháp như model-based testing làm chính vì đòi hỏi chuyên môn cao và thời gian xây dựng mô hình, trong khi chiến lược hiện tại đã đủ mạnh cho một game đơn giản như Tetris.
+- Dựa trên thực tiễn: Chiến lược này dựa trên các phương pháp kiểm thử tiêu chuẩn cho game và phần mềm module hóa, đã được chứng minh hiệu quả trong các dự án tương tự, giúp giảm rủi ro và tăng chất lượng sản phẩm cuối cùng.
+
+\subsection{Kết luận}
+Chiến lược kiểm thử trình bày ở trên được thiết kế phù hợp với ngành phát triển game điện tử, đặc biệt cho thể loại puzzle như Tetris – nơi logic chính xác và trải nghiệm người dùng quyết định thành công. Bằng cách áp dụng các phương pháp kiểm thử tiêu chuẩn như unit, integration, system, regression, performance và usability testing, chiến lược đảm bảo game đạt chất lượng cao, từ gameplay mượt mà đến khả năng mở rộng.
+
+Trong môi trường phát triển nhiều lập trình viên, chiến lược này khuyến khích collaboration thông qua phân chia module rõ ràng, tài liệu API và quy trình CI/CD. Nó cũng tích hợp các phương pháp bổ sung như model-based testing và fuzzing để tăng độ tin cậy, đồng thời cân nhắc đánh đổi để tối ưu hóa nguồn lực.
+
+Chiến lược bảo đảm:
+- Logic Tetris (Tetrimino handling, scoring, level progression) được kiểm thử toàn diện.
+- Giao diện console đáp ứng tiêu chuẩn usability trong game dev.
+- Tích hợp mượt mà, tránh bugs ảnh hưởng đến fun factor.
+- Hồi quy tự động ngăn regressions khi codebase evolve.
+- Hiệu năng ổn định, phù hợp với real-time gameplay.
+
+Với chiến lược này, dự án Tetris không chỉ kỹ thuật vững chắc mà còn mang lại trải nghiệm chơi hấp dẫn, góp phần vào ngành game Việt Nam. Các nhà phát triển nên tham khảo thêm tài liệu từ GDC, IGDA guidelines và best practices từ indie game studios để tinh chỉnh thêm.
 
 
 \label{LastPageTestStrategy}
