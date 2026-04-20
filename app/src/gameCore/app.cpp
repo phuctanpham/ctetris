@@ -127,26 +127,51 @@ void removeLine(){
 int main()
 {
     srand(time(0));
-    x = 5; y = 0; b = rand()%7;
+    x = 5; y = 0; b = rand() % 7;
     initBoard();
-    while (1){
+
+    while (1) {
         boardDelBlock();
-        if (kbhit()){
-            char c = getch();
-            if (c == 'a' && canMove(-1,0)) x--;
-            if (c == 'd' && canMove( 1,0)) x++;
-            if (c == 'x' && canMove( 0,1)) y++;
-            if (c == 'q') break;
+
+        if (kbhit()) {
+            int c = getch();
+            
+            // Xử lý phím mũi tên (thường bắt đầu bằng 0 hoặc 224)
+            if (c == 0 || c == 224) {
+                char arrow = getch(); // Lấy mã thứ hai
+                if (arrow == 75 && canMove(-1, 0)) x--;      // Mũi tên TRÁI
+                else if (arrow == 77 && canMove(1, 0)) x++; // Mũi tên PHẢI
+                else if (arrow == 80 && canMove(0, 1)) y++; // Mũi tên XUỐNG
+            } 
+            else {
+                // Xử lý các phím thường
+                if (c == 'a' && canMove(-1, 0)) x--;
+                if (c == 'd' && canMove(1, 0)) x++;
+                if (c == 's' && canMove(0, 1)) y++; // Thêm 's' cho giống game hiện đại
+                if (c == 'x' && canMove(0, 1)) y++;
+                if (c == 'q') break;
+            }
         }
-        if (canMove(0,1)) y++;
-        else{
+
+        // Khối gạch tự động rơi xuống
+        if (canMove(0, 1)) {
+            y++;
+        }
+        else {
             block2Board();
             removeLine();
-            x = 5; y = 0; b = rand()%7;
+            x = 5; y = 0; b = rand() % 7;
+            // Kiểm tra nếu khối mới sinh ra đã bị kẹt thì Game Over
+            if (!canMove(0, 0)) {
+                draw();
+                cout << "GAME OVER!" << endl;
+                break;
+            }
         }
+
         block2Board();
         draw();
-        _sleep(500);
+        _sleep(300); // Giảm xuống 300ms để game mượt hơn một chút
     }
     return 0;
 }
