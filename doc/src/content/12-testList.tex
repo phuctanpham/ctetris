@@ -164,6 +164,19 @@ Phần này đảm bảo trải nghiệm cốt truyện toàn diện, với tổ
     \textbf{Tiêu chí pass/fail:} Pass nếu nút guide hiển thị popup đúng, nút close đóng popup thành công, không crash. Fail nếu popup không xuất hiện, nút close không hoạt động, hoặc có lỗi hiển thị. \\
     \textbf{Trường hợp biên:} Test khi popup đã mở, nhấn nút guide lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp.
 
+    \item \textbf{Test v1 gameConsole/app.cpp: Tạo nút board và nút close popup board.} \\
+    \textbf{Mô tả:} Test này kiểm tra việc tạo nút board để hiển thị bảng điểm hoặc leaderboard và nút close để đóng popup board trong giao diện console. Nút board cần dễ nhận biết, popup board hiển thị danh sách điểm số rõ ràng, và nút close hoạt động chính xác để đóng popup. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút board (ví dụ: nút "Board" hoặc biểu tượng bảng xếp hạng).
+        \item Nhấn nút board, kiểm tra popup board xuất hiện với danh sách điểm số hoặc leaderboard.
+        \item Quan sát nút close (ví dụ: nút "X" hoặc "Close") trong popup.
+        \item Nhấn nút close, xác nhận popup đóng và quay về giao diện chính.
+        \item Test lại nhiều lần để đảm bảo không lag hoặc lỗi.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu nút board hiển thị popup đúng, nút close đóng popup thành công, không crash. Fail nếu popup không xuất hiện, nút close không hoạt động, hoặc có lỗi hiển thị. \\
+    \textbf{Trường hợp biên:} Test khi popup đã mở, nhấn nút board lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp.
+
     \item \textbf{Test Lưu Cài Đặt:} Mở UI $\rightarrow$ Chỉnh âm lượng $\rightarrow$ Tắt app $\rightarrow$ Mở lại $\rightarrow$ Expected: Thanh âm lượng giữ nguyên vị trí cũ.
     \item \textbf{Test Cửa Sổ:} Nhấn nút Fullscreen $\rightarrow$ Expected: Resize cửa sổ hệ điều hành hoạt động trơn tru, không bị crash ứng dụng.
 \end{itemize}
