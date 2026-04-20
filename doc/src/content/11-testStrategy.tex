@@ -126,7 +126,41 @@ Focus on fun factor và usability.
 
 Trong Tetris, playtesting đảm bảo game addictive, not frustrating due to bugs.
 
+\subsection{Các chiến lược kiểm thử bổ sung}
+Ngoài các chiến lược chính đã đề cập, chiến lược kiểm thử có thể bổ sung thêm một số phương pháp khác để tăng cường độ tin cậy và bao phủ.
 
+\subsubsection{Kiểm thử dựa trên mô hình (Model-Based Testing)}
+Chiến lược này xây dựng mô hình trạng thái của game (ví dụ: máy trạng thái hữu hạn cho các trạng thái chơi, tạm dừng, game over) và tạo test case tự động từ mô hình.
+- Ưu điểm: Phát hiện lỗi chuyển trạng thái và logic phức tạp mà kiểm thử thủ công khó nắm bắt.
+- Áp dụng: Sử dụng công cụ như GraphWalker để mô hình hóa luồng game và sinh test case cho `gameCore`.
+- Tác dụng phụ: Yêu cầu kỹ năng xây dựng mô hình, có thể tốn thời gian ban đầu nhưng tiết kiệm khi codebase thay đổi.
+
+\subsubsection{Kiểm thử fuzzing}
+Fuzzing là phương pháp cung cấp đầu vào ngẫu nhiên hoặc biến đổi để kiểm tra độ bền của hệ thống.
+- Ưu điểm: Phát hiện lỗi biên và crash không mong muốn, đặc biệt với đầu vào bàn phím.
+- Áp dụng: Fuzzing cho `gameConsole` bằng cách gửi chuỗi phím ngẫu nhiên và quan sát phản hồi, hoặc fuzzing dữ liệu board trong `gameCore`.
+- Tác dụng phụ: Có thể tạo ra nhiều false positive, cần lọc kết quả và không hiệu quả cho logic quy tắc cụ thể.
+
+\subsubsection{Kiểm thử alpha và beta}
+- Alpha testing: Thực hiện bởi đội ngũ phát triển nội bộ, tập trung vào chức năng cốt lõi.
+- Beta testing: Phát hành phiên bản thử nghiệm cho người dùng bên ngoài để thu thập phản hồi thực tế.
+- Ưu điểm: Thu thập dữ liệu thực tế về trải nghiệm người dùng và lỗi không phát hiện trong môi trường kiểm soát.
+- Áp dụng: Sau khi hoàn thành kiểm thử tích hợp, tiến hành alpha testing với nhóm QA nội bộ, sau đó beta testing với một nhóm người dùng nhỏ.
+- Tác dụng phụ: Tốn thời gian và có rủi ro lộ thông tin dự án nếu không quản lý tốt.
+
+\subsubsection{Kiểm thử bảo mật cơ bản}
+Mặc dù game không liên quan đến dữ liệu nhạy cảm, vẫn cần kiểm tra bảo mật cơ bản như chống cheat hoặc injection qua đầu vào.
+- Ưu điểm: Ngăn ngừa exploit đơn giản như thay đổi điểm số hoặc trạng thái game.
+- Áp dụng: Kiểm tra đầu vào bàn phím không gây ra hành vi bất ngờ, và đảm bảo không có lỗ hổng trong xử lý dữ liệu.
+- Tác dụng phụ: Có thể không cần thiết cho game đơn giản, nhưng tốt cho việc mở rộng tương lai.
+
+\subsubsection{Kiểm thử tương thích}
+Kiểm tra game hoạt động trên các môi trường khác nhau như terminal khác nhau, hệ điều hành hoặc cấu hình phần cứng.
+- Ưu điểm: Đảm bảo game chạy ổn định trên nhiều nền tảng.
+- Áp dụng: Chạy test case trên các terminal emulator khác nhau (như xterm, gnome-terminal) và kiểm tra hiển thị.
+- Tác dụng phụ: Tăng khối lượng kiểm thử nếu hỗ trợ nhiều nền tảng, nhưng cần thiết cho phân phối rộng.
+
+Những chiến lược bổ sung này có thể được tích hợp tùy theo giai đoạn phát triển và nguồn lực có sẵn, nhằm bổ sung cho chiến lược chính.
 
 \subsection{Chiến lược kiểm thử phù hợp với nhiều lập trình viên}
 Khi nhiều lập trình viên cùng làm việc, yếu tố quy trình kiểm thử và phối hợp trở nên quan trọng.
@@ -256,7 +290,18 @@ Chiến lược kiểm thử phải dựa trên đánh giá rủi ro để phân
 - Lỗi về thẩm mỹ hiển thị như ký tự viền.
 - Lỗi ở các chức năng mở rộng không ảnh hưởng đến gameplay cơ bản.
 
+\subsection{Đánh đổi cần cân nhắc}
+Khi triển khai chiến lược kiểm thử, cần cân nhắc những điểm sau:
 
+- Thời gian viết và duy trì test case vs. tốc độ phát triển. Không nên đầu tư quá sâu vào kiểm thử trước khi sản phẩm đạt mức ổn định. Tác dụng phụ: Nếu đầu tư quá sớm, có thể lãng phí thời gian khi yêu cầu thay đổi, nhưng nếu đầu tư muộn, rủi ro lỗi tích lũy cao.
+- Kiểm thử tự động vs. kiểm thử thủ công. Kiểm thử tự động mạnh về độ lặp lại, kiểm thử thủ công mạnh về trải nghiệm người dùng. Đánh đổi: Tự động hóa tiết kiệm thời gian dài hạn nhưng đòi hỏi kỹ năng lập trình và công cụ, trong khi thủ công linh hoạt hơn nhưng dễ bỏ sót và tốn nhân lực.
+- Tiêu chuẩn API nghiêm ngặt vs. sự linh hoạt khi thay đổi yêu cầu. Cần có thỏa thuận chung để giữ ổn định giao diện module. Tác dụng phụ: API nghiêm ngặt giảm lỗi tích hợp nhưng có thể làm chậm tiến độ khi cần thay đổi nhanh, ngược lại linh hoạt hơn nhưng tăng rủi ro xung đột giữa module.
+- Phát triển song song nhiều nhánh vs. kiểm soát chất lượng. Cần có quy trình tích hợp và review chặt chẽ. Đánh đổi: Phát triển song song tăng tốc độ nhưng đòi hỏi kiểm thử tích hợp thường xuyên, nếu không sẽ dẫn đến lỗi tích hợp muộn và tốn kém sửa chữa.
+- Độ bao phủ kiểm thử vs. chi phí tài nguyên. Ưu tiên kiểm thử các phần quan trọng như `gameCore` nhưng không thể kiểm thử mọi thứ. Tác dụng phụ: Nếu bao phủ thấp, rủi ro lỗi sót cao; nếu quá cao, tốn thời gian và có thể làm chậm tiến độ.
+- Kiểm thử hồi quy vs. phát triển tính năng mới. Mỗi thay đổi cần chạy lại hồi quy, nhưng điều này có thể làm chậm việc thêm tính năng. Đánh đổi: Hồi quy đảm bảo ổn định nhưng nếu quá thường xuyên, có thể gây frustrate cho lập trình viên; nếu ít, rủi ro lỗi lan rộng.
+- Tách logic khỏi hiển thị vs. kiểm thử toàn diện. Việc tách giúp kiểm thử tự động dễ dàng nhưng có thể làm tăng độ phức tạp mã nguồn. Tác dụng phụ: Tăng khả năng bảo trì nhưng đòi hỏi thiết kế kiến trúc tốt từ đầu.
+
+Những đánh đổi này cần được cân nhắc dựa trên giai đoạn dự án: trong giai đoạn đầu, ưu tiên tốc độ phát triển và kiểm thử cơ bản; ở giai đoạn ổn định, tăng cường kiểm thử tự động và hồi quy.
 
 \subsection{Lý do chọn chiến lược kiểm thử hiện tại}
 Chiến lược kiểm thử hiện tại được chọn vì phù hợp với cấu trúc module của dự án và môi trường phát triển nhiều lập trình viên, đồng thời cân bằng giữa hiệu quả và chi phí.
