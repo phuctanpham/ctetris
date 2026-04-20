@@ -353,6 +353,15 @@ Các kịch bản kiểm thử phải áp dụng cả hai phương pháp sau:
         \item Kiểm tra với từng loại khối riêng biệt.
     \end{enumerate}
     \textbf{Tiêu chí pass/fail:} Pass nếu khối hiển thị đúng hình dạng và màu đơn sắc. Fail nếu hình dạng sai hoặc màu không đồng nhất.
+    \item \textbf{Test v1 gameCore/app.cpp: Đổ màu ngẫu nhiên (Blue, Red, Green, Yellow, Orange, Purple).} \\
+    \textbf{Mô tả:} Test kiểm tra việc gán màu ngẫu nhiên cho khối từ danh sách màu được chỉ định. Mỗi khối phải có màu khác nhau khi tạo mới. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Tạo nhiều khối liên tiếp và quan sát màu sắc.
+        \item Đảm bảo màu nằm trong danh sách: Blue, Red, Green, Yellow, Orange, Purple.
+        \item Kiểm tra phân phối ngẫu nhiên.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu màu ngẫu nhiên và trong danh sách. Fail nếu màu cố định hoặc ngoài danh sách.
     \item \textbf{Test Input Lưới:} Truyền input qua Terminal (W/A/S/D) để kiểm tra luồng di chuyển trên lưới.
     \item \textbf{Test Xóa Hàng:} Nhét mock-data (1 hàng đầy) vào ma trận $\rightarrow$ Nhập lệnh cập nhật vòng lặp $\rightarrow$ Expected: Hàng bị xóa, trả về điểm số tương ứng.
     \item \textbf{Test removeLine:} Thiết lập một hàng đầy trong bảng, gọi hàm \texttt{removeLine()} và kiểm tra trạng thái ma trận sau khi xoá. $\rightarrow$ Expected: dòng đầy biến mất, các dòng phía trên trượt xuống một vị trí, dòng đầu tiên trên cùng được điền bằng khoảng trắng và các cạnh tường `#` không thay đổi.
