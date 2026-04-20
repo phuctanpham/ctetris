@@ -14,31 +14,270 @@
 \onehalfspacing
 \section{Chiến lược kiểm thử}
 
-\subsection{Các chiến lược kiểm thử trò chơi điện tử}
-Với kiến trúc nhiều module như mô tả trong `app/appTree.md`, chiến lược kiểm thử cần xây dựng theo từng phần riêng biệt nhưng vẫn đảm bảo tích hợp chặt chẽ.
-- Kiểm thử đơn vị theo module: mỗi lập trình viên nên viết kiểm thử riêng cho module mình phụ trách.
-  + `gameCore`: kiểm thử logic xếp khối, di chuyển, xoay, rơi, kiểm tra loại dòng và xác định trạng thái kết thúc.
-  + `gameConsole`: kiểm thử giao diện điều khiển, hoạt động nhập phím, hiển thị bảng và phản hồi với trạng thái game.
-  + `gameStory`: kiểm thử phần nội dung, chuyển cảnh, tiến trình và điều kiện kích hoạt sự kiện câu chuyện.
-- Kiểm thử tích hợp: đảm bảo giao tiếp giữa `gameCore` và `gameConsole` chính xác, đồng thời `gameStory` nhận đúng sự kiện từ game core.
-- Kiểm thử hệ thống: chạy các kịch bản playthrough từ `main.cpp` để xác minh toàn bộ ứng dụng hoạt động theo quy trình đúng.
-- Kiểm thử biên và điều kiện đặc biệt: tập trung vào các tình huống cạnh như xoay khối khi gần thành, rơi xuống hàng cuối, xếp khối đầy hàng, và chuyển trạng thái khi game over.
-- Kiểm thử hồi quy: mỗi thay đổi ở module này cần kiểm tra lại các chức năng có liên quan trong toàn bộ hệ thống để phát hiện lỗi lan rộng.
+\subsection{Giới thiệu chung}
+Trong dự án game xếp hình hiện tại, hệ thống được chia thành ba module chính: `gameCore`, `gameConsole` và `gameStory`, như mô tả trong `app/appTree.md`. Thiết kế phân tán này cho phép nhiều lập trình viên làm việc song song, nhưng cũng đặt ra yêu cầu kiểm thử cao hơn bởi vì cần đảm bảo tính đúng đắn trong từng module và tính đồng nhất khi tích hợp.
 
-\subsection{Lợi thế của chiến lược lựa chọn}
-Chiến lược kiểm thử theo module giúp nhiều lập trình viên làm việc phối hợp hiệu quả.
-- Phân chia rõ trách nhiệm: mỗi module có bộ kiểm thử chuyên trách, giúp đánh giá chất lượng nhanh và rõ ràng.
-- Hạn chế xung đột: kiểm thử sớm trong từng module giúp phát hiện lỗi nội bộ trước khi hợp nhất vào hệ thống chung.
-- Dễ dàng mở rộng: khi thêm tính năng mới cho `gameStory` hoặc cải tiến `gameConsole`, chỉ cần mở rộng bộ kiểm thử của module và thêm kiểm thử tích hợp tương ứng.
-- Cải thiện phối hợp: các giao diện giữa module được định nghĩa rõ ràng, giúp lập trình viên khác dễ hiểu và kiểm tra tương tác giữa các phần.
+Chiến lược kiểm thử được xây dựng theo ba nguyên tắc chính:
+- Tách bạch kiểm thử theo module để mỗi lập trình viên dễ dàng kiểm soát phần mình phụ trách.
+- Xây dựng kiểm thử tích hợp để phát hiện lỗi giao tiếp giữa các module.
+- Duy trì kiểm thử hệ thống và hồi quy để bảo đảm tính ổn định trong toàn bộ luồng chạy của game.
 
-\subsection{Tác dụng phụ và các đánh đổi cần cân nhắc}
-Chiến lược theo module có nhiều ưu điểm nhưng cũng có chi phí cần quản lý khi nhiều người cùng phát triển.
-- Chi phí đồng bộ hóa: cần có quy ước API và tài liệu chung để đảm bảo các module khác nhau kết nối đúng.
-- Khối lượng kiểm thử tăng lên: nhiều module đồng nghĩa với nhiều bộ kiểm thử, yêu cầu duy trì thường xuyên.
-- Khó khăn tích hợp: lỗi chỉ xuất hiện khi các module kết hợp với nhau, nên cần thêm kiểm thử tích hợp và hệ thống.
-- Ưu tiên tính năng chung: cần thống nhất với nhóm về những kịch bản kiểm thử quan trọng nhất để tránh lãng phí nguồn lực cho các phần phụ.
+Nội dung chiến lược này ưu tiên kiểm thử logic cốt lõi của `gameCore`, sau đó mở rộng sang giao diện `gameConsole` và phần nội dung `gameStory`. Mỗi module đều cần có bộ kiểm thử độc lập, bộ kiểm thử tích hợp và bộ kịch bản hồi quy.
 
+\subsection{Mục tiêu kiểm thử}
+Mục tiêu chính của chiến lược kiểm thử trong dự án là:
+- Bảo đảm tính đúng đắn của luật chơi và logic xử lý khối Tetrimino.
+- Đảm bảo đầu vào người chơi được xử lý chính xác và phản hồi kịp thời.
+- Giảm thiểu lỗi tích hợp giữa các module khi nhiều lập trình viên cùng phát triển.
+- Duy trì tính nhất quán hiển thị trên console và trạng thái game.
+- Hỗ trợ phát hiện sớm lỗi hồi quy khi codebase mở rộng.
+- Cung cấp cơ sở bằng test case để có thể chuyển giao giữa các thành viên.
+
+Những mục tiêu này được cụ thể hóa bằng các loại kiểm thử sau: kiểm thử đơn vị, kiểm thử tích hợp, kiểm thử hệ thống, kiểm thử hồi quy, kiểm thử hiệu năng và kiểm thử trải nghiệm người dùng.
+
+\subsection{Phạm vi kiểm thử}
+Chiến lược kiểm thử cần bao quát tất cả các phần sau:
+
+\subsubsection{Kiểm thử `gameCore`}
+`gameCore` là lõi xử lý logic của trò chơi. Phạm vi kiểm thử `gameCore` bao gồm:
+- Tạo khối mới đúng theo thứ tự và dạng khối được định nghĩa.
+- Di chuyển trái, phải, xuống và xoay khối đúng theo quy tắc.
+- Xác định va chạm và dừng khi khối chạm thành bên hoặc đáy.
+- Xử lý xoay khi khối ở sát cạnh hoặc trên các cấu trúc cao.
+- Xóa dòng khi một hoặc nhiều hàng đầy, cập nhật điểm số và dịch chuyển khối phía trên xuống.
+- Điều kiện xác định game over khi không thể tạo khối mới hoặc khi khối chồng quá cao.
+- Cập nhật trạng thái tốc độ, cấp độ, và điểm dựa trên số dòng bị phá.
+- Chuyển đổi giữa trạng thái đang chơi, tạm dừng, kết thúc và khởi động lại.
+
+Các chức năng này phải được kiểm thử bằng dữ liệu cố định và kịch bản động, bao gồm cả trường hợp bình thường và biên.
+
+\subsubsection{Kiểm thử `gameConsole`}
+`gameConsole` xây dựng giao diện hiển thị và xử lý đầu vào. Phạm vi kiểm thử `gameConsole` bao gồm:
+- Nhận diện chính xác tổ hợp phím điều hướng.
+- Phản hồi nhanh, không bị delay khi người chơi nhấn phím.
+- Hiển thị bảng chơi, phần tử khối, vị trí tiếp theo và thông tin điểm số.
+- Quản lý vòng lặp game và chu kỳ làm mới giao diện.
+- Xử lý tạm dừng, tiếp tục và khởi động lại mà không dẫn đến phân mảnh giao diện.
+- Đảm bảo không xảy ra hiện tượng in đè, hiển thị sai ký tự hoặc mất dòng trên terminal.
+- Tương tác đúng với `gameCore`, không làm sai lệch dữ liệu hiển thị.
+
+Đối với `gameConsole`, kiểm thử có thể phân chia thành kiểm thử logic hiển thị và kiểm thử trải nghiệm nhập liệu.
+
+\subsubsection{Kiểm thử `gameStory`}
+`gameStory` là phần mở rộng nội dung. Phạm vi kiểm thử `gameStory` bao gồm:
+- Kích hoạt đúng các sự kiện khi đạt điều kiện đặt ra.
+- Chuyển cảnh và hiển thị nội dung không làm gián đoạn luồng chơi.
+- Tương thích với các trạng thái game khác nhau: tạm dừng, chơi tiếp, game over.
+- Cập nhật nội dung đúng khi dữ liệu truyện thay đổi.
+- Không làm thay đổi logic core ngoài phạm vi cho phép.
+
+Nếu dự án hiện tại chưa cung cấp cốt truyện đầy đủ, chiến lược vẫn nên dành chỗ mở cho phần `gameStory` trong quá trình kiểm thử.
+
+\subsubsection{Kiểm thử tích hợp}
+Kiểm thử tích hợp nhằm bảo đảm mọi module hoạt động trơn tru khi kết hợp. Phạm vi kiểm thử tích hợp bao gồm:
+- Giao tiếp `gameCore` và `gameConsole` qua API hoặc callback.
+- Xử lý trạng thái đồng bộ giữa hiển thị và logic game.
+- Truyền đúng sự kiện từ `gameCore` sang `gameStory` và ngược lại.
+- Chạy các kịch bản từ `main.cpp` để xác minh toàn bộ luồng khởi chạy, chơi, pause, kết thúc và restart.
+
+Kiểm thử tích hợp cần chú trọng tới các tình huống đa bước, không chỉ kiểm tra từng hàm riêng lẻ.
+
+\subsection{Chiến lược kiểm thử theo lớp}
+Để đáp ứng yêu cầu của dự án nhiều lập trình viên, chiến lược kiểm thử được thiết kế theo nhiều lớp.
+
+\subsubsection{Kiểm thử đơn vị}
+Kiểm thử đơn vị là lớp cơ bản nhất. Mỗi module cần bộ kiểm thử đơn vị độc lập:
+- `gameCore` nên có kiểm thử cho từng hàm tính toán vị trí, xử lý va chạm và cập nhật board.
+- `gameConsole` nên có kiểm thử cho hàm chuyển trạng thái, xử lý đầu vào và xây dựng chuỗi hiển thị.
+- `gameStory` nên có kiểm thử cho logic điều kiện và chuyển đổi trạng thái câu chuyện.
+
+Kiểm thử đơn vị phải đảm bảo rằng từng đoạn mã nhỏ hoạt động đúng, giúp phát hiện lỗi ngay khi viết.
+
+\subsubsection{Kiểm thử tích hợp}
+Sau kiểm thử đơn vị, cần kiểm thử tích hợp để phát hiện lỗi giao tiếp.
+
+- Dùng test double hoặc mock để cô lập module khi cần.
+- Thử nghiệm các đường luồng chính như di chuyển khối, xoay khối và xóa dòng qua toàn bộ chuỗi xử lý.
+- Kiểm tra rằng khi `gameCore` trả về trạng thái đã xóa dòng, `gameConsole` hiển thị đúng và `gameStory` nhận được sự kiện hợp lệ.
+
+\subsubsection{Kiểm thử hệ thống}
+Kiểm thử hệ thống xem toàn bộ game như một thực thể duy nhất.
+
+- Chạy các kịch bản end-to-end, bắt đầu từ `main.cpp` và thực hiện các bước như người chơi thực.
+- Kịch bản gồm nhiều bước: khởi động, chơi vài lượt, tạm dừng, tiếp tục, phá dòng, tăng tốc và game over.
+- Đây là lớp kiểm thử quan trọng nhất để đảm bảo game không chỉ chạy đúng về mặt logic mà còn vận hành ổn định.
+
+\subsubsection{Kiểm thử hồi quy}
+Kiểm thử hồi quy trước và sau khi có thay đổi mã.
+
+- Mỗi lần sửa một tính năng, chạy lại bộ test hồi quy để đảm bảo không làm hỏng chức năng khác.
+- Xây dựng danh sách kịch bản hồi quy gắn với tính năng cốt lõi: tạo khối, di chuyển, xoay, xóa dòng, tạm dừng, tiếp tục và game over.
+- Việc duy trì bộ kiểm thử hồi quy là nền tảng cho sự ổn định trong môi trường phát triển nhiều người.
+
+\subsubsection{Kiểm thử hiệu năng}
+Dù game hoạt động trên console, hiệu năng vẫn cần quan tâm.
+
+- Đo thời gian xử lý mỗi bước vòng lặp game.
+- Đánh giá phản hồi bàn phím khi tốc độ tăng cao.
+- Kiểm tra xem việc vẽ lại console có gây hiện tượng flicker hoặc giật hình.
+- Kiểm tra bộ nhớ và mức tiêu thụ CPU khi chơi lâu.
+- Đảm bảo game vẫn phản hồi tốt khi thực hiện các hành động liên tục.
+
+\subsubsection{Kiểm thử trải nghiệm người dùng}
+Phần này tập trung vào cảm giác chơi chứ không chỉ logic.
+
+- Giao diện có rõ ràng, thông tin điểm và trạng thái được trình bày dễ hiểu.
+- Phím bấm có độ nhạy phù hợp và không gây giật.
+- Thông báo tạm dừng, kết thúc và hướng dẫn xuất hiện đúng lúc.
+- Phần nội dung story không làm gián đoạn và có thể tắt hoặc bỏ qua nếu cần.
+
+\subsection{Chiến lược kiểm thử phù hợp với nhiều lập trình viên}
+Khi nhiều lập trình viên cùng làm việc, yếu tố quy trình kiểm thử và phối hợp trở nên quan trọng.
+
+\subsubsection{Phân chia trách nhiệm rõ ràng}
+Mỗi module phải có người chịu trách nhiệm chính:
+- `gameCore`: chịu trách nhiệm về toàn bộ logic xử lý game.
+- `gameConsole`: chịu trách nhiệm về giao diện và tương tác người dùng.
+- `gameStory`: chịu trách nhiệm về nội dung và quy trình truyện.
+
+Phân chia trách nhiệm rõ ràng giúp giảm xung đột và tạo ra điểm kiểm soát cụ thể khi đưa ra review hoặc sửa lỗi.
+
+\subsubsection{Giao thức kiểm thử chung}
+Cần thiết lập giao thức kiểm thử chung:
+- Quy ước đặt tên test case và thư mục lưu trữ.
+- Mô tả rõ input, output và hành vi mong đợi.
+- Định nghĩa rõ ràng các ranh giới giữa module.
+- Yêu cầu mọi commit liên quan đến feature đều kèm theo kết quả kiểm thử đã chạy.
+
+\subsubsection{Tài liệu hóa API và interface}
+Đối với mỗi module, cần tài liệu hóa giao diện công khai:
+- Với `gameCore`, liệt kê các hàm, cấu trúc dữ liệu và sự kiện trả về.
+- Với `gameConsole`, liệt kê các phương thức nhận đầu vào và phản hồi trạng thái.
+- Với `gameStory`, liệt kê các sự kiện kích hoạt và thông tin cần nhận.
+
+Tài liệu hóa giúp lập trình viên khác dễ dàng viết kiểm thử liên quan mà không cần hiểu toàn bộ mã nguồn.
+
+\subsubsection{Quy trình pull request và kiểm thử}
+Chiến lược kiểm thử phải gắn chặt với quy trình quản lý mã nguồn:
+- Mỗi PR cần nêu rõ kiểm thử đã thực hiện.
+- Yêu cầu chạy test đơn vị và test tích hợp trước khi merge.
+- Nếu có CI, tích hợp test tự động để kiểm tra mỗi PR.
+- Reviewer cần xác minh tên test case, phạm vi kiểm thử và kết quả.
+
+\subsection{Kiểm thử tự động}
+Kiểm thử tự động là thành phần quan trọng để đảm bảo phát triển hiệu quả.
+
+\subsubsection{Lựa chọn framework}
+Nên sử dụng các framework kiểm thử phù hợp với C++ như Google Test hoặc Catch2. Các framework này cho phép viết test case rõ ràng, dễ đọc và tích hợp vào pipeline build.
+
+\subsubsection{Chiến lược viết test}
+Viết test theo nguyên tắc:
+- Test đơn vị cho các hàm xử lý lõi.
+- Test tích hợp cho luồng gửi lệnh và nhận trạng thái giữa module.
+- Test hệ thống cho luồng toàn bộ từ `main.cpp`.
+- Test hồi quy cho các tính năng quan trọng.
+
+\subsubsection{Tách logic xử lý khỏi hiển thị}
+Để kiểm thử tự động hiệu quả, cần tách logic lõi khỏi hiển thị console:
+- `gameCore` chỉ thao tác với dữ liệu, không in ra màn hình.
+- `gameConsole` chuyển dữ liệu sang chuỗi ký tự và chỉ chịu trách nhiệm hiển thị.
+
+Cách tách này giúp viết test tự động cho `gameCore` mà không cần bắt chước terminal.
+
+\subsubsection{Đo độ bao phủ}
+Theo dõi độ bao phủ giúp đánh giá mức độ hoàn chỉnh của bộ test tự động. Ưu tiên đạt độ bao phủ cao ở các phần:
+- Xử lý va chạm và xoay khối.
+- Xử lý xóa dòng và cập nhật điểm.
+- Chuyển trạng thái game.
+
+\subsection{Kiểm thử thủ công}
+Một số tình huống vẫn phải kiểm thử thủ công, đặc biệt là phần giao diện console và trải nghiệm người dùng.
+
+\subsubsection{Thiết kế ca kiểm thử thủ công}
+Cần xây dựng danh sách ca kiểm thử chi tiết. Mỗi ca nên nêu rõ:
+- Các bước thực hiện.
+- Kết quả mong đợi.
+- Ghi chú điều kiện ngoại lệ.
+
+Ví dụ các ca kiểm thử:
+- Chơi game đến khi xóa 1 dòng, 2 dòng, 3 dòng và 4 dòng.
+- Thực hiện xoay khối khi chạm cạnh trái, cạnh phải, và trên đỉnh cao.
+- Nhấn giữ phím để di chuyển khối và quan sát phản hồi.
+- Tạm dừng và tiếp tục, xem thông tin trạng thái có giữ nguyên.
+- Chơi đến khi game over và bắt đầu lại.
+- Kích hoạt sự kiện `gameStory` nếu có.
+
+\subsubsection{Kiểm thử khám phá}
+Kiểm thử khám phá nên được thực hiện bởi các thành viên QA hoặc lập trình viên khác:
+- Chơi game với cách sử dụng bất thường.
+- Thử nhập phím khi game đang tạm dừng.
+- Thay đổi tốc độ rơi khi đang chơi.
+- Chạy game lâu để kiểm tra ổn định.
+
+\subsubsection{Phản hồi người dùng và tính dễ dùng}
+Kiểm thử thủ công còn nhằm kiểm tra cảm nhận người dùng:
+- Các phím điều khiển có dễ nhớ không.
+- Thông tin hiển thị có rõ ràng, dễ hiểu không.
+- Thời gian phản hồi phím có trực tiếp và không bị delay.
+- Các thông báo như pause, game over có dễ phân biệt không.
+
+\subsection{Quản lý tài liệu và báo cáo kiểm thử}
+Chiến lược kiểm thử cần đi đôi với tài liệu rõ ràng và quy trình báo cáo.
+
+\subsubsection{Tài liệu test case}
+Mỗi test case cần ghi chép:
+- Tiêu đề.
+- Mục tiêu kiểm thử.
+- Điều kiện ban đầu.
+- Các bước thực hiện.
+- Kết quả dự kiến.
+- Kết quả thực tế và ghi chú.
+
+Tài liệu này nên được lưu trữ tập trung và cập nhật mỗi khi logic thay đổi.
+
+\subsubsection{Báo cáo lỗi}
+Khi phát hiện lỗi, cần ghi báo cáo chi tiết:
+- Mô tả rõ hành vi sai.
+- Trình bày cách tái tạo lỗi.
+- Chỉ rõ module liên quan.
+- Gắn thẻ mức độ ưu tiên.
+- Kèm theo test case đã chạy.
+
+\subsection{Đánh giá rủi ro và ưu tiên kiểm thử}
+Chiến lược kiểm thử phải dựa trên đánh giá rủi ro để phân bổ nguồn lực phù hợp.
+
+\subsubsection{Rủi ro cao}
+- Lỗi logic `gameCore` làm sai quy tắc xếp khối hoặc xóa dòng.
+- Lỗi tương tác giữa `gameCore` và `gameConsole` khiến thông tin hiển thị sai.
+- Lỗi game over hoặc khởi động lại không đúng.
+
+\subsubsection{Rủi ro trung bình}
+- Lỗi hiển thị thông tin điểm, trạng thái hoặc bảng chơi.
+- Lỗi trong `gameStory` khiến sự kiện kích hoạt sai lúc chơi.
+
+\subsubsection{Rủi ro thấp}
+- Lỗi về thẩm mỹ hiển thị như ký tự viền.
+- Lỗi ở các chức năng mở rộng không ảnh hưởng đến gameplay cơ bản.
+
+\subsection{Đánh đổi cần cân nhắc}
+Khi triển khai chiến lược kiểm thử, cần cân nhắc những điểm sau:
+
+- Thời gian viết và duy trì test case vs. tốc độ phát triển. Không nên đầu tư quá sâu vào kiểm thử trước khi sản phẩm đạt mức ổn định.
+- Kiểm thử tự động vs. kiểm thử thủ công. Kiểm thử tự động mạnh về độ lặp lại, kiểm thử thủ công mạnh về trải nghiệm người dùng.
+- Tiêu chuẩn API nghiêm ngặt vs. sự linh hoạt khi thay đổi yêu cầu. Cần có thỏa thuận chung để giữ ổn định giao diện module.
+- Phát triển song song nhiều nhánh vs. kiểm soát chất lượng. Cần có quy trình tích hợp và review chặt chẽ.
+
+\subsection{Kết luận}
+Chiến lược kiểm thử cho game xếp hình theo cấu trúc `app/appTree.md` phải đảm bảo cả ba yếu tố: kiểm thử module độc lập, kiểm thử tích hợp và kiểm thử hệ thống. Trong môi trường nhiều lập trình viên, việc phân chia rõ trách nhiệm, tài liệu hóa API và kiểm thử quy trình là điều thiết yếu.
+
+Chiến lược này bảo đảm:
+- `gameCore` được kiểm thử kỹ về logic và trạng thái.
+- `gameConsole` được kiểm thử về hiển thị và đầu vào.
+- `gameStory` được kiểm thử về kích hoạt sự kiện và tính tương thích.
+- Mọi thay đổi đều được kiểm thử hồi quy để tránh lỗi lan rộng.
+- Nhóm phát triển có thể phối hợp hiệu quả với quy trình rõ ràng và tài liệu đầy đủ.
+
+Với nội dung chi tiết và đầy đủ trên, nhóm phát triển sẽ có nền tảng kiểm thử vững chắc để phát triển game xếp hình một cách an toàn và hiệu quả, đồng thời dễ dàng mở rộng và bảo trì trong tương lai.
 
 
 \label{LastPageTestStrategy}
