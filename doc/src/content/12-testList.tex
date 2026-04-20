@@ -229,6 +229,19 @@ Phần này đảm bảo trải nghiệm cốt truyện toàn diện, với tổ
     \textbf{Tiêu chí pass/fail:} Pass nếu nút start khởi tạo màn hình chơi đúng, tích hợp tốt với các popup và nhạc nền, và không gây xung đột trạng thái. Fail nếu start không vào game đúng, hoặc làm mất dữ liệu/thiết lập khi tương tác với các chức năng khác. \\
     \textbf{Trường hợp biên:} Test khi nhấn start liên tiếp nhiều lần; test khi open popup trước khi nhấn start; test khi chuyển nhanh giữa start và close popup.
 
+    \item \textbf{Test v3 gameConsole/app.cpp: Gọi API lấy data từ Mongo Atlas thay vì dùng board.json.} \\
+    \textbf{Mô tả:} Test này kiểm tra chuyển đổi nguồn dữ liệu cho game console từ file cục bộ `board.json` sang API lấy data trực tiếp từ Mongo Atlas. API cần trả về dữ liệu bảng/xếp hạng đúng định dạng và ứng dụng phải xử lý lỗi kết nối, dữ liệu trống hoặc dữ liệu sai định dạng. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Chạy ứng dụng console và vào màn hình cần lấy dữ liệu board/leaderboard.
+        \item Kiểm tra việc gọi API Mongo Atlas thành công và nhận về dữ liệu đúng định dạng.
+        \item Xác nhận dữ liệu API được hiển thị chính xác trong giao diện và thay thế dữ liệu cũ từ `board.json`.
+        \item Test khi API trả về lỗi mạng hoặc không khả dụng, đảm bảo ứng dụng hiển thị thông báo lỗi hợp lý và không crash.
+        \item Test khi trả về dữ liệu trống hoặc không đúng định dạng, đảm bảo ứng dụng xử lý chuẩn và không ghi đè dữ liệu hiển thị khác.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu API Mongo Atlas được gọi đúng, dữ liệu hiển thị chính xác, và lỗi mạng/dữ liệu sai được xử lý an toàn. Fail nếu dữ liệu không hiển thị, ứng dụng crash, hoặc vẫn dùng `board.json` cũ. \\
+    \textbf{Trường hợp biên:} Test khi API chậm/phản hồi trễ; test khi token/kết nối Mongo Atlas sai; test khi dữ liệu trả về thiếu trường mong đợi.
+
     \item \textbf{Test v1 gameConsole/app.cpp: Chèn nhạc nền trong quá trình ở màn hình game console.} \\
     \textbf{Mô tả:} Test này kiểm tra việc bổ sung nhạc nền chạy xuyên suốt màn hình game console, bao gồm mở nhạc khi vào màn hình chơi và tắt khi thoát hoặc đóng popup. Nhạc nền cần được phát mượt và không ảnh hưởng tới thao tác điều khiển. \\
     \textbf{Kịch bản kiểm thử:} 
