@@ -344,6 +344,15 @@ Các kịch bản kiểm thử phải áp dụng cả hai phương pháp sau:
     \end{enumerate}
     \textbf{Tiêu chí pass/fail:} Pass nếu cửa sổ hiển thị đúng 9:16, build thành công không lỗi. Fail nếu tỷ lệ sai hoặc crash khi khởi chạy. \\
     \textbf{Trường hợp biên:} Test trên màn hình nhỏ (480p), lớn (4K), và tỷ lệ khác (16:9) để đảm bảo fallback.
+    \item \textbf{Test v1 gameCore/app.cpp: Tạo 1 trong 6 khối (L,I,T,Z left, Z right, O) đơn sắc.} \\
+    \textbf{Mô tả:} Test kiểm tra việc tạo và hiển thị một trong sáu loại khối Tetris cơ bản với màu đơn sắc. Khối phải có hình dạng đúng và màu đồng nhất. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Khởi tạo ứng dụng và tạo một khối ngẫu nhiên từ 6 loại.
+        \item Quan sát hình dạng và màu sắc của khối trên màn hình.
+        \item Kiểm tra với từng loại khối riêng biệt.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu khối hiển thị đúng hình dạng và màu đơn sắc. Fail nếu hình dạng sai hoặc màu không đồng nhất.
     \item \textbf{Test Input Lưới:} Truyền input qua Terminal (W/A/S/D) để kiểm tra luồng di chuyển trên lưới.
     \item \textbf{Test Xóa Hàng:} Nhét mock-data (1 hàng đầy) vào ma trận $\rightarrow$ Nhập lệnh cập nhật vòng lặp $\rightarrow$ Expected: Hàng bị xóa, trả về điểm số tương ứng.
     \item \textbf{Test removeLine:} Thiết lập một hàng đầy trong bảng, gọi hàm \texttt{removeLine()} và kiểm tra trạng thái ma trận sau khi xoá. $\rightarrow$ Expected: dòng đầy biến mất, các dòng phía trên trượt xuống một vị trí, dòng đầu tiên trên cùng được điền bằng khoảng trắng và các cạnh tường `#` không thay đổi.
