@@ -54,6 +54,7 @@ Dưới đây là các lệnh build độc lập qua terminal để tạo file t
     \item \textbf{Test Input Lưới:} Truyền input qua Terminal (W/A/S/D) để kiểm tra luồng di chuyển trên lưới.
     \item \textbf{Test Xóa Hàng:} Nhét mock-data (1 hàng đầy) vào ma trận $\rightarrow$ Nhập lệnh cập nhật vòng lặp $\rightarrow$ Expected: Hàng bị xóa, trả về điểm số tương ứng.
     \item \textbf{Test removeLine:} Thiết lập một hàng đầy trong bảng, gọi hàm \texttt{removeLine()} và kiểm tra trạng thái ma trận sau khi xoá. $\rightarrow$ Expected: dòng đầy biến mất, các dòng phía trên trượt xuống một vị trí, dòng đầu tiên trên cùng được điền bằng khoảng trắng và các cạnh tường `#` không thay đổi.
+    \item \textbf{Test giao diện viền và block vuông:} Kiểm tra hiển thị khung màn hình và khối rơi ở chế độ GUI/console, đảm bảo mỗi ô có tỉ lệ 1:1, không bị dãn méo thành hình chữ nhật. $\rightarrow$ Expected: khung và block hiển thị đồng nhất, các ô vuông, góc vuông rõ ràng và không có hiện tượng kéo dãn bất thường.
     \item \textbf{Test Xoay Chặn (Wall Kick):} Đặt khối sát tường (biên ma trận) $\rightarrow$ Nhấn lệnh Xoay $\rightarrow$ Expected: Khối không bị xoay vượt ra ngoài index của ma trận lưới.
 \end{itemize}
 
@@ -156,8 +157,52 @@ Bên cạnh việc kiểm tra đúng / sai, cần đánh giá thêm các tiêu c
     \item \textbf{Hiệu suất}: hàm cần xử lý bảng kích thước 20x15 trong vòng thời gian ngắn, vì nó được gọi mỗi khi một khối cố định một lần. Mặc dù test không cần đo thời gian chính xác, nhưng nên chú ý đến việc không dùng vòng lặp vô hạn hoặc xử lý thừa phức tạp.
 \end{itemize}
 
-\subsubsection*{Tại sao test removeLine quan trọng}
+\subsection{Mô tả kiểm thử giao diện viền và block vuông}
 
+Phần kiểm thử này tập trung vào hiển thị cấu trúc lưới và các block rơi sao cho mỗi ô vuông, không bị kéo giãn thành hình chữ nhật. Với hiện trạng hình chữ nhật (HCN) ở viền và block, test cần xác định liệu các đối tượng trên lưới có giữ tỉ lệ 1:1 ở cả chiều ngang và chiều dọc hay không. Test còn phải kiểm tra góc kết nối giữa viền và ô block để đảm bảo các góc vuông sắc nét, không bị bo hoặc kéo dài.
+
+Các bước kiểm thử đề xuất:
+
+\begin{enumerate}
+    \item Chạy ứng dụng ở chế độ hiện tại và quan sát khung hiển thị cùng các block trong khu vực chơi.
+    
+    \item Xác thực từng ô trong lưới có kích thước bằng nhau theo cả chiều ngang và chiều dọc. Nếu sử dụng GUI, kiểm tra thước đo pixel hoặc lưới hỗ trợ để đảm bảo tỷ lệ là chính xác. Nếu sử dụng console, kiểm tra font chữ và cỡ ký tự để đảm bảo ô hiển thị vuông.
+    
+    \item Kiểm tra viền màn hình: đường biên ngoài cùng phải tạo thành hình chữ nhật cân đối với các góc 90 độ và cạnh dọc/ngang có cùng tỷ lệ so với lưới nội bộ.
+    
+    \item Kiểm tra khối: mỗi block phải được hiển thị trong các ô vuông đồng nhất. Các phần tử block lân cận nên có cùng chiều cao và chiều rộng, không bị kéo dài theo một chiều.
+    
+    \item Kiểm tra điều kiện thay đổi kích thước: nếu ứng dụng hỗ trợ thay đổi kích thước cửa sổ hoặc chế độ màn hình khác nhau, đảm bảo hiển thị vẫn duy trì ô vuông trên mọi kích thước.
+    
+    \item Kiểm tra mô tả trực quan: ghi nhận nếu viền hoặc block xuất hiện như hình chữ nhật dẹt/chữ nhật kéo dài. Nếu phát hiện HCN, note cụ thể vị trí và trạng thái điều kiện để sửa.
+\end{enumerate}
+
+\paragraph{Tiêu chí pass/fail}
+
+\begin{itemize}
+    \item Pass: tất cả ô lưới và block hiển thị với tỉ lệ 1:1, viền rõ ràng, góc vuông sắc nét và không có biến dạng HCN.
+    \item Fail: có sự khác biệt rõ ràng giữa chiều ngang và chiều dọc của các ô/block, viền bị kéo dài hoặc không tạo góc vuông chính xác.
+\end{itemize}
+
+\subsubsection*{Khuyến nghị kiểm thử mở rộng}
+
+\begin{itemize}
+    \item Thực hiện kiểm thử trên tối thiểu hai chế độ hiển thị khác nhau nếu có: console và GUI hoặc các độ phân giải khác nhau.
+    \item Nếu game dùng bộ đếm pixel cố định, kiểm tra rằng hệ số tỷ lệ của khung vẽ luôn giữ 1:1 cho từng ô.
+    \item Kiểm tra phím điều khiển hoặc tùy chọn cấu hình hiển thị nếu có, đảm bảo các thay đổi vẫn giữ cho mỗi ô vuông.
+\end{itemize}
+
+\subsubsection*{Liên hệ với nâng cấp giao diện}
+
+Đánh giá góc hiển thị viền và block vuông có thể liên quan trực tiếp tới việc tái thiết kế khung hiển thị hoặc chỉnh lại chiều cao/chiều rộng của đối tượng render. Do vậy, phần test này nên được chạy cùng với phát triển giao diện và tích hợp vào bản demo hình dạng block mới.
+
+\subsubsection*{Tại sao test giao diện viền và block vuông quan trọng}
+
+Giao diện lưới vuông giúp game cảm nhận đúng tỷ lệ Tetris, tránh tình trạng khung và block bị méo mó làm giảm độ chính xác chơi và cảm giác thị giác. Phần kiểm thử này giúp đảm bảo rằng các nguyên tắc hình học của lưới được duy trì, tạo ra trải nghiệm trực quan đồng đều và chuyên nghiệp hơn.
+
+\subsubsection*{Kết luận}
+
+Phần kiểm thử giao diện viền và block vuông phải được cộng vào danh sách kiểm thử Module Game Core/Giao diện vì đây là một lỗi trực quan lõi, ảnh hưởng tới trải nghiệm người chơi ngay lập tức. Mô tả kiểm thử nên ghi lại rõ ràng các điều kiện khởi tạo, bước quan sát và tiêu chí pass/fail.
 Trong logic Tetris, loại bỏ hàng đầy là một hành vi lõi quyết định trải nghiệm người chơi. Nếu hàm này hoạt động sai, hậu quả có thể là:
 
 \begin{itemize}
