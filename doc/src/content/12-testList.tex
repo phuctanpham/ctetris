@@ -216,6 +216,19 @@ Phần này đảm bảo trải nghiệm cốt truyện toàn diện, với tổ
     \textbf{Tiêu chí pass/fail:} Pass nếu màu khối được tuỳ chỉnh đúng, áp dụng ngay khi chơi và không làm hỏng giao diện. Fail nếu màu không thay đổi, áp dụng sai vào loại khối khác, hoặc khiến khối khó phân biệt. \\
     \textbf{Trường hợp biên:} Test khi chọn màu thất bại, chọn màu tương phản thấp với nền, và khi áp dụng nhiều lần liên tiếp.
 
+    \item \textbf{Test v2 gameConsole/app.cpp: Tạo nút start và tích hợp với các bên khác.} \\
+    \textbf{Mô tả:} Test này kiểm tra nút start trên màn hình chính console và việc tích hợp chức năng này với các phần khác như guide, board, settings và nhạc nền. Nút start cần khởi chạy đúng màn hình chơi và giữ trạng thái đồng bộ với các popup/tuỳ chọn đã mở. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút start (ví dụ: nút "Start" hoặc "Play").
+        \item Nhấn nút start để vào màn hình game và xác nhận game bắt đầu đúng.
+        \item Trong khi game đang chạy, mở các popup guide, board, hoặc setting; kiểm tra nút start không làm gián đoạn hội thoại các popup và có thể trở lại trạng thái game.
+        \item Đảm bảo khi nhấn start sau khi đóng popup, game tiếp tục chạy hoặc chuyển sang chế độ chơi mà không mất cấu hình.
+        \item Kiểm tra tích hợp với nhạc nền: nhạc bật khi bắt đầu game, tắt hoặc giữ trạng thái khi mở/đóng popup.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu nút start khởi tạo màn hình chơi đúng, tích hợp tốt với các popup và nhạc nền, và không gây xung đột trạng thái. Fail nếu start không vào game đúng, hoặc làm mất dữ liệu/thiết lập khi tương tác với các chức năng khác. \\
+    \textbf{Trường hợp biên:} Test khi nhấn start liên tiếp nhiều lần; test khi open popup trước khi nhấn start; test khi chuyển nhanh giữa start và close popup.
+
     \item \textbf{Test v1 gameConsole/app.cpp: Chèn nhạc nền trong quá trình ở màn hình game console.} \\
     \textbf{Mô tả:} Test này kiểm tra việc bổ sung nhạc nền chạy xuyên suốt màn hình game console, bao gồm mở nhạc khi vào màn hình chơi và tắt khi thoát hoặc đóng popup. Nhạc nền cần được phát mượt và không ảnh hưởng tới thao tác điều khiển. \\
     \textbf{Kịch bản kiểm thử:} 
