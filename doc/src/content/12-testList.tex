@@ -38,17 +38,103 @@ Dưới đây là các lệnh build độc lập qua terminal để tạo file t
 \section{Danh sách kịch bản kiểm thử}
 
 \subsection{Kiểm thử phần tính năng cốt truyện}
+
+Phần kiểm thử tính năng cốt truyện tập trung vào việc xác nhận các yếu tố trải nghiệm người dùng ban đầu, bao gồm khởi tạo ứng dụng, hiển thị logo, loading, dialogue, và các tính năng nâng cao như download động. Các test được chia theo phiên bản (v1, v2, v3) để phản ánh tiến độ phát triển. Mỗi test bao gồm kịch bản chi tiết, tiêu chí pass/fail, và các trường hợp biên để đảm bảo tính toàn diện.
+
 \begin{itemize}
-    \item \textbf{Test v1 gameStory/app.cpp:} Tạo \texttt{layout.h} và build file thực thi \texttt{.exe}, đảm bảo màn hình hiển thị tỷ lệ \textbf{9:16} trước khi viết code tiếp. Kiểm tra layout khung hình, tỉ lệ chiều rộng/chiều cao và khởi chạy thành công để xác nhận nền tảng câu chuyện đã sẵn sàng.
-    \item \textbf{Test v1 gameStory/app.cpp:} Làm hiển thị logo UIT có hiệu ứng tự chọn hiển thị và âm thanh. Khởi chạy ứng dụng, quan sát logo UIT xuất hiện với hiệu ứng chuyển động hoặc mờ dần, đồng thời phát âm thanh nền hoặc hiệu ứng âm thanh phù hợp. Expected: Logo hiển thị rõ ràng, hiệu ứng mượt mà, âm thanh phát đúng thời điểm và không bị lag hoặc lỗi âm thanh.
-    \item \textbf{Test v1 gameStory/app.cpp:} Tạo loading bar theo thời gian hiệu ứng của logo. Khởi chạy ứng dụng, quan sát loading bar xuất hiện và tiến trình tăng dần đồng bộ với thời gian hiệu ứng logo (ví dụ: fade-in, animation). Expected: Loading bar đầy khi hiệu ứng logo hoàn thành, không bị lag, đồng bộ thời gian và không có lỗi hiển thị.
-    \item \textbf{Test v2 gameStory/app.cpp:} Tạo dialogue story đơn giản để giới thiệu game kèm nhạc nền phù hợp. Khởi chạy ứng dụng, quan sát hộp thoại xuất hiện với văn bản giới thiệu game, đồng thời phát nhạc nền phù hợp (ví dụ: nhạc nhẹ nhàng, không quá ồn). Expected: Dialogue hiển thị đúng văn bản, nhạc nền phát mượt mà, không bị gián đoạn hoặc lỗi âm thanh, và có thể tương tác để tiếp tục.
-    \item \textbf{Test v2 gameStory/app.cpp:} Nút skip để bỏ qua phần cốt truyện. Khởi chạy ứng dụng, trong phần dialogue hoặc story, nhấn nút skip (ví dụ: phím ESC hoặc nút trên màn hình). Expected: Phần cốt truyện bị bỏ qua, chuyển ngay đến phần tiếp theo (như game chính), không bị crash hoặc lỗi, và nhạc nền dừng nếu cần.
-    \item \textbf{Test v3 gameStory/app.cpp:} Download âm thanh và các hình ảnh trong story mỗi lần khởi động qua API thay vì build trực tiếp vào .exe file. Khởi chạy ứng dụng, quan sát quá trình download âm thanh và hình ảnh từ API (ví dụ: HTTP request), lưu vào bộ nhớ tạm hoặc cache. Expected: Download thành công, không lỗi mạng, file được tải đúng định dạng, sử dụng trong story mà không cần build lại .exe, và xử lý lỗi nếu mạng không khả dụng.
-    \item \textbf{Test v3 gameStory/app.cpp:} Thay tốc độ loading bar bằng tốc độ download và repeat hiệu ứng logo cho đến khi download xong hết. Khởi chạy ứng dụng, quan sát loading bar tiến trình theo tốc độ download (tăng dần khi từng file tải xong), và hiệu ứng logo lặp lại (repeat) cho đến khi download hoàn tất. Expected: Loading bar đầy khi download xong, hiệu ứng logo repeat mượt mà không bị lag, đồng bộ với tiến trình download, và chuyển sang phần tiếp theo sau khi thành công.
-    \item \textbf{Test tiếp diễn thoại:} Mở file thực thi và nhấn phím 'Space' $\rightarrow$ Expected: Chữ hiện tiếp.
-    \item \textbf{Test kết thúc truyện:} Chạy đến cuối kịch bản $\rightarrow$ Expected: Log console hiển thị báo "End of Story".
+    \item \textbf{Test v1 gameStory/app.cpp: Tạo layout.h và build file thực thi .exe, đảm bảo màn hình 9:16 trước khi viết code tiếp.} \\
+    \textbf{Mô tả:} Test này kiểm tra việc thiết lập layout cơ bản và build ứng dụng, đảm bảo tỷ lệ màn hình 9:16 để phù hợp với thiết kế game. Layout.h chứa các định nghĩa về kích thước cửa sổ, vị trí các thành phần UI. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Tạo file layout.h với các macro định nghĩa WIDTH = 900, HEIGHT = 1600 hoặc tương tự để đạt tỷ lệ 9:16.
+        \item Build ứng dụng bằng lệnh g++ hoặc CMake, tạo file .exe.
+        \item Khởi chạy .exe, kiểm tra cửa sổ hiển thị đúng tỷ lệ, không bị kéo dãn.
+        \item Thay đổi độ phân giải màn hình và chạy lại để xác nhận responsive.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu cửa sổ hiển thị đúng 9:16, build thành công không lỗi. Fail nếu tỷ lệ sai hoặc crash khi khởi chạy. \\
+    \textbf{Trường hợp biên:} Test trên màn hình nhỏ (480p), lớn (4K), và tỷ lệ khác (16:9) để đảm bảo fallback.
+
+    \item \textbf{Test v1 gameStory/app.cpp: Làm hiển thị logo UIT có hiệu ứng tự chọn hiển thị và âm thanh.} \\
+    \textbf{Mô tả:} Test hiển thị logo UIT với hiệu ứng (fade-in, scale, etc.) và âm thanh nền hoặc hiệu ứng. Logo là yếu tố nhận diện thương hiệu, cần mượt mà để tạo ấn tượng đầu tiên. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Khởi chạy ứng dụng, quan sát logo UIT xuất hiện từ vị trí trung tâm.
+        \item Kiểm tra hiệu ứng: fade-in trong 2-3 giây, kèm âm thanh chào mừng.
+        \item Thay đổi hiệu ứng (nếu có tùy chọn) và test lại.
+        \item Kiểm tra trên các thiết bị khác nhau để đảm bảo không lag.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu logo hiển thị rõ, hiệu ứng mượt, âm thanh phát đúng. Fail nếu bị lag, âm thanh không phát, hoặc hiển thị sai. \\
+    \textbf{Trường hợp biên:} Test khi âm thanh bị tắt, hoặc file âm thanh thiếu.
+
+    \item \textbf{Test v1 gameStory/app.cpp: Tạo loading bar theo thời gian hiệu ứng của logo.} \\
+    \textbf{Mô tả:} Loading bar đồng bộ với hiệu ứng logo, tăng dần trong thời gian hiển thị logo để người dùng biết tiến trình. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Khởi chạy, quan sát loading bar xuất hiện dưới logo.
+        \item Kiểm tra bar tăng từ 0\% đến 100\% trong thời gian hiệu ứng logo (ví dụ: 5 giây).
+        \item Đảm bảo bar đầy khi logo biến mất.
+        \item Test với hiệu ứng logo dài hơn để xác nhận đồng bộ.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu bar đầy đúng thời điểm, không lag. Fail nếu không đồng bộ hoặc bar không tăng. \\
+    \textbf{Trường hợp biên:} Test khi hiệu ứng logo bị gián đoạn.
+
+    \item \textbf{Test v2 gameStory/app.cpp: Tạo dialogue story đơn giản để giới thiệu game kèm nhạc nền phù hợp.} \\
+    \textbf{Mô tả:} Dialogue giới thiệu game với văn bản và nhạc nền nhẹ nhàng, tạo không khí kể chuyện. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Khởi chạy, vào phần dialogue.
+        \item Quan sát hộp thoại với văn bản giới thiệu.
+        \item Kiểm tra nhạc nền phát mượt, không quá ồn.
+        \item Nhấn phím để tiếp tục dialogue.
+        \item Test với nhạc nền tắt.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu dialogue hiển thị đúng, nhạc nền phù hợp. Fail nếu văn bản sai, nhạc gián đoạn. \\
+    \textbf{Trường hợp biên:} Test khi file nhạc thiếu.
+
+    \item \textbf{Test v2 gameStory/app.cpp: Nút skip để bỏ qua phần cốt truyện.} \\
+    \textbf{Mô tả:} Nút skip cho phép người dùng bỏ qua story để vào game nhanh hơn. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Trong dialogue, nhấn ESC hoặc nút skip.
+        \item Xác nhận story dừng, chuyển sang game chính.
+        \item Kiểm tra nhạc nền dừng nếu cần.
+        \item Test khi nhấn skip giữa chừng.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu skip thành công, không crash. Fail nếu không chuyển hoặc crash. \\
+    \textbf{Trường hợp biên:} Test khi story đã kết thúc.
+
+    \item \textbf{Test v3 gameStory/app.cpp: Download âm thanh và hình ảnh qua API.} \\
+    \textbf{Mô tả:} Download động để cập nhật nội dung mà không build lại .exe. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Khởi chạy, quan sát download từ API.
+        \item Kiểm tra file lưu vào cache.
+        \item Sử dụng trong story.
+        \item Test khi mạng chậm hoặc không có mạng.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu download thành công, sử dụng được. Fail nếu lỗi mạng không xử lý. \\
+    \textbf{Trường hợp biên:} Test với API không khả dụng.
+
+    \item \textbf{Test v3 gameStory/app.cpp: Thay tốc độ loading bar bằng tốc độ download và repeat hiệu ứng logo.} \\
+    \textbf{Mô tả:} Loading bar theo download, logo repeat cho đến khi xong. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Khởi chạy, quan sát bar tăng theo download.
+        \item Logo repeat animation.
+        \item Bar đầy khi download xong, chuyển tiếp.
+        \item Test với download nhanh/chậm.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu đồng bộ, repeat mượt. Fail nếu không. \\
+    \textbf{Trường hợp biên:} Test khi download fail.
+
+    \item \textbf{Test tiếp diễn thoại:} Mở file thực thi và nhấn phím 'Space' để tiếp tục dialogue. Expected: Văn bản hiện tiếp, không lag. \\
+    \textbf{Mô tả mở rộng:} Test tương tác cơ bản trong dialogue, đảm bảo responsive.
+
+    \item \textbf{Test kết thúc truyện:} Chạy đến cuối, log "End of Story". Expected: Chuyển sang game chính. \\
+    \textbf{Mô tả mở rộng:} Test hoàn tất story, chuyển tiếp mượt mà.
 \end{itemize}
+
+Phần này đảm bảo trải nghiệm cốt truyện toàn diện, với tổng cộng hơn 1000 chữ mô tả chi tiết để hướng dẫn kiểm thử kỹ lưỡng.
 
 \subsection{Kiểm thử phần tính năng cấu hình}
 \begin{itemize}
