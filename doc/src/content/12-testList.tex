@@ -138,139 +138,185 @@ Phần này đảm bảo trải nghiệm cốt truyện toàn diện, với tổ
 
 \subsection{Kiểm thử phần tính năng cấu hình}
 
+Phần kiểm thử tính năng cấu hình tập trung vào độ ổn định của giao diện cấu hình, tính nhất quán của tuỳ chọn, và việc duy trì trải nghiệm người dùng khi tương tác với các popup, menu và cài đặt. Module `gameConsole` là hạt nhân cho các chức năng cấu hình, nên test cần bao gồm cả kịch bản thủ công và kịch bản tự động, kèm theo kiểm tra tương tác giữa các phần như guide, board, setting, nhạc nền và khởi động game.
+
+Mục tiêu của phần kiểm thử này bao gồm:
+\begin{itemize}
+    \item Xác nhận giao diện cấu hình được cài đặt đúng và hiển thị nhất quán trên nhiều môi trường console.
+    \item Đảm bảo các nút chức năng quan trọng (guide, board, setting, start) hoạt động đúng và không gây xung đột trạng thái khi mở/đóng.
+    \item Kiểm tra tính linh hoạt của các tuỳ chọn chỉnh sửa, đặc biệt là âm lượng, màu khối, và dữ liệu leaderboard, để tránh lỗi khi người dùng thay đổi nhiều thiết lập.
+    \item Đánh giá khả năng xử lý lỗi với dữ liệu bên ngoài, bao gồm gọi API trên Mongo Atlas và sắp xếp dữ liệu trong popup board.
+\end{itemize}
+
+Vì cấu hình thường là điểm tiếp xúc đầu tiên khi người chơi vào game, kiểm thử cần đảm bảo phần này không chỉ đúng chức năng mà còn dễ sử dụng, có phản hồi rõ ràng và không ảnh hưởng xấu đến luồng chơi chính.
+
+\paragraph{Môi trường và điều kiện kiểm thử}
+Trước khi chạy mỗi test, cần chuẩn bị môi trường sau:
+\begin{itemize}
+    \item Môi trường build C++ với CMake và GCC/MinGW hỗ trợ chuẩn \textbf{C++17} hoặc cao hơn.
+    \item Kiểm tra các thư viện hiển thị console, nếu có, hoặc các hàm xử lý đầu vào / đầu ra trong Windows console.
+    \item Chuẩn bị dữ liệu test mặc định cho bảng leaderboard / board, đồng thời thiết lập kết nối API giả lập nếu test v3.
+    \item Đảm bảo phần cài đặt nhạc nền có thể bật/tắt và trạng thái được lưu nếu người dùng thay đổi trong suốt phiên.
+\end{itemize}
+
+\paragraph{Phương pháp kiểm thử}
+Các kịch bản kiểm thử phải áp dụng cả hai phương pháp sau:
+\begin{enumerate}
+    \item Kiểm thử thủ công: Quan sát hoạt động của giao diện console, click/nhấn các phím tắt, và xác nhận popup mở/thông báo hiển thị đúng.
+    \item Kiểm thử chức năng: Tạo các trường hợp dữ liệu giả lập, gọi trực tiếp các hàm quản lý popup và lưu trữ cài đặt, rồi so sánh trạng thái kết quả với dữ liệu mong đợi.
+\end{enumerate}
+
+\paragraph{Tiêu chí chung}
+\begin{itemize}
+    \item Tính năng đúng chức năng: tất cả các nút và popup phải phản hồi đúng.
+    \item Tính ổn định: không crash, không lỗi bộ nhớ, không gây lock ứng dụng.
+    \item Tính nhất quán: các trạng thái giữ được khi mở/đóng popup, khi chuyển giữa các chế độ khác nhau.
+    \item Tính dễ sử dụng: chỉ dẫn rõ ràng, phản hồi tức thì khi người dùng thao tác.
+\end{itemize}
+
 \begin{itemize}
     \item \textbf{Test v1 gameConsole/app.cpp: Tạo layout.h và build file thực thi .exe, đảm bảo màn hình 9:16 trước khi viết code tiếp.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc thiết lập layout cơ bản và build ứng dụng console, đảm bảo tỷ lệ màn hình 9:16 để phù hợp với thiết kế game. Layout.h chứa các định nghĩa về kích thước cửa sổ console, vị trí các thành phần UI. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Mô tả:} Test này kiểm tra việc thiết lập layout cơ bản và build ứng dụng console. Ở giai đoạn đầu, layout phải xác định được tỷ lệ khung hình, vùng hiển thị và phân chia vùng chức năng sao cho giao diện console không bị biến dạng. Layout.h được dùng làm nguồn cấu hình, nên cần đặc biệt kiểm tra tất cả tham số kích thước trước khi mở rộng UI. \\
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
-        \item Tạo file layout.h với các macro định nghĩa WIDTH = 900, HEIGHT = 1600 hoặc tương tự để đạt tỷ lệ 9:16.
-        \item Build ứng dụng bằng lệnh g++ hoặc CMake, tạo file .exe.
-        \item Khởi chạy .exe, kiểm tra cửa sổ console hiển thị đúng tỷ lệ, không bị kéo dãn.
-        \item Thay đổi độ phân giải màn hình và chạy lại để xác nhận responsive.
+        \item Tạo hoặc cập nhật file layout.h với các macro định nghĩa WIDTH = 900, HEIGHT = 1600, hoặc theo tỷ lệ 9:16 tương tự.
+        \item Build ứng dụng bằng lệnh g++ hoặc CMake, tạo file thực thi `.exe`.
+        \item Khởi chạy `.exe`, kiểm tra giao diện console hiển thị đúng tỷ lệ 9:16 trên màn hình thực tế và không bị dãn méo.
+        \item Thay đổi cấu hình chiều rộng/chiều cao trong `layout.h` và chạy lại để xác nhận hệ thống responsive tối thiểu.
+        \item Quan sát vị trí các thành phần UI, bao gồm tiêu đề, menu và thông báo hướng dẫn, để đảm bảo chúng vẫn nằm trong khung hiển thị.
     \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu cửa sổ hiển thị đúng 9:16, build thành công không lỗi. Fail nếu tỷ lệ sai hoặc crash khi khởi chạy. \\
-    \textbf{Trường hợp biên:} Test trên màn hình nhỏ (480p), lớn (4K), và tỷ lệ khác (16:9) để đảm bảo fallback.
+    \textbf{Tiêu chí pass/fail:} Pass nếu giao diện build thành công, hiển thị đúng tỷ lệ 9:16 và không gặp lỗi thời gian chạy. Fail nếu tỷ lệ sai, giao diện bị cắt mất, hoặc crash khi khởi chạy. \\
+    \textbf{Trường hợp biên:} Test trên màn hình nhỏ (480p), lớn (4K), và tỷ lệ khác (16:9), đồng thời kiểm tra khi thay đổi kích thước của cửa sổ console để xem có fallback hợp lý hay không.
 
     \item \textbf{Test v1 gameConsole/app.cpp: Tạo nút guide và nút close popup guide.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc tạo nút guide để hiển thị hướng dẫn và nút close để đóng popup guide trong giao diện console. Nút guide cần dễ nhận biết, popup guide hiển thị nội dung hướng dẫn rõ ràng, và nút close hoạt động chính xác để đóng popup. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Mô tả:} Test này kiểm tra việc tạo nút guide để hiển thị hướng dẫn và nút close để đóng popup guide trong giao diện console. Guide là phần quan trọng để giúp người dùng mới hiểu flow chơi, vì vậy cần test cả nội dung, vị trí và tốc độ phản hồi của popup. \\
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
-        \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút guide (ví dụ: nút "Guide" hoặc biểu tượng ?).
-        \item Nhấn nút guide, kiểm tra popup guide xuất hiện với nội dung hướng dẫn.
+        \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút guide (ví dụ: nút "Guide" hoặc biểu tượng hỏi chấm).
+        \item Nhấn nút guide, kiểm tra popup guide xuất hiện với nội dung hướng dẫn rõ ràng, chia thành các bước và có định nghĩa phím.
         \item Quan sát nút close (ví dụ: nút "X" hoặc "Close") trong popup.
-        \item Nhấn nút close, xác nhận popup đóng và quay về giao diện chính.
-        \item Test lại nhiều lần để đảm bảo không lag hoặc lỗi.
+        \item Nhấn nút close, xác nhận popup đóng và quay về giao diện chính mà không mất trạng thái hiện tại.
+        \item Mở lại guide nhiều lần và kiểm tra popup không bị tràn bộ nhớ, không bị hiển thị sai.
     \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu nút guide hiển thị popup đúng, nút close đóng popup thành công, không crash. Fail nếu popup không xuất hiện, nút close không hoạt động, hoặc có lỗi hiển thị. \\
-    \textbf{Trường hợp biên:} Test khi popup đã mở, nhấn nút guide lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp.
+    \textbf{Tiêu chí pass/fail:} Pass nếu nút guide hiển thị popup đúng, nội dung dễ đọc và nút close đóng popup thành công. Fail nếu popup không xuất hiện, nút close không hoạt động, nội dung bị cắt hoặc hiển thị sai.
+    \\
+    \textbf{Trường hợp biên:} Test khi popup đã mở, nhấn nút guide lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp; test khi không có nội dung hướng dẫn hoặc file resource bị thiếu.
 
     \item \textbf{Test v1 gameConsole/app.cpp: Tạo nút board và nút close popup board.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc tạo nút board để hiển thị bảng điểm hoặc leaderboard và nút close để đóng popup board trong giao diện console. Nút board cần dễ nhận biết, popup board hiển thị danh sách điểm số rõ ràng, và nút close hoạt động chính xác để đóng popup. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Mô tả:} Test này kiểm tra việc tạo nút board để hiển thị bảng điểm hoặc leaderboard và nút close để đóng popup board trong giao diện console. Popup board phải hiển thị dữ liệu đúng, có thể phân biệt cột score/time và hỗ trợ cuộn nếu danh sách dài. \\
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
         \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút board (ví dụ: nút "Board" hoặc biểu tượng bảng xếp hạng).
-        \item Nhấn nút board, kiểm tra popup board xuất hiện với danh sách điểm số hoặc leaderboard.
+        \item Nhấn nút board, kiểm tra popup board xuất hiện với danh sách điểm số hoặc leaderboard sắp xếp theo mặc định.
         \item Quan sát nút close (ví dụ: nút "X" hoặc "Close") trong popup.
         \item Nhấn nút close, xác nhận popup đóng và quay về giao diện chính.
-        \item Test lại nhiều lần để đảm bảo không lag hoặc lỗi.
+        \item Thực hiện nhiều lần để đảm bảo không lag, dữ liệu không bị trống hoặc hiển thị sai khi mở lại.
     \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu nút board hiển thị popup đúng, nút close đóng popup thành công, không crash. Fail nếu popup không xuất hiện, nút close không hoạt động, hoặc có lỗi hiển thị. \\
-    \textbf{Trường hợp biên:} Test khi popup đã mở, nhấn nút board lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp.
+    \textbf{Tiêu chí pass/fail:} Pass nếu popup board hiển thị đúng dữ liệu, nút close đóng đúng cách và không crash. Fail nếu popup không xuất hiện, hiển thị sai, hoặc nếu có lỗi khi reload dữ liệu lần thứ hai.
+    \\
+    \textbf{Trường hợp biên:} Test với dữ liệu board rỗng; test khi danh sách quá dài và phải cuộn; test khi popup board đã mở rồi nhấn nút board thêm lần nữa; test khi dữ liệu board bị thiếu trường score/time.
 
     \item \textbf{Test v2 gameConsole/app.cpp: Tạo nút setting và nút close popup setting.} \\
-    \textbf{Mô tả:} Test này kiểm tra việc tạo nút setting để mở popup cấu hình và nút close để đóng popup setting trong giao diện console. Nút setting phải hiển thị rõ ràng, popup setting cần cho phép chỉnh các tuỳ chọn như âm thanh, điều khiển và hiển thị, và nút close phải đóng popup an toàn. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Mô tả:} Test này kiểm tra việc tạo nút setting để mở popup cấu hình và nút close để đóng popup setting trong giao diện console. Popup setting phải cho phép chỉnh sửa nhiều tuỳ chọn, có cấu trúc rõ ràng và không làm mất dữ liệu khi đóng mà chưa lưu. \\
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
         \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút setting (ví dụ: nút "Settings" hoặc biểu tượng bánh răng).
         \item Nhấn nút setting, kiểm tra popup setting xuất hiện với các tùy chọn cấu hình rõ ràng.
-        \item Kiểm tra nội dung popup: âm lượng, điều khiển, chế độ hiển thị hoặc các tuỳ chọn mặc định.
-        \item Nhấn nút close trong popup setting, xác nhận popup đóng và trở về giao diện chính, các thay đổi chưa lưu không bị áp dụng nếu chưa có xác nhận.
-        \item Test lại nhiều lần để đảm bảo popup setting đóng đúng và không gây crash.
+        \item Kiểm tra các mục của popup như âm lượng, điều khiển, chế độ hiển thị và màu sắc khối.
+        \item Nhấn nút close trong popup setting, xác nhận popup đóng và trở về giao diện chính, các thay đổi chưa được xác nhận không bị áp dụng.
+        \item Mở lại popup setting để kiểm tra trạng thái ban đầu được giữ hay thay đổi đúng theo chính sách lưu trữ.
     \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu nút setting mở popup đúng, nút close đóng popup thành công, popup hiển thị nội dung cấu hình hợp lý. Fail nếu popup không xuất hiện, không đóng được, hoặc ứng dụng bị lỗi. \\
-    \textbf{Trường hợp biên:} Test khi popup setting đã mở, nhấn nút setting lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp.
+    \textbf{Tiêu chí pass/fail:} Pass nếu popup setting mở đúng, hiển thị nội dung rõ ràng và đóng đúng khi nhấn close. Fail nếu không đóng được, bị lỗi hiển thị, hoặc nếu popup giữ dữ liệu sai sau khi đóng.
+    \\
+    \textbf{Trường hợp biên:} Test khi popup setting đã mở, nhấn nút setting lại; test trên màn hình nhỏ để đảm bảo popup không vượt biên; test khi nhấn close nhanh liên tiếp; test khi một số mục cấu hình bị thiếu hoặc không hợp lệ.
 
     \item \textbf{Test v2 gameConsole/app.cpp: Điều chỉnh âm lượng.} \\
-    \textbf{Mô tả:} Test này kiểm tra chức năng điều chỉnh âm lượng trong màn hình setting của console app. Người dùng cần có công cụ thay đổi âm lượng dễ sử dụng, và giá trị âm lượng phải được cập nhật ngay lập tức khi chỉnh. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Mô tả:} Test này kiểm tra chức năng điều chỉnh âm lượng trong màn hình setting của console app. Người dùng cần có công cụ thay đổi âm lượng dễ sử dụng, và giá trị âm lượng phải được cập nhật ngay lập tức khi chỉnh, đồng thời phản ánh trên trạng thái nhạc nền. \\
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
         \item Mở popup setting và tìm điều khiển âm lượng (slider, phím tăng/giảm hoặc menu chọn).
-        \item Tăng âm lượng từ mức thấp đến cao, xác nhận âm thanh nền hoặc hiệu ứng được tăng lên.
-        \item Giảm âm lượng xuống mức thấp nhất, xác nhận âm thanh giảm tương ứng hoặc tắt nếu về 0.
-        \item Thay đổi âm lượng và quay lại menu chính, kiểm tra giá trị âm lượng được giữ lại hoặc áp dụng theo chính sách thiết kế.
-        \item Test với thao tác nhanh và nhiều lần để đảm bảo không bị giật, không thay đổi sai giá trị.
+        \item Tăng âm lượng từ mức thấp nhất đến cao nhất, xác nhận âm thanh nền hoặc hiệu ứng tăng theo.
+        \item Giảm âm lượng xuống mức thấp nhất, xác nhận âm thanh giảm hoặc tắt khi về 0.
+        \item Quay lại menu chính, mở lại popup setting và kiểm tra giá trị âm lượng được giữ lại nếu thiết kế yêu cầu.
+        \item Thay đổi nhanh nhiều lần để đảm bảo không bị giật hoặc sai giá trị.
     \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu âm lượng có thể điều chỉnh chính xác, âm thanh thay đổi tương ứng và không gây lỗi. Fail nếu điều khiển không hoạt động, giá trị không cập nhật, hoặc áp dụng sai mức âm lượng. \\
-    \textbf{Trường hợp biên:} Test khi đặt âm lượng về 0, khi kéo cao tối đa, và khi thay đổi liên tục trong khoảng ngắn; test nếu popup setting đóng mà không lưu.
+    \textbf{Tiêu chí pass/fail:} Pass nếu âm lượng có thể điều chỉnh chính xác, phản hồi tức thì và không gây lỗi. Fail nếu điều khiển không hoạt động, âm thanh không thay đổi, giá trị không cập nhật hoặc bị khoá.
+    \\
+    \textbf{Trường hợp biên:} Test khi đặt âm lượng về 0; test khi kéo cao tối đa; test khi thay đổi liên tục trong khoảng ngắn; test nếu popup setting đóng mà không lưu.
 
     \item \textbf{Test v2 gameConsole/app.cpp: Tuỳ chỉnh màu cho các khối xếp hình.} \\
-    \textbf{Mô tả:} Test này kiểm tra chức năng chọn màu sắc cho các khối xếp hình trong màn hình setting của game console. Người dùng cần có tuỳ chọn màu rõ ràng và thay đổi màu phải được áp dụng đúng cho các khối khi vào màn hình chơi. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Mô tả:} Test này kiểm tra chức năng chọn màu sắc cho các khối xếp hình trong màn hình setting. Người dùng cần có tuỳ chọn màu rõ ràng và thay đổi màu phải được áp dụng đúng cho các khối khi vào màn hình chơi. \\
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
         \item Mở popup setting và tìm tuỳ chọn màu sắc khối.
         \item Chọn màu mới cho một hoặc nhiều loại khối, sau đó lưu hoặc áp dụng thay đổi.
         \item Quay về màn hình game và kiểm tra các khối hiển thị với màu đã chọn.
-        \item Thực hiện thay đổi màu lần nữa, kiểm tra màu mới áp dụng đúng và các khối cũ không giữ màu sai.
-        \item Test khi chọn màu trùng với màu nền để đảm bảo vẫn dễ nhìn và không gây nhầm lẫn.
+        \item Thay đổi màu lần nữa và xác nhận màu mới áp dụng đúng, không giữ màu cũ sai.
+        \item Kiểm tra khả năng chọn màu tương phản thấp với nền để đảm bảo vẫn dễ phân biệt.
     \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu màu khối được tuỳ chỉnh đúng, áp dụng ngay khi chơi và không làm hỏng giao diện. Fail nếu màu không thay đổi, áp dụng sai vào loại khối khác, hoặc khiến khối khó phân biệt. \\
-    \textbf{Trường hợp biên:} Test khi chọn màu thất bại, chọn màu tương phản thấp với nền, và khi áp dụng nhiều lần liên tiếp.
+    \textbf{Tiêu chí pass/fail:} Pass nếu màu khối được tùy chỉnh đúng, áp dụng ngay khi chơi và không làm hỏng giao diện. Fail nếu màu không thay đổi, áp dụng sai vào loại khối khác, hoặc gây khó phân biệt.
+    \\
+    \textbf{Trường hợp biên:} Test khi chọn màu không hợp lệ; test khi chọn màu tương phản thấp với nền; test khi thay đổi nhiều lần liên tiếp trong cùng một phiên.
 
     \item \textbf{Test v2 gameConsole/app.cpp: Tạo nút start và tích hợp với các bên khác.} \\
-    \textbf{Mô tả:} Test này kiểm tra nút start trên màn hình chính console và việc tích hợp chức năng này với các phần khác như guide, board, settings và nhạc nền. Nút start cần khởi chạy đúng màn hình chơi và giữ trạng thái đồng bộ với các popup/tuỳ chọn đã mở. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Mô tả:} Test này kiểm tra nút start và sự tích hợp giữa start cùng các chức năng khác như guide, board, setting và nhạc nền. Nút start phải chuyển đổi ứng dụng từ trạng thái menu sang trạng thái chơi một cách mượt mà và giữ được trạng thái của các thiết lập đã mở. \\
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
         \item Khởi chạy ứng dụng console, quan sát giao diện chính có nút start (ví dụ: nút "Start" hoặc "Play").
         \item Nhấn nút start để vào màn hình game và xác nhận game bắt đầu đúng.
-        \item Trong khi game đang chạy, mở các popup guide, board, hoặc setting; kiểm tra nút start không làm gián đoạn hội thoại các popup và có thể trở lại trạng thái game.
-        \item Đảm bảo khi nhấn start sau khi đóng popup, game tiếp tục chạy hoặc chuyển sang chế độ chơi mà không mất cấu hình.
+        \item Trong khi game đang chạy, mở các popup guide, board, hoặc setting; kiểm tra ứng dụng không bị treo và có thể trở lại màn hình chơi.
+        \item Đóng popup và kiểm tra game vẫn tiếp tục, hoặc nếu thiết kế yêu cầu tạm dừng thì trạng thái phải duy trì.
         \item Kiểm tra tích hợp với nhạc nền: nhạc bật khi bắt đầu game, tắt hoặc giữ trạng thái khi mở/đóng popup.
     \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu nút start khởi tạo màn hình chơi đúng, tích hợp tốt với các popup và nhạc nền, và không gây xung đột trạng thái. Fail nếu start không vào game đúng, hoặc làm mất dữ liệu/thiết lập khi tương tác với các chức năng khác. \\
-    \textbf{Trường hợp biên:} Test khi nhấn start liên tiếp nhiều lần; test khi open popup trước khi nhấn start; test khi chuyển nhanh giữa start và close popup.
+    \textbf{Tiêu chí pass/fail:} Pass nếu nút start khởi tạo màn hình chơi đúng, tích hợp tốt với các popup và nhạc nền, không gây xung đột trạng thái. Fail nếu start không vào game, làm mất dữ liệu hoặc gây lỗi khi tương tác với các chức năng khác.
+    \\
+    \textbf{Trường hợp biên:} Test khi nhấn start liên tiếp nhiều lần; test khi mở popup trước khi nhấn start; test khi chuyển nhanh giữa start và đóng popup; test khi có thay đổi cài đặt chưa lưu.
 
     \item \textbf{Test v3 gameConsole/app.cpp: Gọi API lấy data từ Mongo Atlas thay vì dùng board.json.} \\
-    \textbf{Mô tả:} Test này kiểm tra chuyển đổi nguồn dữ liệu cho game console từ file cục bộ `board.json` sang API lấy data trực tiếp từ Mongo Atlas. API cần trả về dữ liệu bảng/xếp hạng đúng định dạng và ứng dụng phải xử lý lỗi kết nối, dữ liệu trống hoặc dữ liệu sai định dạng. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Mô tả:} Test này kiểm tra chuyển đổi nguồn dữ liệu cho game console từ file cục bộ `board.json` sang API trực tiếp từ Mongo Atlas. Việc này giúp dữ liệu leaderboard được cập nhật động nhưng cũng đặt ra yêu cầu xử lý tốt các trường hợp lỗi mạng, dữ liệu trống hoặc sai định dạng. \\
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
-        \item Chạy ứng dụng console và vào màn hình cần lấy dữ liệu board/leaderboard.
-        \item Kiểm tra việc gọi API Mongo Atlas thành công và nhận về dữ liệu đúng định dạng.
-        \item Xác nhận dữ liệu API được hiển thị chính xác trong giao diện và thay thế dữ liệu cũ từ `board.json`.
-        \item Test khi API trả về lỗi mạng hoặc không khả dụng, đảm bảo ứng dụng hiển thị thông báo lỗi hợp lý và không crash.
-        \item Test khi trả về dữ liệu trống hoặc không đúng định dạng, đảm bảo ứng dụng xử lý chuẩn và không ghi đè dữ liệu hiển thị khác.
+        \item Chạy ứng dụng console và vào popup board / leaderboard.
+        \item Kiểm tra việc gọi API Mongo Atlas thành công, nhận dữ liệu và hiển thị đúng.
+        \item So sánh dữ liệu API với dữ liệu mẫu mong đợi để đảm bảo các trường score/time/name được trình bày chính xác.
+        \item Test khi API lỗi mạng hoặc Mongo Atlas không khả dụng, đảm bảo ứng dụng hiển thị thông báo lỗi hợp lý và không crash.
+        \item Test khi API trả về dữ liệu trống hoặc thiếu trường, đảm bảo ứng dụng xử lý ổn định và không phá vỡ hiển thị.
     \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu API Mongo Atlas được gọi đúng, dữ liệu hiển thị chính xác, và lỗi mạng/dữ liệu sai được xử lý an toàn. Fail nếu dữ liệu không hiển thị, ứng dụng crash, hoặc vẫn dùng `board.json` cũ. \\
-    \textbf{Trường hợp biên:} Test khi API chậm/phản hồi trễ; test khi token/kết nối Mongo Atlas sai; test khi dữ liệu trả về thiếu trường mong đợi.
+    \textbf{Tiêu chí pass/fail:} Pass nếu API được gọi đúng, dữ liệu hiển thị chính xác và lỗi được xử lý an toàn. Fail nếu dữ liệu không hiển thị, ứng dụng crash, hoặc vẫn cố dùng `board.json` cũ.
+    \\
+    \textbf{Trường hợp biên:} Test khi API chậm/phản hồi trễ; test khi token/kết nối Mongo Atlas sai; test khi dữ liệu trả về thiếu trường mong đợi hoặc trường không theo định dạng.
 
     \item \textbf{Test v3 gameConsole/app.cpp: Tạo sort theo time trong popup board.} \\
-    \textbf{Mô tả:} Test này kiểm tra chức năng sắp xếp theo thời gian trong popup board của gameConsole. Người dùng cần có tùy chọn sort theo thời gian, và dữ liệu hiển thị phải phản ánh đúng thứ tự tăng/d giảm theo timestamp hoặc thời gian hoàn thành. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Mô tả:} Test này kiểm tra chức năng sắp xếp theo thời gian trong popup board. Khi dữ liệu được lấy động từ Mongo Atlas hoặc file cục bộ, người dùng cần thấy dữ liệu hiển thị đúng thứ tự theo timestamp/hoàn thành. \\
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
-        \item Mở popup board và xác nhận có nút hoặc tùy chọn sort theo time.
-        \item Chọn sort theo time tăng dần, kiểm tra danh sách được sắp xếp đúng từ thời gian nhỏ nhất đến lớn nhất.
-        \item Chọn sort theo time giảm dần, kiểm tra danh sách được sắp xếp ngược lại.
-        \item Thử với dữ liệu có nhiều bản ghi cùng thời gian để đảm bảo thứ tự giữ ổn định và không sai lệch.
-        \item Đóng popup và mở lại để xác nhận trạng thái sort được duy trì nếu thiết kế yêu cầu. 
+        \item Mở popup board và xác nhận có nút/tùy chọn sort theo time.
+        \item Chọn sort theo time tăng dần và kiểm tra danh sách hiển thị từ nhỏ đến lớn.
+        \item Chọn sort theo time giảm dần và kiểm tra danh sách hiển thị từ lớn đến nhỏ.
+        \item Dùng dữ liệu có nhiều bản ghi cùng thời gian để kiểm tra thứ tự vẫn ổn định.
+        \item Đóng popup và mở lại để xác nhận trạng thái sort duy trì nếu thiết kế yêu cầu.
     \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu sort theo time được thực hiện chính xác, danh sách hiển thị theo thứ tự đúng và không có dữ liệu bị thay đổi sai. Fail nếu thứ tự sai, không có tùy chọn sort, hoặc popup bị lỗi khi sort. \\
-    \textbf{Trường hợp biên:} Test khi dữ liệu board rỗng; test khi thời gian bằng nhau; test khi sort liên tục nhiều lần.
+    \textbf{Tiêu chí pass/fail:} Pass nếu sort theo time đúng, dữ liệu hiển thị đúng thứ tự và không bị sai lệch. Fail nếu thứ tự sai, không có tùy chọn sort hoặc popup bị lỗi khi sort.
+    \\
+    \textbf{Trường hợp biên:} Test khi dữ liệu board rỗng; test khi nhiều bản ghi cùng thời gian; test khi sort liên tục nhiều lần.
 
     \item \textbf{Test v3 gameConsole/app.cpp: Tạo sort theo score trong popup board.} \\
-    \textbf{Mô tả:} Test này kiểm tra chức năng sắp xếp theo điểm số trong popup board của gameConsole. Người dùng cần có tùy chọn sort theo score, và danh sách hiển thị phải phản ánh đúng thứ tự điểm số cao/thấp. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Mô tả:} Test này kiểm tra chức năng sắp xếp theo điểm số trong popup board. Người dùng cần có tùy chọn sort theo score để nhanh chóng tìm ra top điểm hoặc vị trí thấp nhất. \\
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
-        \item Mở popup board và xác nhận có nút hoặc tùy chọn sort theo score.
-        \item Chọn sort theo score giảm dần, kiểm tra danh sách được sắp xếp từ điểm cao nhất đến thấp nhất.
-        \item Chọn sort theo score tăng dần, kiểm tra danh sách được sắp xếp từ điểm thấp nhất đến cao nhất.
-        \item Thử với dữ liệu có nhiều bản ghi cùng score để đảm bảo thứ tự giữ ổn định và không gây sai lệch kiểu dữ liệu.
-        \item Đóng popup và mở lại để xác nhận trạng thái sort được duy trì nếu thiết kế yêu cầu.
+        \item Mở popup board và xác nhận có nút/tùy chọn sort theo score.
+        \item Chọn sort theo score giảm dần, kiểm tra danh sách từ điểm cao nhất đến thấp nhất.
+        \item Chọn sort theo score tăng dần, kiểm tra danh sách từ điểm thấp nhất đến cao nhất.
+        \item Kiểm tra dữ liệu có nhiều bản ghi cùng điểm để xác nhận thứ tự giữ ổn định và hiển thị đúng.
+        \item Đóng popup và mở lại để kiểm tra trạng thái sort có được lưu nếu cần.
     \end{enumerate}
-    \textbf{Tiêu chí pass/fail:} Pass nếu sort theo score được thực hiện chính xác, danh sách hiển thị đúng thứ tự điểm số và không có mục bị hoán đổi sai. Fail nếu thứ tự điểm số sai, không có tùy chọn sort, hoặc popup bị lỗi khi sort. \\
+    \textbf{Tiêu chí pass/fail:} Pass nếu sort theo score được thực hiện chính xác, danh sách hiển thị đúng thứ tự và không có mục bị hoán đổi sai. Fail nếu thứ tự score sai, không có tùy chọn sort hoặc popup bị lỗi khi sort.
+    \\
     \textbf{Trường hợp biên:} Test khi dữ liệu board rỗng; test khi điểm số bằng nhau; test khi sort nhiều lần liên tiếp.
 
     \item \textbf{Test v1 gameConsole/app.cpp: Chèn nhạc nền trong quá trình ở màn hình game console.} \\
     \textbf{Mô tả:} Test này kiểm tra việc bổ sung nhạc nền chạy xuyên suốt màn hình game console, bao gồm mở nhạc khi vào màn hình chơi và tắt khi thoát hoặc đóng popup. Nhạc nền cần được phát mượt và không ảnh hưởng tới thao tác điều khiển. \\
-    \textbf{Kịch bản kiểm thử:} 
+    \textbf{Kịch bản kiểm thử:}
     \begin{enumerate}
         \item Khởi chạy ứng dụng console và vào màn hình game chính.
         \item Quan sát nhạc nền bắt đầu phát khi màn hình game xuất hiện.
