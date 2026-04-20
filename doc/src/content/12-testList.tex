@@ -371,6 +371,15 @@ Các kịch bản kiểm thử phải áp dụng cả hai phương pháp sau:
         \item Kiểm tra tốc độ rơi đều đặn.
     \end{enumerate}
     \textbf{Tiêu chí pass/fail:} Pass nếu khối rơi mượt mà từ trên xuống. Fail nếu không rơi hoặc rơi không đều.
+    \item \textbf{Test v1 gameCore/app.cpp: Điều khiển khối bằng các mũi tên và các phím chữ WASD.} \\
+    \textbf{Mô tả:} Test kiểm tra khả năng điều khiển khối di chuyển trái/phải và xoay bằng phím mũi tên và WASD. \\
+    \textbf{Kịch bản kiểm thử:} 
+    \begin{enumerate}
+        \item Nhấn phím mũi tên trái/phải hoặc A/D để di chuyển khối.
+        \item Nhấn mũi tên lên hoặc W để xoay khối.
+        \item Kiểm tra phản hồi tức thì.
+    \end{enumerate}
+    \textbf{Tiêu chí pass/fail:} Pass nếu khối di chuyển và xoay đúng. Fail nếu không phản hồi hoặc sai hướng.
     \item \textbf{Test Input Lưới:} Truyền input qua Terminal (W/A/S/D) để kiểm tra luồng di chuyển trên lưới.
     \item \textbf{Test Xóa Hàng:} Nhét mock-data (1 hàng đầy) vào ma trận $\rightarrow$ Nhập lệnh cập nhật vòng lặp $\rightarrow$ Expected: Hàng bị xóa, trả về điểm số tương ứng.
     \item \textbf{Test removeLine:} Thiết lập một hàng đầy trong bảng, gọi hàm \texttt{removeLine()} và kiểm tra trạng thái ma trận sau khi xoá. $\rightarrow$ Expected: dòng đầy biến mất, các dòng phía trên trượt xuống một vị trí, dòng đầu tiên trên cùng được điền bằng khoảng trắng và các cạnh tường `#` không thay đổi.
