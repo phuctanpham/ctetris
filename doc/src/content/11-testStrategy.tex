@@ -15,26 +15,29 @@
 \section{Chiến lược kiểm thử}
 
 \subsection{Các chiến lược kiểm thử trò chơi điện tử}
-Trong dự án game xếp hình, chiến lược kiểm thử cần bao quát mọi khía cạnh từ logic lõi đến trải nghiệm người chơi.
-- Kiểm thử chức năng cơ bản: xác minh xuất hiện, di chuyển, xoay và rơi các khối đúng theo quy tắc, cùng với việc loại bỏ hàng khi đầy.
-- Kiểm thử biên: kiểm tra các hành vi khi khối chạm thành bên, chạm đáy, xoay gần thành và xếp chồng trong các vùng hẹp.
-- Kiểm thử trạng thái: đảm bảo các trạng thái game như đang chơi, tạm dừng, kết thúc và bắt đầu lại chuyển đổi chính xác.
-- Kiểm thử hiệu năng: đánh giá tốc độ rơi tăng dần, khả năng vẽ lại màn hình và phản hồi bàn phím ở từng mức độ khó.
-- Kiểm thử hồi quy: mỗi khi thay đổi chức năng xoay, loại dòng hoặc giao diện, thực hiện lại các kịch bản quan trọng để tránh phá vỡ các tính năng hiện có.
+Với kiến trúc nhiều module như mô tả trong `app/appTree.md`, chiến lược kiểm thử cần xây dựng theo từng phần riêng biệt nhưng vẫn đảm bảo tích hợp chặt chẽ.
+- Kiểm thử đơn vị theo module: mỗi lập trình viên nên viết kiểm thử riêng cho module mình phụ trách.
+  + `gameCore`: kiểm thử logic xếp khối, di chuyển, xoay, rơi, kiểm tra loại dòng và xác định trạng thái kết thúc.
+  + `gameConsole`: kiểm thử giao diện điều khiển, hoạt động nhập phím, hiển thị bảng và phản hồi với trạng thái game.
+  + `gameStory`: kiểm thử phần nội dung, chuyển cảnh, tiến trình và điều kiện kích hoạt sự kiện câu chuyện.
+- Kiểm thử tích hợp: đảm bảo giao tiếp giữa `gameCore` và `gameConsole` chính xác, đồng thời `gameStory` nhận đúng sự kiện từ game core.
+- Kiểm thử hệ thống: chạy các kịch bản playthrough từ `main.cpp` để xác minh toàn bộ ứng dụng hoạt động theo quy trình đúng.
+- Kiểm thử biên và điều kiện đặc biệt: tập trung vào các tình huống cạnh như xoay khối khi gần thành, rơi xuống hàng cuối, xếp khối đầy hàng, và chuyển trạng thái khi game over.
+- Kiểm thử hồi quy: mỗi thay đổi ở module này cần kiểm tra lại các chức năng có liên quan trong toàn bộ hệ thống để phát hiện lỗi lan rộng.
 
 \subsection{Lợi thế của chiến lược lựa chọn}
-Chiến lược kiểm thử này giúp phát hiện sớm lỗi logic cốt lõi và đảm bảo trải nghiệm chơi ổn định.
-- Tăng tính tin cậy: kiểm thử chức năng lõi liên tục giúp phát hiện lỗi trước khi chúng ảnh hưởng tới toàn bộ trò chơi.
-- Giảm rủi ro khi mở rộng: khi bổ sung tính năng mới như thay đổi tốc độ rơi, bộ đếm điểm hoặc giao diện, các kịch bản hiện có vẫn được kiểm tra lại.
-- Dễ dàng bảo trì: phân chia kiểm thử theo lớp (game core, giao diện, điều khiển) giúp xác định nhanh phần bị lỗi và viết lại dễ hơn.
-- Tối ưu hóa chất lượng: kiểm tra biên và kiểm tra hồi quy cho phép duy trì chất lượng trong suốt quá trình phát triển.
+Chiến lược kiểm thử theo module giúp nhiều lập trình viên làm việc phối hợp hiệu quả.
+- Phân chia rõ trách nhiệm: mỗi module có bộ kiểm thử chuyên trách, giúp đánh giá chất lượng nhanh và rõ ràng.
+- Hạn chế xung đột: kiểm thử sớm trong từng module giúp phát hiện lỗi nội bộ trước khi hợp nhất vào hệ thống chung.
+- Dễ dàng mở rộng: khi thêm tính năng mới cho `gameStory` hoặc cải tiến `gameConsole`, chỉ cần mở rộng bộ kiểm thử của module và thêm kiểm thử tích hợp tương ứng.
+- Cải thiện phối hợp: các giao diện giữa module được định nghĩa rõ ràng, giúp lập trình viên khác dễ hiểu và kiểm tra tương tác giữa các phần.
 
 \subsection{Tác dụng phụ và các đánh đổi cần cân nhắc}
-Mặc dù chiến lược kiểm thử toàn diện mang lại độ tin cậy cao, vẫn cần cân nhắc các hạn chế và chi phí.
-- Thời gian kiểm thử: viết và duy trì nhiều kịch bản kiểm thử có thể tốn thời gian, đặc biệt khi dự án nhỏ và lịch trình gấp.
-- Độ phức tạp của kiểm thử tự động: với game đồ họa và tương tác thời gian thực, một số hành vi cần kiểm thử thủ công hoặc mô phỏng phức tạp.
-- Chi phí tài nguyên: kiểm thử hiệu năng trên nhiều cấu hình phần cứng có thể cần thêm thiết bị hoặc môi trường thử nghiệm.
-- Ưu tiên tính năng: cần tập trung vào các chức năng quan trọng nhất của game xếp hình trước, tránh đầu tư quá nhiều vào những phần phụ không ảnh hưởng lớn đến gameplay.
+Chiến lược theo module có nhiều ưu điểm nhưng cũng có chi phí cần quản lý khi nhiều người cùng phát triển.
+- Chi phí đồng bộ hóa: cần có quy ước API và tài liệu chung để đảm bảo các module khác nhau kết nối đúng.
+- Khối lượng kiểm thử tăng lên: nhiều module đồng nghĩa với nhiều bộ kiểm thử, yêu cầu duy trì thường xuyên.
+- Khó khăn tích hợp: lỗi chỉ xuất hiện khi các module kết hợp với nhau, nên cần thêm kiểm thử tích hợp và hệ thống.
+- Ưu tiên tính năng chung: cần thống nhất với nhóm về những kịch bản kiểm thử quan trọng nhất để tránh lãng phí nguồn lực cho các phần phụ.
 
 
 
