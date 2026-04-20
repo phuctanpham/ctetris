@@ -12,35 +12,38 @@
 \providecommand{\StandaloneSectionSetup}[2]{\ApplyStandardFooter{#1}{#2}}
 \StandaloneSectionSetup{04-teamConflictSolving.tex}{LastPageTeamConflictSolving}
 
+
 \begin{center}
     {\LARGE \textbf{MÔ TẢ QUÁ TRÌNH LÀM VIỆC NHÓM}} \\[10pt]
     {\large Dự án: ctetris}
 \end{center}
 
-% ===== SECTION 1 =====
-\textbf{1. Xử lí conflict khi trộn hai dòng phát triển giữa lập trình viên và kiểm thử viên (tester)}
+\section*{1. Xử lý xung đột khi trộn hai dòng phát triển giữa lập trình viên và kiểm thử viên (tester)}
 
+\textbf{Thống kê conflict:}
 \begin{itemize}
-    \item \textbf{Thống kê conflict:}
-    \begin{itemize}
-        \item Trong quá trình phát triển dự án, có 1 conflict xảy ra khi merge nhánh main vào nhánh truongtm/bien-ban-hop-ngay-02.
-        \item File bị conflict: \texttt{doc/src/content/11-testStrategy.tex}.
-        \item Nguyên nhân: Lập trình viên (trên nhánh main) đã viết đầy đủ chiến lược kiểm thử, trong khi kiểm thử viên (trên nhánh truongtm) đã thay thế bằng phiên bản ngắn hơn với các ghi chú để tự viết thêm.
-        \item Cách xử lý: Resolve conflict bằng cách giữ phiên bản từ kiểm thử viên, vì phiên bản đó phù hợp hơn với quy trình phát triển của nhóm.
-    \end{itemize}
-    \item \textbf{Quy trình xử lý conflict:}
-    \begin{itemize}
-        \item Phát hiện conflict khi thực hiện merge.
-        \item Thảo luận giữa lập trình viên và kiểm thử viên để quyết định phiên bản nào được giữ.
-        \item Sử dụng công cụ Git để resolve và commit merge.
-    \end{itemize}
+    \item Trong quá trình phát triển dự án, có 1 conflict xảy ra khi merge nhánh main vào nhánh truongtm/bien-ban-hop-ngay-02.
+    \item File bị conflict: \texttt{doc/src/content/11-testStrategy.tex}.
+    \item Nguyên nhân: Lập trình viên (trên nhánh main) đã viết đầy đủ chiến lược kiểm thử, trong khi kiểm thử viên (trên nhánh truongtm) đã thay thế bằng phiên bản ngắn hơn với các ghi chú để tự viết thêm.
+    \item Cách xử lý: Resolve conflict bằng cách giữ phiên bản từ kiểm thử viên, vì phiên bản đó phù hợp hơn với quy trình phát triển của nhóm.
+\end{itemize}
+
+\textbf{Quy trình xử lý conflict:}
+\begin{itemize}
+    \item Phát hiện conflict khi thực hiện merge.
+    \item Thảo luận giữa lập trình viên và kiểm thử viên để quyết định phiên bản nào được giữ.
+    \item Sử dụng công cụ Git để resolve và commit merge.
 \end{itemize}
 
 \label{LastPageTeamConflictSolving}
 % ===== SECTION 2 =====
 \section*{2. Xử lý xung đột giữa 2 vùng viết Overleaf và Github}
 
-Trong quá trình phát triển tài liệu, nhóm gặp phải xung đột khi các thành viên cập nhật song song trên hai nền tảng: Overleaf (soạn thảo trực tuyến) và GitHub (quản lý mã nguồn, tài liệu phân mảng). Điều này dẫn đến việc mất đồng bộ, ghi đè hoặc bỏ sót các thay đổi quan trọng.
+\textbf{Bối cảnh:}
+\begin{itemize}
+    \item Trong quá trình phát triển tài liệu, nhóm gặp phải xung đột khi các thành viên cập nhật song song trên hai nền tảng: Overleaf (soạn thảo trực tuyến) và GitHub (quản lý mã nguồn, tài liệu phân mảng).
+    \item Điều này dẫn đến việc mất đồng bộ, ghi đè hoặc bỏ sót các thay đổi quan trọng.
+\end{itemize}
 
 \textbf{Hướng giải quyết:}
 \begin{itemize}
