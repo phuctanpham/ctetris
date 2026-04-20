@@ -13,7 +13,7 @@
 \StandaloneSectionSetup{03-meetingMinute.tex}{LastPageMeetingMinute}
 
 \setlist[itemize,1]{label=\textbullet, leftmargin=1.5em, itemsep=0pt, parsep=0pt, topsep=2pt}
-\setlist[itemize,2]{label=o, leftmargin=1.8em, itemsep=0pt, parsep=0pt, topsep=2pt}
+\setlist[itemize,2]{label=$\circ$, leftmargin=1.8em, itemsep=0pt, parsep=0pt, topsep=2pt}
 
 \pagenumbering{arabic}
 \setlength{\parindent}{0pt}
@@ -34,104 +34,68 @@
 
 % ===== SECTION 1 =====
 \textbf{1. Thông tin chung}
-
-// tự viết thêm
+\begin{itemize}
+    \item \textbf{Thời gian:} 13h:30 – 13h:55, Chủ nhật, ngày 12/04/2026.
+    \item \textbf{Địa điểm:} Trực tuyến qua Google Meet.
+    \item \textbf{Tổ chức cuộc họp:} Phạm Tấn Phúc.
+    \item \textbf{Thành phần tham dự:} Phạm Tấn Phúc, Ngô Triều Vĩ, Nguyễn Trung Kiên.
+    \item \textbf{Mục đích cuộc họp:}
+    \begin{itemize}
+        \item Review cấu trúc mã nguồn dự án CTetris trên GitHub.
+        \item Kiểm tra tài liệu báo cáo trên Latex
+        \item Chia sẻ và thảo luận về Gameplay của trò chơi.
+    \end{itemize}
+\end{itemize}
 
 % ===== SECTION 2 =====
+\vspace{4pt}
 \textbf{2. Nội dung thảo luận chính}
 
-\subsecheading{2.1. Về cái gì đó ...}
-// tự viết thêm
+\subsecheading{2.1. Dự án CTetris (Console Tetris)}
+\begin{itemize}
+    \item Cấu trúc thư mục mã nguồn: Nhóm đã thống nhất chia dự án thành các module rõ ràng:
+    \begin{itemize}
+        \item \texttt{app/}: Chứa mã nguồn chính (\texttt{main.cpp}).
+        \item \texttt{src/}: Bao gồm các thành phần giao diện console, logic game (gameCore), và hình học (geometry).
+        \item \texttt{include/}: Chứa các file header tương ứng cho từng module.
+    \end{itemize}
+    \item Tài liệu đi kèm: File \texttt{appTree.md} đã liệt kê chi tiết sơ đồ cây của ứng dụng để các thành viên dễ theo dõi.
+    \item Tiến độ GitHub: Đã thực hiện cập nhật nội dung game guide.
+\end{itemize}
 
-\subsecheading{2.2. về cái gì đó ...}
-// tự viết thêm
+\subsecheading{2.2. Tài liệu Báo cáo (Overleaf/LaTeX)}
+\begin{itemize}
+    \item Nội dung báo cáo: Nhóm đang hoàn thiện báo cáo.
+    \item Cấu trúc file LaTeX: Đã phân chia thành các file nhỏ trong thư mục \texttt{doc/src/content/} (Preface, References, Appendix, GameRequirements...).
+    \item Chữ ký xác nhận: Nhóm đã chuẩn bị trang ký tên với chữ ký số của các thành viên.
+\end{itemize}
 
-\subsecheading{...}
+\subsecheading{2.3. Dự án cTetris}
+\begin{itemize}
+    \item Gameplay: Trò chơi cTetris
+    \item Cơ chế điều khiển:
+    \begin{itemize}
+        \item Phím A/D hoặc Mũi tên để di chuyển.
+        \item Phím W hoặc Mũi tên lên xoay.
+    \end{itemize}
+    \item Quy tắc tính điểm: đạt 1 dòng được +1 điểm. Tốc độ game tăng dần theo điểm số.
+\end{itemize}
 
-\subsecheading{2.n. về cái gì đó ...}
-// tự viết thêm
+\subsecheading{2.4. Thảo luận khác}
+\begin{itemize}
+    \item Nhóm đã kiểm tra các kênh trao đổi trên Slack (\texttt{\#all-sii004f21}) để cập nhật thông báo từ giảng viên.
+    \item Thống nhất hạn chót hoàn thiện các phần còn lại là trước 20:00 cùng ngày.
+\end{itemize}
 
 % ===== SECTION 3 =====
 \vspace{2pt}
-\textbf{3. Kết luận:}
+\textbf{3. Kết luận và Phân công tiếp theo:}
+\begin{itemize}
+    \item \textbf{Phạm Tấn Phúc:} Tổng hợp mã nguồn cuối cùng và kiểm tra tính ổn định của game.
+    \item \textbf{Tạ Minh Trường:} Hoàn thiện nốt các phần nội dung còn trống trong file báo cáo LaTeX.
+    \item \textbf{Cả nhóm:} Cùng rà soát lại file PDF xuất ra từ Overleaf để đảm bảo không lỗi định dạng trước khi nộp.
+\end{itemize}
 
-// tự viết thêm
-
-% ====================================================
-% ===== BIÊN BẢN HỌP NGÀY 19/04/2026 =================
-% ====================================================
-\newpage
-
-\begin{center}
-    {\large\bfseries BIÊN BẢN CUỘC HỌP}
-\end{center}
-\begin{center}
-    \textbf{Ngày: 19 / 04 / 2026}
-\end{center}
-\vspace{0.4em}
-
-% ===== SECTION 1 =====
-\textbf{1. Thông tin chung}
-
-// tự viết thêm
-
-% ===== SECTION 2 =====
-\textbf{2. Nội dung thảo luận chính}
-
-\subsecheading{2.1. Về cái gì đó ...}
-// tự viết thêm
-
-\subsecheading{2.2. về cái gì đó ...}
-// tự viết thêm
-
-\subsecheading{...}
-
-\subsecheading{2.n. về cái gì đó ...}
-// tự viết thêm
-
-% ===== SECTION 3 =====
-\vspace{2pt}
-\textbf{3. Kết luận:}
-
-// tự viết thêm
-
-% ====================================================
-% ===== BIÊN BẢN HỌP NGÀY 26/04/2026 =================
-% ====================================================
-\newpage
-
-\begin{center}
-    {\large\bfseries BIÊN BẢN CUỘC HỌP}
-\end{center}
-\begin{center}
-    \textbf{Ngày: 26 / 04 / 2026}
-\end{center}
-\vspace{0.4em}
-
-% ===== SECTION 1 =====
-\textbf{1. Thông tin chung}
-
-// tự viết thêm
-
-% ===== SECTION 2 =====
-\textbf{2. Nội dung thảo luận chính}
-
-\subsecheading{2.1. Về cái gì đó ...}
-// tự viết thêm
-
-\subsecheading{2.2. về cái gì đó ...}
-// tự viết thêm
-
-\subsecheading{...}
-
-\subsecheading{2.n. về cái gì đó ...}
-// tự viết thêm
-
-% ===== SECTION 3 =====
-\vspace{2pt}
-\textbf{3. Kết luận:}
-
-// tự viết thêm
 
 \label{LastPageMeetingMinute} 
 \end{document}
