@@ -1,3 +1,0 @@
-/workspaces/ctetris/app/src/gameStory/build/CMakeFiles/gameStory.dir
-/workspaces/ctetris/app/src/gameStory/build/CMakeFiles/edit_cache.dir
-/workspaces/ctetris/app/src/gameStory/build/CMakeFiles/rebuild_cache.dir
