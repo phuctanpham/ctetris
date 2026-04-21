@@ -1,4 +1,5 @@
 // phucpt: .vscode/settings.json
 {
-  "latex-workshop.latex.autoBuild.run": "never"
+  "latex-workshop.latex.autoBuild.run": "never",
+  "cmake.sourceDirectory": "/workspaces/ctetris/app/src/gameStory"
 }
