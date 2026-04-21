@@ -19,14 +19,34 @@ void setupLayout(sf::RenderWindow& window) {
 // gameconsole-logo-intro-01
 // Hiển thị logo UIT với hiệu ứng fade-in và phát nhạc
 void showLogoIntro(sf::RenderWindow& window, sf::Music& music, float& logoDuration) {
-	// Tải logo từ file ảnh PNG (ví dụ: gameStory_logo.png)
-	sf::Texture logoTexture;
-	if (!logoTexture.loadFromFile("gameStory_logo.png")) {
-		// Nếu không có ảnh, dùng hình chữ nhật thay thế
-		logoTexture.create(400, 200);
+	// Tải logo từ file GIF (gameStory_logo.gif) thành các frame PNG tạm thời
+	// SFML không hỗ trợ GIF động trực tiếp, nên cần giải nén các frame trước
+	// Để tuân thủ rule 1 file, ta sẽ gọi lệnh hệ thống để giải nén nếu chưa có thư mục frame
+	std::vector<sf::Texture> frames;
+	std::string frameDir = "gameStory_logo_frames";
+	if (!std::filesystem::exists(frameDir)) {
+		// Dùng ImageMagick convert để tách frame (yêu cầu đã cài imagemagick)
+		std::string cmd = "mkdir -p " + frameDir + " && convert gameStory_logo.gif " + frameDir + "/frame_%03d.png";
+		system(cmd.c_str());
 	}
-	sf::Sprite logoSprite(logoTexture);
-	logoSprite.setOrigin(logoTexture.getSize().x/2, logoTexture.getSize().y/2);
+	// Load các frame PNG vào vector
+	int idx = 0;
+	while (true) {
+		char buf[256];
+		snprintf(buf, sizeof(buf), "%s/frame_%03d.png", frameDir.c_str(), idx);
+		if (!std::filesystem::exists(buf)) break;
+		sf::Texture tex;
+		if (tex.loadFromFile(buf)) frames.push_back(std::move(tex));
+		++idx;
+	}
+	if (frames.empty()) {
+		// Nếu không có frame, dùng hình chữ nhật thay thế
+		sf::Texture fallback;
+		fallback.create(400, 200);
+		frames.push_back(std::move(fallback));
+	}
+	sf::Sprite logoSprite;
+	logoSprite.setOrigin(frames[0].getSize().x/2, frames[0].getSize().y/2);
 	logoSprite.setPosition(360, 400);
 
 	// Phát nhạc nếu có file gameStory_logo.ogg
@@ -34,11 +54,16 @@ void showLogoIntro(sf::RenderWindow& window, sf::Music& music, float& logoDurati
 		music.play();
 	}
 
-	// Hiệu ứng fade-in logo
+	// Hiệu ứng phát GIF động (fade-in frame đầu)
 	sf::Clock clock;
-	logoDuration = 2.5f; // giây
+	logoDuration = std::max(2.5f, frames.size() * 0.08f); // tối thiểu 2.5s, mỗi frame ~80ms
+	size_t frameCount = frames.size();
 	while (clock.getElapsedTime().asSeconds() < logoDuration) {
-		float alpha = std::min(255.f, 255.f * clock.getElapsedTime().asSeconds() / 1.0f);
+		float t = clock.getElapsedTime().asSeconds();
+		size_t frameIdx = std::min(frameCount-1, static_cast<size_t>((t/logoDuration)*frameCount));
+		logoSprite.setTexture(frames[frameIdx]);
+		// Fade-in cho frame đầu tiên
+		float alpha = (t < 1.0f) ? std::min(255.f, 255.f * t / 1.0f) : 255.f;
 		logoSprite.setColor(sf::Color(255,255,255, static_cast<sf::Uint8>(alpha)));
 		window.clear(sf::Color::Black);
 		window.draw(logoSprite);
