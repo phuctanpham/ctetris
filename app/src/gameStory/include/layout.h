@@ -1,3 +1,13 @@
+#pragma once
+#include <SFML/Graphics.hpp>
+
+namespace layout {
+    // Khởi tạo cửa sổ với tỷ lệ 9:16
+    inline sf::RenderWindow create916Window(int height = 720) {
+        int width = height * 9 / 16;
+        return sf::RenderWindow(sf::VideoMode(width, height), "GameStory 9:16", sf::Style::Close);
+    }
+}
 #ifndef LAYOUT_H
 #define LAYOUT_H
 
