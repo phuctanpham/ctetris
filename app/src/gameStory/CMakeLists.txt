@@ -3,7 +3,7 @@ project(gameStory)
 set(CMAKE_CXX_STANDARD 17)
 
 # SFML
-find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
+find_package(SFML 3.0 REQUIRED COMPONENTS graphics window system)
 
 include_directories(include)
 add_executable(gameStory app.cpp)
