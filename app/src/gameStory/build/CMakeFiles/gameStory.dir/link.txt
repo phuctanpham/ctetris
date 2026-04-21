@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/gameStory.dir/app.cpp.o -o gameStory 

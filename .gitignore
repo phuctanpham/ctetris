@@ -80,3 +80,5 @@ bld/
 *.pidb
 *.svclog
 *.scc
+
+**/task.md
