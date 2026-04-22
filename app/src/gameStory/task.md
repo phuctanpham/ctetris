@@ -9,12 +9,27 @@
     - Comment codeblock này trong gamestory/app.cpp là: gamestory-loading-bar-02
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí đầu tiên sau 01 và trước 03
 [ ] Task 2.1: viết v2 gameStory/app.cpp - tạo dialogue story đơn giản để giới thiệu game kèm nhạc nền phù hợp
+    - Comment codeblock này trong gamestory/app.cpp là: gamestory-phan-cot-game-03
+    - Đặt thứ tự codeblock này từ trên xuống ở vị trí đầu tiên sau 02 và trước 04
+    - Cần hỗ trợ phím enter và space thay vì chỉ click next để chuyển tiếp cảnh
+    - Cần đa dạng chuyển cảnh, ví dụ làm 2 route đơn giản cho kịch bản truyện, chọn A thì ra phân cảnh khác khác, chọn B thì ra phân cảnh khác. Hỗ trợ phím tab để chuyển đổi các option.
 [ ] Task 2.2:  viết v2 gameStory/app.cpp - nút skip để bỏ qua phần cốt truyện
+    - Comment codeblock này trong gamestory/app.cpp là: gamestory-nut-bo-qua-cot-truyen-04
+    - Đặt thứ tự codeblock này từ trên xuống ở vị trí trước 03 và sau 05
+    - Sau khi skip chuyển qua nhịp nhàng phần game console.
 [ ] Task 3.1: viết v3 gameStory/app.cpp - download âm thanh và các hình ảnh trong story mỗi lần khởi động qua API thay vì build trực tiếp vào .exe file
+    - Comment codeblock này trong gamestory/app.cpp là: gamestory-tich-hop-backend-04
+    - Đặt thứ tự codeblock này từ trên xuống ở vị trí đầu tiên sau 04 và trước 06
+    - Trừ loading bar, Không để các file ảnh nặng và nhạc nền trong file .exe nữa mà sẽ phải gọi API để download các hình ảnh rồi mới chạy được phần cốt game
+    - Tự động skip nếu không kêt nối internet.
 [ ] Task 3.2: viết v3 gameStory/app.cpp - thay tốc độ loading bar bằng tốc độ download và repeat hiệu ứng logo cho đến khi download xong hết
+    - Comment codeblock này trong gamestory/app.cpp là: gamestory-hieu-chinh-loading-bar-theo-download-speed-06
+    - Đặt thứ tự codeblock này từ trên xuống ở vị trí cuối cùng
+    - Như tên task, tác vụ này nhằm đảm bảo cốt chuyện đầy đủ rồi mới chạy
+    - Mục tiêu đưa các media lên đám mây để lưu trữ không build trực tiếp vào file
 ## Rules:
     - Chỉ có 1 file c++ (app/src/gameStory/app.cpp) duy nhất để viết.
     - Các *.h phải để trong thư mục include của ứng dụng (app/src/gameStory/include).
     - Cần tách 1 file layout.h (app/src/gameStory/include/layout.h) để đảm bảo ứng dụng chạy theo khung hình có tỷ lệ 9:16 trên windown.
-    - Cần tạo thành công build file từ app.cpp để chạy trên macos cho.
-    - Các file hình ảnh, âm thanh, phim ... phải để trong chính thư mục đang làm việc và đặt tên bắt đầu bằng tiền tố là tên thư mục. VD: cần thêm 1 file nhạc nền tên logo.mp4 cho gameCore thì phải để trong app/src/gameStory/gameStory_logo.mp4
+    - Cần tạo thành công build file từ app.cpp để chạy trên macos và ubuntu.
+    - Các file hình ảnh, âm thanh, phim ... phải để trong chính thư mục đang làm việc và đặt tên bắt đầu bằng tiền tố là tên thư mục. VD: cần thêm 1 file nhạc nền tên music.mp3 cho gameStory thì phải để trong app/src/gameStory/gameStory_music.mp3
