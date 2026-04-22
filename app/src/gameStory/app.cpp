@@ -119,11 +119,6 @@ int main() {
     // gameconsole-logo-intro-01
     // Hiển thị logo UIT với hiệu ứng (có thể thêm âm thanh ở đây)
     // =========================
-    // (Hiện tại chỉ load GIF, có thể mở rộng thêm hiệu ứng/âm thanh ở đây)
-    int windowHeight = 720;
-    auto window = layout::create916Window(windowHeight);
-    window.setFramerateLimit(60);
-    window.setVerticalSyncEnabled(true);
 
 
     std::vector<sf::Image> frames;
