@@ -15,7 +15,37 @@ read platform
 if [[ "$platform" == "1" ]]; then
     TARGET="Ubuntu"
 elif [[ "$platform" == "2" ]]; then
+    install_brew_deps_if_needed() {
+        BREW_DEPS=(bison flac libogg pkgconf cmake freetype libpng sfml doxygen giflib libvorbis)
+        MISSING_DEPS=()
+        for dep in "${BREW_DEPS[@]}"; do
+            if ! brew list --formula | grep -q "^$dep$"; then
+                MISSING_DEPS+=("$dep")
+            fi
+        done
+        if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
+            echo "Các thư viện sau chưa được cài đặt qua brew: ${MISSING_DEPS[*]}"
+            read -p "Bạn có muốn cài đặt các thư viện này không? [y/N]: " install_brew_deps
+            if [[ "$install_brew_deps" =~ ^[Yy]$ ]]; then
+                brew install ${MISSING_DEPS[*]}
+            else
+                echo "Aborting build."
+                exit 1
+            fi
+        fi
+    }
     TARGET="macOS"
+    # Danh sách các thư viện cần kiểm tra
+    BREW_DEPS=(bison flac libogg pkgconf cmake freetype libpng sfml doxygen giflib libvorbis)
+    MISSING_DEPS=()
+    for dep in "${BREW_DEPS[@]}"; do
+        if ! brew list --formula | grep -q "^$dep$"; then
+            MISSING_DEPS+=("$dep")
+        fi
+        install_brew_deps_if_needed
+            exit 1
+        fi
+    fi
 else
     echo "Invalid choice. Exiting."
     exit 1
