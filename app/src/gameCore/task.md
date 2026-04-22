@@ -24,7 +24,7 @@
 [x] Task 1.8: viết v1 gameCore/app.cpp - hiệu ứng xoá dòng
     - Comment codeblock này trong gamecorre/app.cpp là:  gamecore-xu-ly-xoa-dong-06
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 05 và trên 07
-[ ] Task 1.9: viết v2 gameCore/app.cpp - tính điểm
+[x] Task 1.9: viết v2 gameCore/app.cpp - tính điểm
     - Comment codeblock này trong gamecorre/app.cpp là:  gamecore-tinh-diem-07
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 06 và trên 08
 [ ] Task 2.1: viết v2 gameCore/app.cpp - tốc độ rơi nhanh dần theo điểm số.
