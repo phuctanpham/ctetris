@@ -1,6 +1,5 @@
-echo "Build complete. Run ./build/gameCore to start."
-
 #!/bin/sh
+echo "Build complete. Run ./build/gameCore to start."
 set -e
 
 command_exists() {
@@ -50,6 +49,7 @@ check_sfml_version() {
 			esac
 			;;
 	esac
+	return 0
 }
 
 install_brew_deps_if_needed() {
@@ -118,10 +118,6 @@ elif [ "$platform" = "2" ]; then
 		brew update
 		install_brew_deps_if_needed
 	}
-else
-	echo "Invalid choice. Exiting."
-	exit 1
-fi
 
 if [ -d "build" ]; then
 	printf "Thư mục build đã tồn tại. Bạn có muốn xoá thư mục build cũ không? [y/N]: "
@@ -149,3 +145,4 @@ make
 
 echo "To run the executable, use:"
 echo "  ./build/gameCore"
+fi

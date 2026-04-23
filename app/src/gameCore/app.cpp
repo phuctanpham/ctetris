@@ -107,22 +107,22 @@ int main() {
     while (window.isOpen()) {
         float time = clock.restart().asSeconds();
         timer += time;
-        sf::Event event;
+        sf::Event event{};
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) window.close();
             if (event.type == sf::Event::KeyPressed) {
-                if (isGameOver && event.key.code == sf::Keyboard::R) {
+                if (isGameOver && event.key.code == sf::KeyboardKey::R) {
                     for (int i = 0; i < M; i++) for (int j = 0; j < N; j++) field[i][j] = 0;
                     score = 0; isGameOver = false; spawnNewBlock();
                 }
                 if (!isGameOver) {
-                    if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W) rotate = true;
-                    else if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::A) dx = -1;
-                    else if (event.key.code == sf::Keyboard::Right || event.key.code == sf::Keyboard::D) dx = 1;
+                    if (event.key.code == sf::KeyboardKey::Up || event.key.code == sf::KeyboardKey::W) rotate = true;
+                    else if (event.key.code == sf::KeyboardKey::Left || event.key.code == sf::KeyboardKey::A) dx = -1;
+                    else if (event.key.code == sf::KeyboardKey::Right || event.key.code == sf::KeyboardKey::D) dx = 1;
                 }
             }
         }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) || sf::Keyboard::isKeyPressed(sf::Keyboard::S)) delay = 0.05f;
+        if (sf::Keyboard::isKeyPressed(sf::KeyboardKey::Down) || sf::Keyboard::isKeyPressed(sf::KeyboardKey::S)) delay = 0.05f;
         else delay = 0.3f;
 
         if (!isGameOver) {
@@ -208,7 +208,10 @@ int main() {
         if (isGameOver) {
             sf::Font font;
             if (font.loadFromFile("/System/Library/Fonts/Supplemental/Arial.ttf")) {
-                sf::Text gameOverText("GAME OVER\nPress R to Restart", font, 48);
+                sf::Text gameOverText;
+                gameOverText.setFont(font);
+                gameOverText.setString("GAME OVER\nPress R to Restart");
+                gameOverText.setCharacterSize(48);
                 gameOverText.setFillColor(sf::Color::Red);
                 gameOverText.setPosition(offsetX + 20, offsetY + 200);
                 window.draw(gameOverText);

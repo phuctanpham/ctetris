@@ -27,6 +27,12 @@
     - Comment codeblock này trong gameconsole/app.cpp là: gameconsole-chen-nhac-05
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 03 và trước 05
     - Tương tự kỹ thuật lightbox, việc làm trước chèn nhạc nền trong v1 nhằm tối ưu kỹ thuật chèn media để tái sử dụng lại cho ở các version sau.
+[ ] Task 1.6: tích hợp v1 với các modules còn lại trong app/src qua file app/main.cpp
+    - Nếu có viết thêm để hỗ trợ tích hợp, Comment codeblock này trong gameConsole/app.cpp là:  integration/v1
+    - Đặt thứ tự codeblock này từ trên xuống ở vị trí trên 00
+    - Khởi động chương trình luôn bắt đầu bằng màn hình của gameStory.
+    - Sau khi kết thúc màn hình của phần gameStory sẽ chuyển tiếp qua khởi động màn hình gameConsole
+    - Sau khi bấm nút start bên màn hình gameConsole chuyển tiếp qua khởi động màn hình gameCore
 [ ] Task 2.1: viết v2 gameConsole/app.cpp - tạo nút setting và nút close popup setting.
     - Comment codeblock này trong gameconsole/app.cpp là: gameconsole-chen-nhac-05
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 04 và trước 06
@@ -46,7 +52,7 @@
 [ ] Task 2.4: viết v2 gameConsole/app.cpp - tạo nút start và tích hợp với các bên src/game* khác.
     - Comment codeblock này trong gameconsole/app.cpp là: gameconsole-nut-start-va-tich-hop-voi-cac-ben-khac-08
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 07 và trước 09
-    - chủ yếu lúc này cần nói chuyện giưã các src/game* để làm sao click nút start (nút skip)) mà nó chuyển tiếp qua các phần giao diện khác của src/game* quản lý. Hoặc khi ở màn hình giao diện khác, có nút “setting” thì vòng lại màn hình này nhịp nhàng
+    - chủ yếu lúc này cần nói chuyện giưã các src/game* để làm sao click nút start (nút skip) mà nó chuyển tiếp qua các phần giao diện khác của src/game* quản lý. Hoặc khi ở màn hình giao diện khác, có nút “setting” thì vòng lại màn hình này nhịp nhàng
 [ ] Task 2.5: viết v3 gameConsole/app.cpp - gọi API lấy data từ mongo atlas thay vì dùng gameConsole_board.json
     - Comment codeblock này trong gameconsole/app.cpp là: gameconsole-tich-hop-backend-09
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 08 và trước 10
