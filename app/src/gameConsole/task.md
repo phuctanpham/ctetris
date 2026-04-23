@@ -33,6 +33,13 @@
     - Khởi động chương trình luôn bắt đầu bằng màn hình của gameStory.
     - Sau khi kết thúc màn hình của phần gameStory sẽ chuyển tiếp qua khởi động màn hình gameConsole
     - Sau khi bấm nút start bên màn hình gameConsole chuyển tiếp qua khởi động màn hình gameCore
+        - Đưa về các file CMakeLists.txt trong các modules về 1 một file duy nhất đặt ở app/ để hỗ trợ build chương trình chạy độc lập từng module hoặc tích hợp toàn bộ modules. Kiểm tra tính tồn tại của thư mục build trong thư mục app. Hỗ trợ build chương trình chạy trên các platfom: macos, windown, linux, ios và android, mỗi platform là 1 tên thư mục chứa các file build trong thư mục app/build. Ví dụ: build file cài đặt exe chạy trên windown thì là app/build/windown/ctetris.msi. File exe sẽ cần kiểm tra thư viện và môi trường windown để tiến hành cài đặt thư viện cần thiết rồi cài đặt game trước khởi động trò chơi. Macos các cũng tương tự các file như ctetris.app (macos). Nếu build riêng lẻ từng module để kiểm thử thì moduldeName.platformTailName, ví dụ: gameStory.exe
+  - Đưa về các file build.sh trong các modules về 1 một file duy nhất đặt ở app/ . File build.sh sẽ:
+    + hỏi build đơn lẻ từng module hay tích hợp toàn bộ.
+    + hỏi build trên nền tảng nào? windown và macos
+    + kiểm tra môi trường hệ điều hành hiện tại đã cài cmake đúng version chưa? nếu chưa có hoặc chưa đúng version sẽ hỏi để gỡ bỏ một cách sạch sẽ và cài lại
+    + kiểm tra môi trường hệ điều hành hiện tại đã cài sfml version được thống nhất trong CMakeLists.txt chưa? nếu chưa có hoặc chưa đúng version sẽ hỏi để gỡ bỏ một cách sạch sẽ và cài lại cho môi trường hệ điều hành hiện tại
+    + kiểm tra môi trường hệ điều hành hiện tại đã cài các thư viện và gói cài đặt cần thiết để build file cho nền tảng đã chọn chưa? nếu chưa có hoặc chưa đúng version sẽ hỏi để gỡ bỏ một cách sạch sẽ và cài lại.
 [ ] Task 2.1: viết v2 gameConsole/app.cpp - tạo nút setting và nút close popup setting.
     - Comment codeblock này trong gameconsole/app.cpp là: gameconsole-chen-nhac-05
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 04 và trước 06
