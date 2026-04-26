@@ -80,3 +80,4 @@ bld/
 *.pidb
 *.svclog
 *.scc
+**/build
