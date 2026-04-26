@@ -4,38 +4,34 @@ Write-Host "=================================================" -ForegroundColor 
 Write-Host "  ctetris -- Build Script (SDL3) - Windows"        -ForegroundColor Cyan
 Write-Host "=================================================" -ForegroundColor Cyan
 
-# --- Tu dong dam bao nanosvg headers (single-header lib cho gameStory) ---
-# Kiem tra app/src/gameStory/include co nanosvg.h va nanosvgrast.h chua;
-# neu thieu hoac file rong thi tai lai tu GitHub bang Invoke-WebRequest.
+# Phien ban emsdk da kiem chung tuong thich tot voi SDL3
+$EmsdkVersion = "3.1.72"
+$EmsdkDir     = Join-Path $env:USERPROFILE "emsdk"
+
+# --- Tu dong dam bao nanosvg headers ---
 function Ensure-NanoSVG {
     $IncludeDir = "src/gameStory/include"
     $BaseUrl    = "https://raw.githubusercontent.com/memononen/nanosvg/master/src"
 
-    # Tao thu muc include neu chua ton tai
     if (-not (Test-Path $IncludeDir)) {
         New-Item -ItemType Directory -Path $IncludeDir -Force | Out-Null
     }
 
-    # Duyet qua tung file can dam bao co mat
     $files = @("nanosvg.h", "nanosvgrast.h")
     foreach ($file in $files) {
         $target = Join-Path $IncludeDir $file
         $needsDownload = $true
 
-        # Chi bo qua download neu file ton tai va co kich thuoc > 0
         if (Test-Path $target) {
-            if ((Get-Item $target).Length -gt 0) {
-                $needsDownload = $false
-            }
+            if ((Get-Item $target).Length -gt 0) { $needsDownload = $false }
         }
 
         if ($needsDownload) {
             Write-Host "Thieu $file -- dang tai ve $IncludeDir ..." -ForegroundColor Yellow
             try {
-                # -UseBasicParsing de tuong thich PowerShell core va Windows PowerShell
                 Invoke-WebRequest -Uri "$BaseUrl/$file" -OutFile $target -UseBasicParsing
             } catch {
-                Write-Host "[LOI] Khong tai duoc $file. Kiem tra ket noi internet roi thu lai." -ForegroundColor Red
+                Write-Host "[LOI] Khong tai duoc $file." -ForegroundColor Red
                 if (Test-Path $target) { Remove-Item $target -Force }
                 exit 1
             }
@@ -46,8 +42,6 @@ function Ensure-NanoSVG {
 Ensure-NanoSVG
 
 # --- Tu dong sinh gameStory_logo_svg.h tu gameStory_logo.svg ---
-# Embed noi dung SVG vao raw string literal de plug-and-play (khong can
-# copy file SVG di kem .exe). Chi regenerate khi .svg moi hon .h.
 function Generate-LogoHeader {
     $SvgFile    = "src/gameStory/gameStory_logo.svg"
     $HeaderFile = "src/gameStory/include/gameStory_logo_svg.h"
@@ -57,7 +51,6 @@ function Generate-LogoHeader {
         exit 1
     }
 
-    # Skip neu header da ton tai va moi hon SVG (giong make dependency)
     if (Test-Path $HeaderFile) {
         $svgTime    = (Get-Item $SvgFile).LastWriteTime
         $headerTime = (Get-Item $HeaderFile).LastWriteTime
@@ -66,10 +59,7 @@ function Generate-LogoHeader {
 
     Write-Host "Sinh $HeaderFile tu $SvgFile ..." -ForegroundColor Yellow
 
-    # Doc toan bo noi dung SVG (raw, giu nguyen ky tu xuong dong)
     $svgContent = Get-Content -Path $SvgFile -Raw
-
-    # Dung delimiter SVG_RAW_LOGO de tranh trung lap voi noi dung SVG
     $headerContent = @"
 #pragma once
 // File nay duoc sinh tu dong tu gameStory_logo.svg boi build.ps1
@@ -79,17 +69,114 @@ $svgContent
 )SVG_RAW_LOGO";
 "@
 
-    # Ghi UTF-8 khong BOM (tranh compiler tren cac platform hieu sai)
     $absPath = Join-Path (Get-Location) $HeaderFile
     [System.IO.File]::WriteAllText(
-        $absPath,
-        $headerContent,
+        $absPath, $headerContent,
         (New-Object System.Text.UTF8Encoding $false)
     )
 }
 
 Generate-LogoHeader
+# --- Tu dong sinh app icon (PNG/ICO) tu SVG ---
+$IconScript = "icons\gen_icons.ps1"
+if (Test-Path $IconScript) {
+    try { & powershell -ExecutionPolicy Bypass -File $IconScript } catch {
+        Write-Host "[ICON] Sinh icon that bai (bo qua): $_" -ForegroundColor Yellow
+    }
+}
+function Require-Tool($name, $hint) {
+    if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
+        Write-Host "[LOI] Thieu cong cu '$name'. $hint" -ForegroundColor Red
+        exit 1
+    }
+}
 
+# Helper: import bien moi truong tu emsdk_env.bat vao process PowerShell hien tai
+# PowerShell khong source duoc .bat truc tiep -- ta chay .bat trong cmd, in toan bo
+# bien moi truong bang lenh "set", roi parse de cap nhat tung bien vao Process scope
+function Import-EmsdkEnv {
+    param([string]$EnvBat)
+    if (-not (Test-Path $EnvBat)) { return $false }
+    $output = & cmd /c "`"$EnvBat`" >nul 2>&1 && set"
+    foreach ($line in $output) {
+        if ($line -match '^([^=]+)=(.*)$') {
+            [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], "Process")
+        }
+    }
+    return $true
+}
+
+# Helper: dam bao emsdk san sang trong process PowerShell hien tai
+# Logic giong build.sh: detect emcmake -> thu load env -> prompt cai dat ->
+# clone -> install -> activate -> load env -> verify
+function Ensure-Emsdk {
+    if (Get-Command emcmake -ErrorAction SilentlyContinue) {
+        $ver = (& emcc --version 2>$null | Select-Object -First 1)
+        Write-Host "[OK] Emscripten da san sang: $ver" -ForegroundColor Green
+        return
+    }
+
+    $envBat = Join-Path $EmsdkDir "emsdk_env.bat"
+    if (Test-Path $envBat) {
+        Write-Host "[INFO] Tim thay $EmsdkDir, dang load env..." -ForegroundColor Yellow
+        Import-EmsdkEnv -EnvBat $envBat | Out-Null
+        if (Get-Command emcmake -ErrorAction SilentlyContinue) {
+            $ver = (& emcc --version 2>$null | Select-Object -First 1)
+            Write-Host "[OK] Emscripten kich hoat: $ver" -ForegroundColor Green
+            return
+        }
+        Write-Host "[INFO] Load xong nhung van thieu emcmake -- co the chua activate version $EmsdkVersion." -ForegroundColor Yellow
+    }
+
+    Write-Host "[INFO] Emscripten chua san sang trong shell hien tai." -ForegroundColor Yellow
+    $ans = Read-Host "Cai/kich hoat emsdk $EmsdkVersion vao $EmsdkDir? [y/N]"
+    if ($ans -notmatch '^[Yy]') {
+        Write-Host ""
+        Write-Host "Huy. De cai thu cong:"
+        Write-Host "  cd `$HOME"
+        Write-Host "  git clone https://github.com/emscripten-core/emsdk.git"
+        Write-Host "  cd emsdk"
+        Write-Host "  .\emsdk install $EmsdkVersion"
+        Write-Host "  .\emsdk activate $EmsdkVersion"
+        Write-Host "  & .\emsdk_env.bat"
+        exit 1
+    }
+
+    if (-not (Test-Path $EmsdkDir)) {
+        Require-Tool "git" "Cai Git: https://git-scm.com/download/win"
+        Write-Host "Clone emsdk vao $EmsdkDir ..." -ForegroundColor Yellow
+        git clone https://github.com/emscripten-core/emsdk.git $EmsdkDir
+    }
+
+    Push-Location $EmsdkDir
+    Write-Host "Install emsdk $EmsdkVersion ..." -ForegroundColor Yellow
+    & ".\emsdk.bat" install  $EmsdkVersion
+    Write-Host "Activate emsdk $EmsdkVersion ..." -ForegroundColor Yellow
+    & ".\emsdk.bat" activate $EmsdkVersion
+    Pop-Location
+
+    Import-EmsdkEnv -EnvBat $envBat | Out-Null
+
+    if (-not (Get-Command emcmake -ErrorAction SilentlyContinue)) {
+        Write-Host "[LOI] Khong tim thay emcmake sau khi load $envBat" -ForegroundColor Red
+        Write-Host "      Hay kiem tra thu muc $EmsdkDir roi chay lai."
+        exit 1
+    }
+    $ver = (& emcc --version 2>$null | Select-Object -First 1)
+    Write-Host "[OK] Emscripten da san sang: $ver" -ForegroundColor Green
+
+    Write-Host ""
+    Write-Host "[GOI Y] De lan sau khong phai load thu cong, chay truoc khi build:" -ForegroundColor Yellow
+    Write-Host "        & `"$envBat`""                                               -ForegroundColor Yellow
+    Write-Host ""
+}
+# --- Tu dong sinh app icon (PNG/ICO) tu SVG ---
+$IconScript = "icons\gen_icons.ps1"
+if (Test-Path $IconScript) {
+    try { & powershell -ExecutionPolicy Bypass -File $IconScript } catch {
+        Write-Host "[ICON] Sinh icon that bai (bo qua): $_" -ForegroundColor Yellow
+    }
+}
 # --- Hoi target ---
 $targetChoice = Read-Host "Ban muon build gi? (1: ctetris, 2: gameStory, 3: gameConsole, 4: gameCore)"
 switch ($targetChoice) {
@@ -102,25 +189,21 @@ switch ($targetChoice) {
 # --- Hoi nen tang ---
 $platChoice = Read-Host "Chon nen tang (1: Windows, 2: WASM)"
 
-# Ham kiem tra cong cu
-function Require-Tool($name, $hint) {
-    if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
-        Write-Host "[LOI] Thieu cong cu '$name'. $hint" -ForegroundColor Red
-        exit 1
-    }
-}
-
 # =========== Nhanh WASM ===========
 if ($platChoice -eq '2') {
     Write-Host "Kiem tra moi truong WASM..." -ForegroundColor Yellow
-    Require-Tool "emcmake" "Cai Emscripten SDK va activate emsdk truoc khi chay lai."
-    Require-Tool "ninja"   "Cai Ninja: choco install ninja"
+    Require-Tool "ninja" "Cai Ninja: choco install ninja"
+    Ensure-Emsdk
 
     $BuildDir = "build/wasm"
     if (Test-Path $BuildDir) { Remove-Item -Recurse -Force $BuildDir }
     New-Item -ItemType Directory -Path $BuildDir | Out-Null
     Push-Location $BuildDir
 
+    Write-Host ""
+    Write-Host "[INFO] Lan build WASM dau tien se tai SDL3 source (~10MB) va" -ForegroundColor Cyan
+    Write-Host "       build cung -- mat khoang 1-2 phut. Cac lan sau dung cache." -ForegroundColor Cyan
+    Write-Host ""
     Write-Host "Cau hinh CMake voi emcmake..." -ForegroundColor Yellow
     emcmake cmake -G Ninja ../..
 
@@ -130,7 +213,7 @@ if ($platChoice -eq '2') {
     Pop-Location
     Write-Host ""
     Write-Host "Build WASM thanh cong tai $BuildDir." -ForegroundColor Green
-    Write-Host "Cach chay tren localhost:"          -ForegroundColor Green
+    Write-Host "Cach chay tren localhost:"           -ForegroundColor Green
     Write-Host "  cd $BuildDir; python -m http.server 8000" -ForegroundColor Green
     Write-Host "  Mo: http://localhost:8000/$Target.html"   -ForegroundColor Green
     exit
@@ -139,7 +222,6 @@ if ($platChoice -eq '2') {
 # =========== Nhanh Windows native ===========
 Require-Tool "cmake" "Cai CMake >=3.16 tu https://cmake.org/download/"
 
-# Goi y vcpkg neu chua co SDL3
 if (-not $env:VCPKG_ROOT -and -not $env:CMAKE_PREFIX_PATH) {
     Write-Host "[CANH BAO] Khong tim thay VCPKG_ROOT hoac CMAKE_PREFIX_PATH cho SDL3." -ForegroundColor Yellow
     Write-Host "Cach 1: vcpkg install sdl3 va set `$env:VCPKG_ROOT"                    -ForegroundColor Yellow

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#4b63b7">
+<title>cTetris</title>
+
+<!-- PWA links: manifest + favicon SVG (modern browsers ho tro SVG favicon) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!-- iOS standalone PWA: cho phep "Add to Home Screen" -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+
+<style>
+/* ====================================================
+   Reset mobile-first: bo het margin/padding, nen trang
+   ==================================================== */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Body lam flex container de can giua canvas theo ca 2 chieu */
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ====================================================
+   Canvas: ti le 270:480 (9:16), tu dong scale theo viewport
+   - aspect-ratio + width/height auto: browser tu chuyen
+     giua height-driven (landscape) va width-driven (portrait)
+   - 100dvh = dynamic viewport height (bu cho thanh URL mobile)
+   ==================================================== */
+canvas.emscripten {
+    aspect-ratio: 270 / 480;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    max-width: 100vw;
+    width: auto;
+    background: #000000;
+    display: block;
+    outline: none;
+    border: 0;
+    /* Pixelated rendering giu net text/block khi scale len man hinh lon */
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* Loading overlay -- an di sau khi WASM runtime init xong */
+#loading {
+    position: fixed;
+    inset: 0;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: opacity 0.3s;
+}
+#loading.hidden { opacity: 0; pointer-events: none; }
+
+#spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e0e0e0;
+    border-top-color: #4b63b7;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+#loading-text {
+    color: #4b63b7;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+}
+</style>
+</head>
+<body>
+
+<!-- Overlay loading: bi an sau khi onRuntimeInitialized -->
+<div id="loading">
+    <div id="spinner"></div>
+    <div id="loading-text">Loading cTetris...</div>
+</div>
+
+<!-- Canvas SDL3 ve len. ID 'canvas' la mac dinh ma Emscripten Module tim. -->
+<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+
+<script>
+// Emscripten Module config: tro toi canvas, xu ly sk runtime
+var Module = {
+    canvas: (function() {
+        var c = document.getElementById('canvas');
+        c.addEventListener("webglcontextlost", function(e) {
+            alert('WebGL context bi mat. Hay reload trang.');
+            e.preventDefault();
+        }, false);
+        return c;
+    })(),
+    onRuntimeInitialized: function() {
+        var loading = document.getElementById('loading');
+        if (loading) {
+            loading.classList.add('hidden');
+            setTimeout(function() { loading.style.display = 'none'; }, 300);
+        }
+    },
+    print:    function(text) { console.log(text); },
+    printErr: function(text) { console.error(text); }
+};
+
+// PWA: dang ky service worker (chi hoat dong tren HTTPS hoac localhost)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').catch(function(err) {
+            console.warn('Khong dang ky duoc service worker:', err);
+        });
+    });
+}
+</script>
+
+{{{ SCRIPT }}}
+
+</body>
+</html>

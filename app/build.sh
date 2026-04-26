@@ -1,42 +1,40 @@
 #!/bin/sh
-# Tap lenh build tich hop -- SDL3 native + WASM
+# Tap lenh build tich hop -- SDL3 native + WASM (auto setup emsdk)
 set -e
 
 echo "================================================="
 echo "  ctetris -- Build Script (SDL3)"
 echo "================================================="
 
+# Phien ban emsdk da kiem chung tuong thich voi SDL3 native port
+EMSDK_VERSION="3.1.72"
+EMSDK_DIR="${HOME}/emsdk"
+
 # --- Tu dong dam bao nanosvg headers (single-header lib cho gameStory) ---
-# Kiem tra app/src/gameStory/include co nanosvg.h va nanosvgrast.h chua;
-# neu thieu hoac file rong (download dang do truoc do) thi tai lai tu GitHub.
 ensure_nanosvg() {
     INCLUDE_DIR="src/gameStory/include"
     NANOSVG_BASE_URL="https://raw.githubusercontent.com/memononen/nanosvg/master/src"
-
     mkdir -p "$INCLUDE_DIR"
 
-    # Kiem tra cong cu curl truoc khi tai
     if ! command -v curl >/dev/null 2>&1; then
         echo "[LOI] Thieu cong cu 'curl' de tai nanosvg headers."
         echo "      macOS: curl co san  |  Ubuntu: sudo apt-get install curl"
         exit 1
     fi
 
-    # Tai nanosvg.h neu thieu hoac rong
     if [ ! -s "$INCLUDE_DIR/nanosvg.h" ]; then
         echo "Thieu nanosvg.h -- dang tai ve $INCLUDE_DIR/ ..."
         if ! curl -fsSL -o "$INCLUDE_DIR/nanosvg.h" "$NANOSVG_BASE_URL/nanosvg.h"; then
-            echo "[LOI] Khong tai duoc nanosvg.h. Kiem tra ket noi internet roi thu lai."
+            echo "[LOI] Khong tai duoc nanosvg.h."
             rm -f "$INCLUDE_DIR/nanosvg.h"
             exit 1
         fi
     fi
 
-    # Tai nanosvgrast.h neu thieu hoac rong
     if [ ! -s "$INCLUDE_DIR/nanosvgrast.h" ]; then
         echo "Thieu nanosvgrast.h -- dang tai ve $INCLUDE_DIR/ ..."
         if ! curl -fsSL -o "$INCLUDE_DIR/nanosvgrast.h" "$NANOSVG_BASE_URL/nanosvgrast.h"; then
-            echo "[LOI] Khong tai duoc nanosvgrast.h. Kiem tra ket noi internet roi thu lai."
+            echo "[LOI] Khong tai duoc nanosvgrast.h."
             rm -f "$INCLUDE_DIR/nanosvgrast.h"
             exit 1
         fi
@@ -46,8 +44,6 @@ ensure_nanosvg() {
 ensure_nanosvg
 
 # --- Tu dong sinh gameStory_logo_svg.h tu gameStory_logo.svg ---
-# Embed noi dung SVG vao raw string literal de plug-and-play (khong can
-# copy file SVG di kem .exe/.app). Chi regenerate khi .svg moi hon .h.
 generate_logo_header() {
     SVG_FILE="src/gameStory/gameStory_logo.svg"
     HEADER_FILE="src/gameStory/include/gameStory_logo_svg.h"
@@ -57,14 +53,12 @@ generate_logo_header() {
         exit 1
     fi
 
-    # Skip neu header da ton tai va moi hon SVG (giong make dependency)
+    # Skip neu header da moi hon SVG (giong cach make tinh dependency)
     if [ -f "$HEADER_FILE" ] && [ "$HEADER_FILE" -nt "$SVG_FILE" ]; then
         return 0
     fi
 
     echo "Sinh $HEADER_FILE tu $SVG_FILE ..."
-
-    # Dung delimiter SVG_RAW_LOGO de tranh trung lap voi noi dung file SVG
     {
         echo "#pragma once"
         echo "// File nay duoc sinh tu dong tu gameStory_logo.svg boi build.sh"
@@ -77,6 +71,90 @@ generate_logo_header() {
 
 generate_logo_header
 
+# Helper: kiem tra cong cu, fail-fast neu thieu
+require_tool() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        echo "[LOI] Thieu cong cu '$1'."
+        echo "      $2"
+        exit 1
+    fi
+}
+
+# Helper: dam bao emsdk san sang trong subshell hien tai
+# Logic: detect emcmake -> thu source -> prompt cai dat -> clone -> install -> activate -> source -> verify
+ensure_emsdk() {
+    # Buoc 1: emcmake da co san trong PATH (vi du user da source truoc khi chay build.sh) -> done
+    if command -v emcmake >/dev/null 2>&1; then
+        echo "[OK] Emscripten da san sang: $(emcc --version 2>/dev/null | head -1)"
+        return 0
+    fi
+
+    # Buoc 2: thu source emsdk_env.sh neu thu muc emsdk da ton tai (truong hop user
+    # da clone+install+activate truoc do nhung mo terminal moi nen PATH bi mat)
+    if [ -f "$EMSDK_DIR/emsdk_env.sh" ]; then
+        echo "[INFO] Tim thay $EMSDK_DIR, dang source emsdk_env.sh..."
+        # shellcheck disable=SC1091
+        . "$EMSDK_DIR/emsdk_env.sh" >/dev/null 2>&1 || true
+        if command -v emcmake >/dev/null 2>&1; then
+            echo "[OK] Emscripten kich hoat: $(emcc --version 2>/dev/null | head -1)"
+            return 0
+        fi
+        echo "[INFO] Source xong nhung van thieu emcmake -- co the chua activate version $EMSDK_VERSION."
+    fi
+
+    # Buoc 3: hoi user truoc khi tu dong cai dat (theo rule task.md - khong silent install)
+    echo "[INFO] Emscripten chua san sang trong shell hien tai."
+    printf "Cai/kich hoat emsdk %s vao %s? [y/N]: " "$EMSDK_VERSION" "$EMSDK_DIR"
+    read ans
+    case "$ans" in
+        [Yy]*) ;;
+        *)
+            echo ""
+            echo "Huy. De cai thu cong:"
+            echo "  cd ~ && git clone https://github.com/emscripten-core/emsdk.git"
+            echo "  cd ~/emsdk && ./emsdk install $EMSDK_VERSION && ./emsdk activate $EMSDK_VERSION"
+            echo "  source ~/emsdk/emsdk_env.sh"
+            echo "  cd - && bash build.sh"
+            exit 1
+            ;;
+    esac
+
+    # Buoc 4: clone neu chua co
+    if [ ! -d "$EMSDK_DIR" ]; then
+        require_tool git "macOS: brew install git  |  Ubuntu: sudo apt-get install git"
+        echo "Clone emsdk vao $EMSDK_DIR ..."
+        git clone https://github.com/emscripten-core/emsdk.git "$EMSDK_DIR"
+    fi
+
+    # Buoc 5: install + activate (idempotent: chay lai khong co tac dung phu)
+    echo "Install emsdk $EMSDK_VERSION ..."
+    ( cd "$EMSDK_DIR" && ./emsdk install  "$EMSDK_VERSION" )
+    echo "Activate emsdk $EMSDK_VERSION ..."
+    ( cd "$EMSDK_DIR" && ./emsdk activate "$EMSDK_VERSION" )
+
+    # Buoc 6: source vao subshell hien tai cua build.sh de cap nhat PATH/EMSDK/EM_*
+    # shellcheck disable=SC1091
+    . "$EMSDK_DIR/emsdk_env.sh"
+
+    # Buoc 7: verify lan cuoi -- neu van thieu thi env script da bi loi
+    if ! command -v emcmake >/dev/null 2>&1; then
+        echo "[LOI] Khong tim thay emcmake sau khi source $EMSDK_DIR/emsdk_env.sh"
+        echo "      Hay kiem tra thu muc $EMSDK_DIR roi chay lai."
+        exit 1
+    fi
+    echo "[OK] Emscripten da san sang: $(emcc --version 2>/dev/null | head -1)"
+
+    # Goi y persist cau hinh de lan sau khoi phai source thu cong moi terminal
+    echo ""
+    echo "[GOI Y] De lan sau khong phai source thu cong, them dong nay vao ~/.zprofile:"
+    echo "        echo 'source \"$EMSDK_DIR/emsdk_env.sh\"' >> ~/.zprofile"
+    echo ""
+}
+# --- Tu dong sinh app icon (PNG/ICNS/ICO) tu SVG ---
+# Goi gen_icons.sh -- script tu graceful skip neu khong co rasterizer
+if [ -f icons/gen_icons.sh ]; then
+    sh icons/gen_icons.sh || true
+fi
 # --- Hoi target ---
 echo "Ban muon build gi?"
 echo "  1) Toan bo chuong trinh tich hop (ctetris)"
@@ -100,26 +178,21 @@ printf "Lua chon [1-2]: "; read plat_choice
 
 CURRENT_OS=$(uname -s)
 
-# Ham kiem tra cong cu, fail-fast neu thieu
-require_tool() {
-    if ! command -v "$1" >/dev/null 2>&1; then
-        echo "[LOI] Thieu cong cu '$1'."
-        echo "      $2"
-        exit 1
-    fi
-}
-
 # =========== Nhanh WASM ===========
 if [ "$plat_choice" = "2" ]; then
     echo "Kiem tra moi truong WASM..."
-    require_tool emcmake "Cai Emscripten SDK: https://emscripten.org/docs/getting_started/downloads.html ; sau do 'source ./emsdk_env.sh'."
-    require_tool ninja   "macOS: brew install ninja  |  Ubuntu: sudo apt-get install ninja-build"
+    require_tool ninja "macOS: brew install ninja  |  Ubuntu: sudo apt-get install ninja-build"
+    ensure_emsdk
 
     BUILD_DIR="build/wasm"
     rm -rf "$BUILD_DIR"
     mkdir -p "$BUILD_DIR"
     cd "$BUILD_DIR"
 
+    echo ""
+    echo "[INFO] Lan build WASM dau tien se tai SDL3 source (~10MB) va"
+    echo "       build cung -- mat khoang 1-2 phut. Cac lan sau dung cache."
+    echo ""
     echo "Cau hinh CMake voi emcmake..."
     emcmake cmake -G Ninja ../..
 

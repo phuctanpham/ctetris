@@ -1,0 +1,3 @@
+// Resource file Windows: nhung icon vao .exe
+// ID 1 (smallest numeric) -> Windows Explorer hien icon nay tren shell
+1 ICON "icon.ico"
