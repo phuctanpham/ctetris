@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+      - phucpt/github-pages
     paths:
       - 'app/src/**'
       - 'app/main.cpp'
