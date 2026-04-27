@@ -103,7 +103,9 @@ static void clearLines(GameState& state) {
             r++;
         }
     }
-    state.score += linesCleared * 100;
+    // Quy tac moi: moi dong xoa = 1 diem (thay vi 100). Score gioi han 6 chu so.
+    state.score += linesCleared;
+    if (state.score > 999999) state.score = 999999;
 }
 
 static void resetGame(GameState& state) {
@@ -200,29 +202,27 @@ static void drawSmallText(SDL_Renderer* renderer, float x, float y, float scale,
 
 // ---------- Icon helpers ----------
 
-// drawPowerIcon: phan duoi la cung tron (thay vi U vuong); phan tren la thanh dung.
-// Tham so 'active' bat mau vang khi chuot giu / phim ESC dang giu.
+// Power icon: thu nho ve kich thuoc tuong duong pause icon (~12px)
+// thay vi 18px nhu truoc. Cung chu vong tron (cung ho ~300 do) + thanh dung.
 static void drawPowerIcon(SDL_Renderer* renderer, const SDL_FRect& host, bool active) {
     SDL_Color c = active ? HIGHLIGHT_YELLOW : NORMAL_WHITE;
     SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
 
     float cx = host.x + host.w / 2;
-    float cy = host.y + host.h / 2 + 2.0f;  // dich xuong de chua thanh tren
-    const float radius = 8.0f;
+    float cy = host.y + host.h / 2 + 1.0f;
+    const float radius = 5.5f;  // truoc la 8.0 -> nho hon ~30%, gan bang pause sq 12x12
 
-    // Sweep tu -60 do (phia tren ben phai) di clockwise (tang goc)
-    // qua 0 (phai), 90 (duoi), 180 (trai), 240 (phia tren ben trai).
-    // Goc 270 (dinh) bi bo de chua thanh dung -> tao khe ho 60 do.
+    // Cung tron tu -60 do (top-right) den 240 do (top-left) clockwise,
+    // chua khe ho ~60 do o dinh cho thanh dung
     for (int deg = -60; deg <= 240; deg += 4) {
         float rad = (float)deg * 3.14159265f / 180.0f;
         float px = cx + radius * std::cos(rad);
         float py = cy + radius * std::sin(rad);
-        // Cham 2x2 cho duong tron day net
-        SDL_FRect dot = { px - 1.0f, py - 1.0f, 2.0f, 2.0f };
+        SDL_FRect dot = { px - 0.75f, py - 0.75f, 1.5f, 1.5f };
         SDL_RenderFillRect(renderer, &dot);
     }
-    // Thanh dung phia tren (xuyen qua khe ho cua vong tron)
-    SDL_FRect bar = { cx - 1.0f, cy - 12.0f, 2.0f, 9.0f };
+    // Thanh dung: ngan hon, di tu top dinh xuong tam vong tron
+    SDL_FRect bar = { cx - 0.75f, cy - 8.5f, 1.5f, 6.0f };
     SDL_RenderFillRect(renderer, &bar);
 }
 
@@ -321,50 +321,37 @@ static void drawNextPreview(SDL_Renderer* renderer, const SDL_FRect& slot, const
     }
 }
 
-// Score: format "00000000" (8 chu so) chia 2 hang 4-4 de fit slot 30x40
+// Score: format "000000" 6 chu so, 1 dong, font scale vua 30x40
 static void drawScoreInSlot(SDL_Renderer* renderer, const SDL_FRect& host, int score) {
-    char buf[16];
-    SDL_snprintf(buf, sizeof(buf), "%08d", score);
-    char top[5], bot[5];
-    SDL_memcpy(top, buf,     4); top[4] = '\0';
-    SDL_memcpy(bot, buf + 4, 4); bot[4] = '\0';
-
-    const float SCALE = 0.85f;        // 4 ky tu * 8 px * 0.85 = 27.2 px (fit 30)
-    const float CHAR_H = 8.0f * SCALE;   // 6.8 px
-    const float ROW_GAP = 2.0f;
-    const float ROW_W = 4 * 8.0f * SCALE; // 27.2 px
-    float yTop = host.y + (host.h - 2 * CHAR_H - ROW_GAP) / 2.0f;
-    float xLeft = host.x + (host.w - ROW_W) / 2.0f;
-
+    char buf[12];
+    SDL_snprintf(buf, sizeof(buf), "%06d", score);
+    // Font 8px/char * 6 char = 48px goc -> can scale ~0.6 de fit 30px
+    // Chon 0.55 cho co them khoang trang xung quanh, de doc.
+    const float SCALE = 0.55f;
+    float textW = 6 * 8.0f * SCALE;        // ~26.4 px
+    float textH = 8.0f * SCALE;            // ~4.4 px
+    float x = host.x + (host.w - textW) / 2.0f;
+    float y = host.y + (host.h - textH) / 2.0f;
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    drawSmallText(renderer, xLeft, yTop, SCALE, top);
-    drawSmallText(renderer, xLeft, yTop + CHAR_H + ROW_GAP, SCALE, bot);
+    drawSmallText(renderer, x, y, SCALE, buf);
 }
 
-// Timer: format HH:MM:SS - chia 2 hang ("HH:MM" tren, ":SS" duoi) de fit slot
+// Timer: format "HH:MM" 1 dong (bo SS de gon hon trong slot 30x40)
 static void drawTimerInSlot(SDL_Renderer* renderer, const SDL_FRect& host, Uint32 elapsedMs) {
-    Uint32 totalSec = elapsedMs / 1000;
-    int hours = (int)(totalSec / 3600);
-    int mins  = (int)((totalSec % 3600) / 60);
-    int secs  = (int)(totalSec % 60);
-    if (hours > 99) hours = 99;  // gioi han hien thi 2 chu so
-
-    char top[12], bot[12];
-    SDL_snprintf(top, sizeof(top), "%02d:%02d", hours, mins);
-    SDL_snprintf(bot, sizeof(bot), ":%02d",     secs);
-
-    const float SCALE = 0.7f;          // 5 ky tu * 8 px * 0.7 = 28 px (fit 30)
-    const float CHAR_H = 8.0f * SCALE;
-    const float ROW_GAP = 2.0f;
-    float topW = 5 * 8.0f * SCALE;
-    float botW = 3 * 8.0f * SCALE;
-    float yTop = host.y + (host.h - 2 * CHAR_H - ROW_GAP) / 2.0f;
-    float xTop = host.x + (host.w - topW) / 2.0f;
-    float xBot = host.x + (host.w - botW) / 2.0f;
-
+    Uint32 totalMin = elapsedMs / 60000;
+    int hours = (int)(totalMin / 60);
+    int mins  = (int)(totalMin % 60);
+    if (hours > 99) hours = 99;
+    char buf[8];
+    SDL_snprintf(buf, sizeof(buf), "%02d:%02d", hours, mins);
+    // 5 ky tu * 8 px * SCALE = textW. Chon 0.65 -> ~26 px (fit 30)
+    const float SCALE = 0.65f;
+    float textW = 5 * 8.0f * SCALE;
+    float textH = 8.0f * SCALE;
+    float x = host.x + (host.w - textW) / 2.0f;
+    float y = host.y + (host.h - textH) / 2.0f;
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    drawSmallText(renderer, xTop, yTop, SCALE, top);
-    drawSmallText(renderer, xBot, yTop + CHAR_H + ROW_GAP, SCALE, bot);
+    drawSmallText(renderer, x, y, SCALE, buf);
 }
 
 // drawSidebar nhan them keys + elapsed de tinh hover/active va render timer
