@@ -61,22 +61,39 @@ ensure_nanosvg() {
 }
 
 # ================================================================
-# Step 2: sinh gameStory_logo_svg.h
+# Step 2: sinh gameStory_logo_svg.h va gameStory_corp_svg.h
+# Tu dong embed SVG content thanh raw string literal cua C++
+# (plug-and-play: khong can copy file SVG di kem .exe/.app)
 # ================================================================
-generate_logo_header() {
-    SVG_FILE="src/gameStory/gameStory_logo.svg"
-    HEADER_FILE="src/gameStory/include/gameStory_logo_svg.h"
+generate_svg_header() {
+    SVG_FILE="$1"
+    HEADER_FILE="$2"
+    VAR_NAME="$3"   # ten bien C++ chua noi dung SVG (vd LOGO_SVG_DATA)
+
     [ ! -f "$SVG_FILE" ] && { echo "[LOI] Khong tim thay $SVG_FILE"; exit 1; }
+    # Skip neu header da moi hon SVG
     [ -f "$HEADER_FILE" ] && [ "$HEADER_FILE" -nt "$SVG_FILE" ] && return 0
+
     echo "Sinh $HEADER_FILE ..."
     {
         echo "#pragma once"
-        echo "// File nay duoc sinh tu dong tu gameStory_logo.svg boi build.sh"
+        echo "// File nay duoc sinh tu dong tu $(basename $SVG_FILE) boi build.sh"
         echo "// KHONG sua tay -- moi thay doi se bi ghi de o lan build tiep theo."
-        echo "static const char* LOGO_SVG_DATA = R\"SVG_RAW_LOGO("
+        echo "static const char* $VAR_NAME = R\"SVG_RAW_DATA("
         cat "$SVG_FILE"
-        echo ")SVG_RAW_LOGO\";"
+        echo ")SVG_RAW_DATA\";"
     } > "$HEADER_FILE"
+}
+
+generate_logo_header() {
+    generate_svg_header \
+        "src/gameStory/gameStory_logo.svg" \
+        "src/gameStory/include/gameStory_logo_svg.h" \
+        "LOGO_SVG_DATA"
+    generate_svg_header \
+        "src/gameStory/gameStory_corp.svg" \
+        "src/gameStory/include/gameStory_corp_svg.h" \
+        "CORP_SVG_DATA"
 }
 
 # ================================================================

@@ -39,26 +39,48 @@ function Ensure-NanoSVG {
 }
 
 # ----------------------------------------------------------------
-# Step 2: sinh gameStory_logo_svg.h
+# Step 2: sinh gameStory_logo_svg.h va gameStory_corp_svg.h
+# Refactor: tach helper Generate-SvgHeader de tai su dung cho ca
+# logo va corp (cung pattern: doc SVG -> embed thanh raw string literal)
 # ----------------------------------------------------------------
-function Generate-LogoHeader {
-    $Svg = "src/gameStory/gameStory_logo.svg"
-    $Hdr = "src/gameStory/include/gameStory_logo_svg.h"
-    if (-not (Test-Path $Svg)) { throw "Khong tim thay $Svg" }
-    if ((Test-Path $Hdr) -and
-        (Get-Item $Hdr).LastWriteTime -gt (Get-Item $Svg).LastWriteTime) { return }
-    $content = Get-Content $Svg -Raw
+function Generate-SvgHeader {
+    param(
+        [string]$SvgFile,
+        [string]$HeaderFile,
+        [string]$VarName
+    )
+    if (-not (Test-Path $SvgFile)) { throw "Khong tim thay $SvgFile" }
+    # Skip neu header da moi hon SVG (giong make timestamp dependency)
+    if ((Test-Path $HeaderFile) -and
+        (Get-Item $HeaderFile).LastWriteTime -gt (Get-Item $SvgFile).LastWriteTime) {
+        return
+    }
+
+    Write-Host "Sinh $HeaderFile ..." -ForegroundColor Yellow
+    $content = Get-Content $SvgFile -Raw
+    $svgBaseName = Split-Path $SvgFile -Leaf
     $out = @"
 #pragma once
-// File nay duoc sinh tu dong tu gameStory_logo.svg boi build.ps1
+// File nay duoc sinh tu dong tu $svgBaseName boi build.ps1
 // KHONG sua tay -- moi thay doi se bi ghi de o lan build tiep theo.
-static const char* LOGO_SVG_DATA = R"SVG_RAW_LOGO(
+static const char* $VarName = R"SVG_RAW_DATA(
 $content
-)SVG_RAW_LOGO";
+)SVG_RAW_DATA";
 "@
     [System.IO.File]::WriteAllText(
-        (Join-Path (Get-Location) $Hdr), $out,
+        (Join-Path (Get-Location) $HeaderFile), $out,
         (New-Object System.Text.UTF8Encoding $false))
+}
+
+function Generate-LogoHeader {
+    Generate-SvgHeader `
+        -SvgFile    "src/gameStory/gameStory_logo.svg" `
+        -HeaderFile "src/gameStory/include/gameStory_logo_svg.h" `
+        -VarName    "LOGO_SVG_DATA"
+    Generate-SvgHeader `
+        -SvgFile    "src/gameStory/gameStory_corp.svg" `
+        -HeaderFile "src/gameStory/include/gameStory_corp_svg.h" `
+        -VarName    "CORP_SVG_DATA"
 }
 
 # ----------------------------------------------------------------
