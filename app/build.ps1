@@ -85,10 +85,8 @@ function Svg-To-Png {
 function Generate-Brandkit {
     param([string]$OutDir)
 
-    $Source   = Join-Path $ScriptDir "src/gameStory/gameStory_logo.svg"
-    $Template = Join-Path $ScriptDir "icons/template.svg"
-    if (-not (Test-Path $Source))   { throw "Thieu $Source"   }
-    if (-not (Test-Path $Template)) { throw "Thieu $Template" }
+    $Source = Join-Path $ScriptDir "brandkit/logo.svg"
+    if (-not (Test-Path $Source)) { throw "Thieu $Source" }
 
     $required = @("icon-192.png","icon-512.png","icon-maskable-512.png","favicon.svg","icon.ico")
     $allExist = $true
@@ -96,7 +94,7 @@ function Generate-Brandkit {
         if (-not (Test-Path (Join-Path $OutDir $a))) { $allExist = $false; break }
     }
     if ($allExist) {
-        Write-Host "[ICON] Cache hit -- $OutDir da co du brandkit, skip." -ForegroundColor Green
+        Write-Host "[ICON] Cache hit -- $OutDir, skip." -ForegroundColor Green
         return
     }
 
@@ -110,13 +108,10 @@ function Generate-Brandkit {
         if (Get-Command choco -EA SilentlyContinue) {
             choco install -y rsvg-convert imagemagick
         } else {
-            Write-Host "[LOI] Khong co choco. Cai tu https://chocolatey.org" -ForegroundColor Red
-            return
+            Write-Host "[LOI] Khong co choco." -ForegroundColor Red; return
         }
         $tool = Get-Rasterizer
-        if (-not $tool) {
-            Write-Host "[ICON] Cai that bai, bo qua." -ForegroundColor Yellow; return
-        }
+        if (-not $tool) { return }
     }
 
     if (-not (Test-Path $OutDir)) {
@@ -124,25 +119,56 @@ function Generate-Brandkit {
     }
     Write-Host "[ICON] Sinh brandkit vao $OutDir (rasterizer: $tool) ..." -ForegroundColor Cyan
 
-    $logoAbs = (Resolve-Path $Source).Path -replace '\\', '/'
+    # Doc viewBox tu logo.svg de tinh scale chinh xac
+    $svgRaw = Get-Content $Source -Raw
+    $vbX = 0; $vbY = 0; $vbW = 1024; $vbH = 1024
+    if ($svgRaw -match 'viewBox="([^"]+)"') {
+        $parts = $Matches[1] -split '\s+'
+        if ($parts.Count -ge 4) {
+            $vbX = [double]$parts[0]; $vbY = [double]$parts[1]
+            $vbW = [double]$parts[2]; $vbH = [double]$parts[3]
+        }
+    } elseif ($svgRaw -match 'width="([0-9.]+)"' -and $Matches[1]) {
+        $vbW = [double]$Matches[1]
+        if ($svgRaw -match 'height="([0-9.]+)"') { $vbH = [double]$Matches[1] }
+    }
+
+    # Trich xuat phan inner cua <svg>...</svg>
+    if ($svgRaw -match '(?s)<svg[^>]*>(.*?)</svg>') {
+        $logoInner = $Matches[1]
+    } else { throw "logo.svg khong co the <svg>" }
+
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("ctetris-icons-" + [guid]::NewGuid().Guid)
     New-Item -ItemType Directory $tmp -Force | Out-Null
 
-    try {
-        function Render-Template {
-            param([string]$Bg, [double]$PadRatio, [string]$OutSvg)
-            $pad   = [int](1024 * $PadRatio)
-            $inner = 1024 - 2 * $pad
-            (Get-Content $Template -Raw) `
-                -replace '\{\{BG_COLOR\}\}', $Bg `
-                -replace '\{\{LOGO_HREF\}\}', "file:///$logoAbs" `
-                -replace '\{\{PAD\}\}', "$pad" `
-                -replace '\{\{INNER\}\}', "$inner" |
-                Set-Content $OutSvg -Encoding UTF8
-        }
+    function Render-Wrapper {
+        param([string]$Bg, [double]$PadRatio, [string]$OutSvg)
+        $pad   = 1024.0 * $PadRatio
+        $inner = 1024.0 - 2 * $pad
+        $maxD  = [Math]::Max($vbW, $vbH)
+        $scale = $inner / $maxD
+        $scaledW = $vbW * $scale
+        $scaledH = $vbH * $scale
+        $offX = $pad + ($inner - $scaledW) / 2
+        $offY = $pad + ($inner - $scaledH) / 2
+        $negX = -1 * $vbX
+        $negY = -1 * $vbY
+        $wrapper = @"
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 1024 1024" width="1024" height="1024">
+    <rect width="1024" height="1024" fill="$Bg"/>
+    <g transform="translate($offX $offY) scale($scale) translate($negX $negY)">
+$logoInner
+    </g>
+</svg>
+"@
+        Set-Content -Path $OutSvg -Value $wrapper -Encoding UTF8
+    }
 
-        Render-Template "#ffffff" 0.10 (Join-Path $tmp "standard.svg")
-        Render-Template "#ffffff" 0.20 (Join-Path $tmp "maskable.svg")
+    try {
+        Render-Wrapper "#ffffff" 0.10 (Join-Path $tmp "standard.svg")
+        Render-Wrapper "#ffffff" 0.20 (Join-Path $tmp "maskable.svg")
 
         Svg-To-Png $tool (Join-Path $tmp "standard.svg") 192  (Join-Path $OutDir "icon-192.png")
         Svg-To-Png $tool (Join-Path $tmp "standard.svg") 512  (Join-Path $OutDir "icon-512.png")
@@ -150,6 +176,7 @@ function Generate-Brandkit {
         Svg-To-Png $tool (Join-Path $tmp "maskable.svg") 192  (Join-Path $OutDir "icon-maskable-192.png")
         Svg-To-Png $tool (Join-Path $tmp "maskable.svg") 512  (Join-Path $OutDir "icon-maskable-512.png")
         Svg-To-Png $tool (Join-Path $tmp "standard.svg") 180  (Join-Path $OutDir "apple-touch-icon.png")
+        Svg-To-Png $tool (Join-Path $tmp "standard.svg") 32   (Join-Path $OutDir "favicon.png")
 
         Copy-Item $Source (Join-Path $OutDir "favicon.svg") -Force
 

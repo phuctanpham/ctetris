@@ -126,17 +126,18 @@ svg_to_png() {
 }
 
 # ================================================================
-# Step 4: brandkit - param OUT_DIR phai la ABSOLUTE path
+# Step 4: brandkit
+# Approach inline: doc viewBox cua logo.svg, sinh wrapper SVG voi
+# noi dung logo INLINE (khong dung <image href>) -- cach duy nhat
+# bao dam moi rasterizer (rsvg/magick/inkscape) deu render dung.
 # ================================================================
 generate_brandkit() {
     OUT_DIR="$1"
-    SOURCE_SVG="$SCRIPT_DIR/src/gameStory/gameStory_logo.svg"
-    TEMPLATE="$SCRIPT_DIR/icons/template.svg"
+    SOURCE_SVG="$SCRIPT_DIR/brandkit/logo.svg"
 
     [ ! -f "$SOURCE_SVG" ] && { echo "[LOI] Thieu $SOURCE_SVG"; return 1; }
-    [ ! -f "$TEMPLATE"   ] && { echo "[LOI] Thieu $TEMPLATE";   return 1; }
 
-    # Cache check
+    # Cache check: chi skip neu da co du file QUAN TRONG
     if [ -f "$OUT_DIR/icon-512.png" ] && \
        [ -f "$OUT_DIR/icon-192.png" ] && \
        [ -f "$OUT_DIR/icon-maskable-512.png" ] && \
@@ -153,25 +154,80 @@ generate_brandkit() {
     mkdir -p "$OUT_DIR"
     echo "[ICON] Sinh brandkit vao $OUT_DIR (rasterizer: $RASTERIZE) ..."
 
-    # Path tuyet doi cho href trong SVG template
-    LOGO_ABS="$SOURCE_SVG"
-
     TMP=$(mktemp -d)
     trap "rm -rf $TMP" EXIT
 
-    render_template() {
+    # Buoc 1: trich xuat viewBox tu logo.svg de tinh ti le scale chinh xac.
+    # Format viewBox cua SVG: "minX minY width height" (cach nhau bang space).
+    # Dung grep+sed don gian, tranh phu thuoc xmllint/python.
+    VIEWBOX=$(grep -oE 'viewBox="[^"]*"' "$SOURCE_SVG" | head -1 \
+              | sed -e 's/viewBox="//' -e 's/"//')
+    if [ -z "$VIEWBOX" ]; then
+        # SVG khong co viewBox -> fallback dung width/height
+        W=$(grep -oE 'width="[0-9.]+"' "$SOURCE_SVG" | head -1 \
+            | sed -e 's/width="//' -e 's/"//')
+        H=$(grep -oE 'height="[0-9.]+"' "$SOURCE_SVG" | head -1 \
+            | sed -e 's/height="//' -e 's/"//')
+        [ -z "$W" ] && W=1024
+        [ -z "$H" ] && H=1024
+        VB_X=0; VB_Y=0; VB_W=$W; VB_H=$H
+    else
+        VB_X=$(echo "$VIEWBOX" | awk '{print $1}')
+        VB_Y=$(echo "$VIEWBOX" | awk '{print $2}')
+        VB_W=$(echo "$VIEWBOX" | awk '{print $3}')
+        VB_H=$(echo "$VIEWBOX" | awk '{print $4}')
+    fi
+
+    # Buoc 2: trich xuat noi dung BEN TRONG <svg>...</svg> cua logo
+    # de inline vao wrapper. Dung sed range giua dau dong co <svg va </svg>.
+    LOGO_INNER="$TMP/logo_inner.txt"
+    awk '
+        /<svg/   { capture = 1; sub(/.*<svg[^>]*>/, ""); }
+        capture  { print }
+        /<\/svg>/ { exit }
+    ' "$SOURCE_SVG" | sed 's|</svg>.*||' > "$LOGO_INNER"
+
+    # Buoc 3: helper sinh wrapper SVG voi padding va inline logo
+    # CANVAS = 1024 (kich thuoc chuan PWA). Logo duoc:
+    #   - translate sang (pad, pad) de can giua trong vung INNER
+    #   - scale = INNER / max(VB_W, VB_H) de fit theo canh dai nhat
+    #   - translate them de cancel viewBox offset (VB_X, VB_Y)
+    render_wrapper() {
         bg="$1"; pad_ratio="$2"; out_svg="$3"
-        pad=$(awk "BEGIN { printf \"%d\", 1024 * $pad_ratio }")
-        inner=$(awk "BEGIN { printf \"%d\", 1024 - 2 * $pad }")
-        sed -e "s|{{BG_COLOR}}|$bg|g" \
-            -e "s|{{LOGO_HREF}}|file://$LOGO_ABS|g" \
-            -e "s|{{PAD}}|$pad|g" \
-            -e "s|{{INNER}}|$inner|g" \
-            "$TEMPLATE" > "$out_svg"
+        pad=$(awk "BEGIN { printf \"%.4f\", 1024 * $pad_ratio }")
+        inner=$(awk "BEGIN { printf \"%.4f\", 1024 - 2 * $pad }")
+        # Scale dong nhat hai truc de giu ti le; chon chieu dai hon lam mau so
+        scale=$(awk "BEGIN { vbw=$VB_W; vbh=$VB_H;
+                              maxd = (vbw>vbh) ? vbw : vbh;
+                              printf \"%.6f\", $inner / maxd }")
+        # Offset can giua trong vung INNER neu logo khong vuong
+        scaled_w=$(awk "BEGIN { printf \"%.4f\", $VB_W * $scale }")
+        scaled_h=$(awk "BEGIN { printf \"%.4f\", $VB_H * $scale }")
+        offset_x=$(awk "BEGIN { printf \"%.4f\", $pad + ($inner - $scaled_w) / 2 }")
+        offset_y=$(awk "BEGIN { printf \"%.4f\", $pad + ($inner - $scaled_h) / 2 }")
+        # Cancel viewBox origin truoc khi scale
+        neg_vb_x=$(awk "BEGIN { printf \"%.4f\", -1 * $VB_X }")
+        neg_vb_y=$(awk "BEGIN { printf \"%.4f\", -1 * $VB_Y }")
+
+        {
+            echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+            echo "<svg xmlns=\"http://www.w3.org/2000/svg\""
+            echo "     xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+            echo "     viewBox=\"0 0 1024 1024\" width=\"1024\" height=\"1024\">"
+            echo "  <rect width=\"1024\" height=\"1024\" fill=\"$bg\"/>"
+            # Outer translate -> can giua trong canvas
+            # Inner scale + translate -> normalize viewBox cua logo
+            echo "  <g transform=\"translate($offset_x $offset_y) scale($scale) translate($neg_vb_x $neg_vb_y)\">"
+            cat "$LOGO_INNER"
+            echo "  </g>"
+            echo "</svg>"
+        } > "$out_svg"
     }
 
-    render_template "#ffffff" "0.10" "$TMP/standard.svg"
-    render_template "#ffffff" "0.20" "$TMP/maskable.svg"
+    # Standard purpose: padding 10% (logo chiem 80% canvas)
+    render_wrapper "#ffffff" "0.10" "$TMP/standard.svg"
+    # Maskable purpose: padding 20% (logo chiem 60%, an toan moi mask shape)
+    render_wrapper "#ffffff" "0.20" "$TMP/maskable.svg"
 
     svg_to_png "$TMP/standard.svg" 192  "$OUT_DIR/icon-192.png"
     svg_to_png "$TMP/standard.svg" 512  "$OUT_DIR/icon-512.png"
@@ -180,8 +236,12 @@ generate_brandkit() {
     svg_to_png "$TMP/maskable.svg" 512  "$OUT_DIR/icon-maskable-512.png"
     svg_to_png "$TMP/standard.svg" 180  "$OUT_DIR/apple-touch-icon.png"
 
+    # Favicon: copy nguyen logo SVG (browser tab tu render sac net)
     cp "$SOURCE_SVG" "$OUT_DIR/favicon.svg"
+    # Favicon PNG 32x32 fallback cho browser cu khong support SVG favicon
+    svg_to_png "$TMP/standard.svg" 32 "$OUT_DIR/favicon.png"
 
+    # Windows ICO multi-resolution (chi voi ImageMagick)
     if [ "$RASTERIZE" = "magick" ] || [ "$RASTERIZE" = "convert" ]; then
         TOOL="$RASTERIZE"
         for s in 16 32 48 64 128 256; do
@@ -192,6 +252,7 @@ generate_brandkit() {
                 "$OUT_DIR/icon.ico"
     fi
 
+    # macOS ICNS (chi tren Darwin)
     if [ "$CURRENT_OS" = "Darwin" ] && command -v iconutil >/dev/null 2>&1; then
         ICONSET="$TMP/icon.iconset"
         mkdir -p "$ICONSET"

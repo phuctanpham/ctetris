@@ -2,7 +2,8 @@
     "name": "cTetris",
     "short_name": "cTetris",
     "description": "Classic Tetris game built with SDL3 and Emscripten",
-    "start_url": "./ctetris.html",
+    "id": "/ctetris/",
+    "start_url": "./",
     "scope": "./",
     "display": "standalone",
     "orientation": "portrait",
@@ -14,6 +15,12 @@
             "src": "favicon.svg",
             "sizes": "any",
             "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "favicon.png",
+            "sizes": "32x32",
+            "type": "image/png",
             "purpose": "any"
         },
         {
