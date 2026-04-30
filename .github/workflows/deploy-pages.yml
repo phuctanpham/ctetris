@@ -1,8 +1,5 @@
 name: Deploy WASM to GitHub Pages
 
-# Trigger khi co thay doi tai cac path lien quan tren branch main
-# YAML rules: branches phai la list cua string -- vd [main, develop]
-# Khong duoc viet [main] [other] -- do la 2 list lien tiep, parser fail.
 on:
   push:
     branches:
@@ -17,6 +14,10 @@ on:
       - 'app/build.sh'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
+
+# ✅ Opt into Node.js 24 for all jobs before June 2 deadline
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: read
@@ -111,13 +112,12 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      # Clean up all workflow artifacts except cache if deploy is successful
       - name: Cleanup workflow artifacts (except cache)
         if: ${{ success() }}
         run: |
           echo "Cleaning up workflow artifacts except cache..."
           gh api repos/${{ github.repository }}/actions/artifacts \
-            --paginate -q '.artifacts[] | select(.expired==false) | select(.name!~"^cache") | .id' | \
-          xargs -r -n1 gh api --method DELETE repos/${{ github.repository }}/actions/artifacts/{}/
+            --paginate -q '.artifacts[] | select(.expired==false) | select(.name | test("^cache") | not) | .id' | \
+          xargs -r -I{} gh api --method DELETE repos/${{ github.repository }}/actions/artifacts/{}/
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
