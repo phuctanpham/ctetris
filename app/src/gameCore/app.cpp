@@ -4,6 +4,13 @@
 #include <SDL3/SDL.h>
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
+
+// Tren WASM build, can goi window.location.reload() khi user click "Reload"
+// o man hinh shutdown. Su dung emscripten_run_script de chen JS.
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 const SDL_Color COLORS[] = {
     {  0,   0,   0, 255},
@@ -15,14 +22,18 @@ const SDL_Color COLORS[] = {
     {128,   0, 128, 255}
 };
 
+// Mau thong nhat cho hieu ung "active" (chuot giu / phim giu)
+static const SDL_Color HIGHLIGHT_YELLOW = {255, 215, 0, 255};
+// Mau text "nhe" -- dung 220 thay vi 255 de font xuat hien mong/it dam hon.
+static const SDL_Color SOFT_WHITE = {220, 220, 220, 255};
+
 // gamecore-tao-cac-khoi-xep-hinh-LITZO-01
 const Point SHAPE_L[4] = {{0,0}, {0,1}, {0,2}, {1,2}};
 const Point SHAPE_I[4] = {{0,0}, {1,0}, {2,0}, {3,0}};
-const Point SHAPE_T[4] = {{0,0}, {1,0}, {2,0}, {1,1}};
-const Point SHAPE_S[4] = {{1,0}, {2,0}, {0,1}, {1,1}};
 const Point SHAPE_Z[4] = {{0,0}, {1,0}, {1,1}, {2,1}};
 const Point SHAPE_O[4] = {{0,0}, {1,0}, {0,1}, {1,1}};
-const Point* const SHAPES[] = { SHAPE_L, SHAPE_I, SHAPE_T, SHAPE_S, SHAPE_Z, SHAPE_O };
+const Point SHAPE_T[4] = {{0,0}, {1,0}, {2,0}, {1,1}};
+const Point* const SHAPES[] = { SHAPE_L, SHAPE_I, SHAPE_Z, SHAPE_O, SHAPE_T };
 const int NUM_SHAPES = (int)(sizeof(SHAPES) / sizeof(SHAPES[0]));
 
 // gamecore-do-mau-02
@@ -30,6 +41,17 @@ static Tetromino spawnBlock() {
     Tetromino t;
     int idx = std::rand() % NUM_SHAPES;
     for (int i = 0; i < 4; i++) t.blocks[i] = SHAPES[idx][i];
+
+    if ((std::rand() & 1) == 0) {
+        int maxX = 0;
+        for (int i = 0; i < 4; i++) {
+            if (t.blocks[i].x > maxX) maxX = t.blocks[i].x;
+        }
+        for (int i = 0; i < 4; i++) {
+            t.blocks[i].x = maxX - t.blocks[i].x;
+        }
+    }
+
     t.colorID = std::rand() % 6 + 1;
     t.x = BOARD_COLS / 2 - 1;
     t.y = 0;
@@ -98,7 +120,8 @@ static void clearLines(GameState& state) {
             r++;
         }
     }
-    state.score += linesCleared * 100;
+    state.score += linesCleared;
+    if (state.score > 99999) state.score = 99999;
 }
 
 static void resetGame(GameState& state) {
@@ -113,6 +136,17 @@ static void resetGame(GameState& state) {
     state.speedHeld = false;
     state.currentBlock = spawnBlock();
     state.nextBlock    = spawnBlock();
+
+    state.gameStartTime  = SDL_GetTicks();
+    state.pauseStartTime = 0;
+    state.totalPausedMs  = 0;
+    state.wasRunning     = true;
+    state.mouseHeldQuit     = false;
+    state.mouseHeldPause    = false;
+    state.mouseHeldArrUp    = false;
+    state.mouseHeldArrDown  = false;
+    state.mouseHeldArrLeft  = false;
+    state.mouseHeldArrRight = false;
 }
 
 // gamecore-xu-ly-cham-05
@@ -137,7 +171,7 @@ static void lockBlock(GameState& state) {
 }
 
 // =========================================================
-// Sidebar 12 component dong nhat 30x40, khong vien trang quanh component
+// Sidebar 12 component dong nhat 30x40
 // =========================================================
 static SDL_FRect rectAt(int slotIndex) {
     return { (float)SIDEBAR_X, (float)(slotIndex * COMP_H), 30.0f, (float)COMP_H };
@@ -146,7 +180,7 @@ static SDL_FRect rectAt(int slotIndex) {
 static const SDL_FRect RECT_QUIT      = rectAt(0);
 static const SDL_FRect RECT_PAUSE     = rectAt(1);
 static const SDL_FRect RECT_SCORE     = rectAt(2);
-static const SDL_FRect RECT_SPEED_IND = rectAt(3);   // Speed indicator (read-only)
+static const SDL_FRect RECT_TIMER     = rectAt(3);
 static const SDL_FRect RECT_NEXT1     = rectAt(4);
 static const SDL_FRect RECT_NEXT2     = rectAt(5);
 static const SDL_FRect RECT_NEXT3     = rectAt(6);
@@ -154,7 +188,7 @@ static const SDL_FRect RECT_ARR_UP    = rectAt(7);
 static const SDL_FRect RECT_ARR_DOWN  = rectAt(8);
 static const SDL_FRect RECT_ARR_LEFT  = rectAt(9);
 static const SDL_FRect RECT_ARR_RIGHT = rectAt(10);
-static const SDL_FRect RECT_SPEED_BTN = rectAt(11);  // Speed booster (giu = SPACE)
+static const SDL_FRect RECT_SPEED_BTN = rectAt(11);
 
 // Popup quit
 static const SDL_FRect POPUP_BG     = { 20.0f,  70.0f, 230.0f, 340.0f };
@@ -167,32 +201,59 @@ static const SDL_FRect POPUP_CONSOLE = { BTN_X, BTN_Y0 + (BTN_H + BTN_GAP) * 1, 
 static const SDL_FRect POPUP_QUIT    = { BTN_X, BTN_Y0 + (BTN_H + BTN_GAP) * 2, BTN_W, BTN_H };
 static const SDL_FRect POPUP_CANCEL  = { BTN_X, BTN_Y0 + (BTN_H + BTN_GAP) * 3, BTN_W, BTN_H };
 
+// Reload button cho man hinh WASM shutdown
+static const SDL_FRect RELOAD_BTN = {
+    (CORE_SCREEN_WIDTH  - 160.0f) / 2.0f,
+    (CORE_SCREEN_HEIGHT - 50.0f)  / 2.0f,
+    160.0f, 50.0f
+};
+
 static bool hitTest(const SDL_FRect& r, float x, float y) {
     return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 }
 
-// ---------- Icon helpers ----------
+// Touch swipe: returns true if screen point (mx,my) lands on any cell of the falling block
+static bool isTouchOnFallingBlock(const GameState& state, float mx, float my) {
+    for (int i = 0; i < 4; i++) {
+        int gx = state.currentBlock.x + state.currentBlock.blocks[i].x;
+        int gy = state.currentBlock.y + state.currentBlock.blocks[i].y;
+        float cellX = (float)(gx * BLOCK_SIZE);
+        float cellY = (float)(gy * BLOCK_SIZE);
+        if (mx >= cellX && mx < cellX + BLOCK_SIZE &&
+            my >= cellY && my < cellY + BLOCK_SIZE)
+            return true;
+    }
+    return false;
+}
 
-static void drawPowerIcon(SDL_Renderer* renderer, const SDL_FRect& host) {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+static void drawSmallText(SDL_Renderer* renderer, float x, float y, float scale, const char* text) {
+    SDL_SetRenderScale(renderer, scale, scale);
+    SDL_RenderDebugText(renderer, x / scale, y / scale, text);
+    SDL_SetRenderScale(renderer, 1.0f, 1.0f);
+}
+
+static void drawPowerIcon(SDL_Renderer* renderer, const SDL_FRect& host, bool active) {
+    SDL_Color c = active ? HIGHLIGHT_YELLOW : SOFT_WHITE;
+    SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+
     float cx = host.x + host.w / 2;
-    float cy = host.y + host.h / 2;
-    SDL_FRect bottom = { cx - 9, cy + 6,  18, 2 };
-    SDL_FRect leftV  = { cx - 9, cy - 4,   2, 12 };
-    SDL_FRect rightV = { cx + 7, cy - 4,   2, 12 };
-    SDL_FRect topL   = { cx - 9, cy - 4,   5, 2 };
-    SDL_FRect topR   = { cx + 4, cy - 4,   5, 2 };
-    SDL_FRect bar    = { cx - 1, cy - 12,  2, 12 };
-    SDL_RenderFillRect(renderer, &bottom);
-    SDL_RenderFillRect(renderer, &leftV);
-    SDL_RenderFillRect(renderer, &rightV);
-    SDL_RenderFillRect(renderer, &topL);
-    SDL_RenderFillRect(renderer, &topR);
+    float cy = host.y + host.h / 2 + 1.0f;
+    const float radius = 5.5f;
+
+    for (int deg = -60; deg <= 240; deg += 4) {
+        float rad = (float)deg * 3.14159265f / 180.0f;
+        float px = cx + radius * std::cos(rad);
+        float py = cy + radius * std::sin(rad);
+        SDL_FRect dot = { px - 0.75f, py - 0.75f, 1.5f, 1.5f };
+        SDL_RenderFillRect(renderer, &dot);
+    }
+    SDL_FRect bar = { cx - 0.75f, cy - 8.5f, 1.5f, 6.0f };
     SDL_RenderFillRect(renderer, &bar);
 }
 
-static void drawPauseIcon(SDL_Renderer* renderer, const SDL_FRect& host, bool isPaused) {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+static void drawPauseIcon(SDL_Renderer* renderer, const SDL_FRect& host, bool isPaused, bool active) {
+    SDL_Color c = active ? HIGHLIGHT_YELLOW : SOFT_WHITE;
+    SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
     float cx = host.x + host.w / 2;
     float cy = host.y + host.h / 2;
     if (!isPaused) {
@@ -207,20 +268,17 @@ static void drawPauseIcon(SDL_Renderer* renderer, const SDL_FRect& host, bool is
     }
 }
 
-// Mui ten kieu net thang co 2 vet cheo o dau (khong phai tam giac dac)
-// dir: 0 = up, 1 = down, 2 = left, 3 = right
-static void drawArrowIcon(SDL_Renderer* renderer, const SDL_FRect& host, int dir) {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+static void drawArrowIcon(SDL_Renderer* renderer, const SDL_FRect& host, int dir, bool active) {
+    SDL_Color c = active ? HIGHLIGHT_YELLOW : SOFT_WHITE;
+    SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
     float cx = host.x + host.w / 2;
     float cy = host.y + host.h / 2;
-    const float L = 14.0f;   // do dai net thang
-    const float HEAD = 5.0f; // do dai vet cheo o dau
+    const float L = 14.0f;
+    const float HEAD = 5.0f;
 
     if (dir == 0 || dir == 1) {
-        // Net dung
         SDL_FRect shaft = { cx - 1, cy - L/2, 2, L };
         SDL_RenderFillRect(renderer, &shaft);
-        // Hai vet cheo lam dau mui ten (gia lap bang chuoi pixel cheo)
         for (int i = 0; i < (int)HEAD; i++) {
             float dy = (dir == 0) ? (cy - L/2 + i) : (cy + L/2 - i - 1);
             SDL_FRect pL = { cx - 1 - i, dy, 2, 1 };
@@ -229,7 +287,6 @@ static void drawArrowIcon(SDL_Renderer* renderer, const SDL_FRect& host, int dir
             SDL_RenderFillRect(renderer, &pR);
         }
     } else {
-        // Net ngang
         SDL_FRect shaft = { cx - L/2, cy - 1, L, 2 };
         SDL_RenderFillRect(renderer, &shaft);
         for (int i = 0; i < (int)HEAD; i++) {
@@ -242,34 +299,32 @@ static void drawArrowIcon(SDL_Renderer* renderer, const SDL_FRect& host, int dir
     }
 }
 
-// Hai chevron ">>" cho speed booster (chi ve duong vien V, khong phai tam giac dac)
 static void drawSpeedBoosterIcon(SDL_Renderer* renderer, const SDL_FRect& host, bool active) {
-    if (active) SDL_SetRenderDrawColor(renderer, 255, 215, 0, 255);
-    else        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_Color c = active ? HIGHLIGHT_YELLOW : SOFT_WHITE;
+    SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
     float cx = host.x + host.w / 2;
     float cy = host.y + host.h / 2;
 
-    // Moi chevron ">" gom 2 net cheo gap nhau tai dinh
-    // Ve bang chuoi 2-pixel cheo cho ro net
     auto drawChevron = [&](float tipX) {
         for (int i = 0; i < 6; i++) {
-            // Net tren: tu (tipX - 6 + i, cy - 6 + i) di xuong toi dinh
             SDL_FRect pTop = { tipX - 6 + i, cy - 6 + i, 2, 2 };
-            // Net duoi: tu (tipX - 6 + i, cy + 6 - i) di len toi dinh
             SDL_FRect pBot = { tipX - 6 + i, cy + 5 - i, 2, 2 };
             SDL_RenderFillRect(renderer, &pTop);
             SDL_RenderFillRect(renderer, &pBot);
         }
     };
-    drawChevron(cx - 1);   // chevron ben trai
-    drawChevron(cx + 7);   // chevron ben phai
+    drawChevron(cx - 1);
+    drawChevron(cx + 7);
 }
 
-// Preview piece thu nho trong slot
 static void drawNextPreview(SDL_Renderer* renderer, const SDL_FRect& slot, const Tetromino& t) {
     SDL_Color c = COLORS[t.colorID];
     SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, 255);
-    const float CELL = 4.0f;
+
+    const float CELL = 5.0f;
+    const float CELL_GAP = 1.5f;
+    const float CELL_INNER = CELL - CELL_GAP;
+
     int minx = 99, miny = 99, maxx = -1, maxy = -1;
     for (int i = 0; i < 4; i++) {
         if (t.blocks[i].x < minx) minx = t.blocks[i].x;
@@ -284,67 +339,77 @@ static void drawNextPreview(SDL_Renderer* renderer, const SDL_FRect& slot, const
     for (int i = 0; i < 4; i++) {
         SDL_FRect cell = { ox + t.blocks[i].x * CELL,
                            oy + t.blocks[i].y * CELL,
-                           CELL - 0.5f, CELL - 0.5f };
+                           CELL_INNER, CELL_INNER };
         SDL_RenderFillRect(renderer, &cell);
     }
 }
 
-// Ve text gon trong rect (can giua)
-static void drawCenterText(SDL_Renderer* renderer, const SDL_FRect& r, const char* text) {
-    int len = (int)SDL_strlen(text);
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderDebugText(renderer,
-                        r.x + (r.w - len * 8.0f) / 2.0f,
-                        r.y + (r.h - 8.0f) / 2.0f, text);
+static void drawScoreInSlot(SDL_Renderer* renderer, const SDL_FRect& host, int score) {
+    char buf[12];
+    SDL_snprintf(buf, sizeof(buf), "%05d", score);
+    const float SCALE = 0.65f;
+    float textW = 5 * 8.0f * SCALE;
+    float textH = 8.0f * SCALE;
+    float x = host.x + (host.w - textW) / 2.0f;
+    float y = host.y + (host.h - textH) / 2.0f;
+    SDL_SetRenderDrawColor(renderer, SOFT_WHITE.r, SOFT_WHITE.g, SOFT_WHITE.b, 255);
+    drawSmallText(renderer, x, y, SCALE, buf);
 }
 
-static void drawSidebar(SDL_Renderer* renderer, const GameState& state) {
-    // Nen sidebar
+static void drawTimerInSlot(SDL_Renderer* renderer, const SDL_FRect& host, Uint32 elapsedMs) {
+    Uint32 totalMin = elapsedMs / 60000;
+    int hours = (int)(totalMin / 60);
+    int mins  = (int)(totalMin % 60);
+    if (hours > 99) hours = 99;
+    char buf[8];
+    SDL_snprintf(buf, sizeof(buf), "%02d:%02d", hours, mins);
+    const float SCALE = 0.65f;
+    float textW = 5 * 8.0f * SCALE;
+    float textH = 8.0f * SCALE;
+    float x = host.x + (host.w - textW) / 2.0f;
+    float y = host.y + (host.h - textH) / 2.0f;
+    SDL_SetRenderDrawColor(renderer, SOFT_WHITE.r, SOFT_WHITE.g, SOFT_WHITE.b, 255);
+    drawSmallText(renderer, x, y, SCALE, buf);
+}
+
+static void drawSidebar(SDL_Renderer* renderer, const GameState& state,
+                        const bool* keys, Uint32 elapsedMs) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_FRect bg = { (float)SIDEBAR_X, 0, (float)SIDEBAR_W, (float)CORE_SCREEN_HEIGHT };
     SDL_RenderFillRect(renderer, &bg);
 
-    drawPowerIcon(renderer, RECT_QUIT);
-    drawPauseIcon(renderer, RECT_PAUSE, state.isPaused);
+    bool aQuit  = state.mouseHeldQuit  || (keys && keys[SDL_SCANCODE_ESCAPE]);
+    bool aPause = state.mouseHeldPause || (keys && (keys[SDL_SCANCODE_RETURN] || keys[SDL_SCANCODE_KP_ENTER]));
+    bool aUp    = state.mouseHeldArrUp    || (keys && (keys[SDL_SCANCODE_UP]    || keys[SDL_SCANCODE_W]));
+    bool aDown  = state.mouseHeldArrDown  || (keys && (keys[SDL_SCANCODE_DOWN]  || keys[SDL_SCANCODE_S]));
+    bool aLeft  = state.mouseHeldArrLeft  || (keys && (keys[SDL_SCANCODE_LEFT]  || keys[SDL_SCANCODE_A]));
+    bool aRight = state.mouseHeldArrRight || (keys && (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]));
+    bool aSpeed = state.speedHeld         || (keys && keys[SDL_SCANCODE_SPACE]);
 
-    // Score
-    char buf[16];
-    SDL_snprintf(buf, sizeof(buf), "%d", state.score);
-    drawCenterText(renderer, RECT_SCORE, buf);
-
-    // Speed indicator: hien thi cap (1 hoac 3 trong v1)
-    int speedLevel = state.softDrop ? 3 : 1;
-    char sbuf[8];
-    SDL_snprintf(sbuf, sizeof(sbuf), "x%d", speedLevel);
-    drawCenterText(renderer, RECT_SPEED_IND, sbuf);
-
-    // Next 1/2/3
+    drawPowerIcon(renderer, RECT_QUIT, aQuit);
+    drawPauseIcon(renderer, RECT_PAUSE, state.isPaused, aPause);
+    drawScoreInSlot(renderer, RECT_SCORE, state.score);
+    drawTimerInSlot(renderer, RECT_TIMER, elapsedMs);
     drawNextPreview(renderer, RECT_NEXT1, state.nextBlock);
-    // RECT_NEXT2 / RECT_NEXT3: trong (placeholder)
-
-    // 4 mui ten
-    drawArrowIcon(renderer, RECT_ARR_UP,    0);
-    drawArrowIcon(renderer, RECT_ARR_DOWN,  1);
-    drawArrowIcon(renderer, RECT_ARR_LEFT,  2);
-    drawArrowIcon(renderer, RECT_ARR_RIGHT, 3);
-
-    // Speed booster
-    drawSpeedBoosterIcon(renderer, RECT_SPEED_BTN, state.softDrop);
+    drawArrowIcon(renderer, RECT_ARR_UP,    0, aUp);
+    drawArrowIcon(renderer, RECT_ARR_DOWN,  1, aDown);
+    drawArrowIcon(renderer, RECT_ARR_LEFT,  2, aLeft);
+    drawArrowIcon(renderer, RECT_ARR_RIGHT, 3, aRight);
+    drawSpeedBoosterIcon(renderer, RECT_SPEED_BTN, aSpeed);
 }
 
 static void drawPopupButton(SDL_Renderer* renderer, const SDL_FRect& r,
                             const char* label, SDL_Color bg) {
     SDL_SetRenderDrawColor(renderer, bg.r, bg.g, bg.b, 255);
     SDL_RenderFillRect(renderer, &r);
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer, SOFT_WHITE.r, SOFT_WHITE.g, SOFT_WHITE.b, 255);
     SDL_RenderRect(renderer, &r);
     int ll = (int)SDL_strlen(label);
     SDL_RenderDebugText(renderer,
                         r.x + (r.w - ll * 8.0f) / 2.0f,
                         r.y + (r.h - 8.0f) / 2.0f, label);
 }
-// Helper: ngat text theo so ky tu toi da moi dong (font 8px/ky tu)
-// Tra ve so dong da ve, bat dau tu y, moi dong cao 14px
+
 static int drawWrappedText(SDL_Renderer* renderer, const char* text,
                            float x, float y, int maxCharsPerLine, int maxLines) {
     int len = (int)SDL_strlen(text);
@@ -355,48 +420,24 @@ static int drawWrappedText(SDL_Renderer* renderer, const char* text,
     while (pos < len && lineCount < maxLines) {
         int remaining = len - pos;
         int take = (remaining > maxCharsPerLine) ? maxCharsPerLine : remaining;
-
-        // Co gang ngat tai dau cach gan nhat neu chua het cau
         if (take == maxCharsPerLine && pos + take < len) {
             int back = take;
             while (back > 0 && text[pos + back - 1] != ' ') back--;
             if (back > 0) take = back;
         }
-
         if (take >= (int)sizeof(buf)) take = (int)sizeof(buf) - 1;
         SDL_memcpy(buf, text + pos, take);
         buf[take] = '\0';
-
         SDL_RenderDebugText(renderer, x, y + lineCount * 14.0f, buf);
         pos += take;
-        // Bo qua dau cach o dau dong tiep theo
         while (pos < len && text[pos] == ' ') pos++;
         lineCount++;
     }
     return lineCount;
 }
 
-// Helper: ve scrollbar dung (track + thumb) sat le phai cua vung content
-// totalLines: tong so dong, visibleLines: so dong hien thi, scrollPos: chi so dong dau
-static void drawVerticalScrollbar(SDL_Renderer* renderer,
-                                  float x, float y, float h,
-                                  int totalLines, int visibleLines, int scrollPos) {
-    if (totalLines <= visibleLines) return;
-    // Track
-    SDL_SetRenderDrawColor(renderer, 40, 40, 50, 255);
-    SDL_FRect track = { x, y, 4.0f, h };
-    SDL_RenderFillRect(renderer, &track);
-    // Thumb
-    float thumbH = h * (float)visibleLines / (float)totalLines;
-    if (thumbH < 8.0f) thumbH = 8.0f;
-    float thumbY = y + (h - thumbH) * (float)scrollPos
-                   / (float)(totalLines - visibleLines);
-    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-    SDL_FRect thumb = { x, thumbY, 4.0f, thumbH };
-    SDL_RenderFillRect(renderer, &thumb);
-}
 // gamecore-popup-quit-08
-static void drawQuitPopup(SDL_Renderer* renderer, const GameState& state) {
+static void drawQuitPopup(SDL_Renderer* renderer, const GameState& state, Uint32 elapsedMs) {
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
     SDL_FRect screen = { 0, 0, (float)CORE_SCREEN_WIDTH, (float)CORE_SCREEN_HEIGHT };
@@ -404,30 +445,80 @@ static void drawQuitPopup(SDL_Renderer* renderer, const GameState& state) {
 
     SDL_SetRenderDrawColor(renderer, 60, 60, 80, 255);
     SDL_RenderFillRect(renderer, &POPUP_BG);
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer, SOFT_WHITE.r, SOFT_WHITE.g, SOFT_WHITE.b, 255);
     SDL_RenderRect(renderer, &POPUP_BG);
 
     SDL_SetRenderDrawColor(renderer, 200, 50, 50, 255);
     SDL_RenderFillRect(renderer, &POPUP_CLOSE);
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer, SOFT_WHITE.r, SOFT_WHITE.g, SOFT_WHITE.b, 255);
     SDL_RenderRect(renderer, &POPUP_CLOSE);
     SDL_RenderDebugText(renderer, POPUP_CLOSE.x + 5, POPUP_CLOSE.y + 5, "X");
 
-    // Tieu de + cau hoi (wrap theo do rong popup, content rong = 200, ~25 ky tu)
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer, SOFT_WHITE.r, SOFT_WHITE.g, SOFT_WHITE.b, 255);
     SDL_RenderDebugText(renderer, POPUP_BG.x + 15, POPUP_BG.y + 30,
                         state.isGameOver ? "GAME OVER" : "PAUSED");
     drawWrappedText(renderer, "What do you want to do?",
                     POPUP_BG.x + 15, POPUP_BG.y + 60, 25, 2);
+
     char scoreLine[40];
     SDL_snprintf(scoreLine, sizeof(scoreLine), "Current score: %d", state.score);
     drawWrappedText(renderer, scoreLine,
                     POPUP_BG.x + 15, POPUP_BG.y + 95, 25, 2);
 
+    Uint32 totalSec = elapsedMs / 1000;
+    int hours = (int)(totalSec / 3600);
+    int mins  = (int)((totalSec % 3600) / 60);
+    int secs  = (int)(totalSec % 60);
+    if (hours > 99) hours = 99;
+    char timeLine[40];
+    SDL_snprintf(timeLine, sizeof(timeLine), "Total time: %02d:%02d:%02d",
+                 hours, mins, secs);
+    drawWrappedText(renderer, timeLine,
+                    POPUP_BG.x + 15, POPUP_BG.y + 110, 25, 2);
+
     drawPopupButton(renderer, POPUP_RESTART, "Restart (new game)",     { 70, 130,  90, 255});
     drawPopupButton(renderer, POPUP_CONSOLE, "Console (back to menu)", { 70, 100, 160, 255});
     drawPopupButton(renderer, POPUP_QUIT,    "Quit (exit app)",        {180,  60,  60, 255});
     drawPopupButton(renderer, POPUP_CANCEL,  "Cancel (close popup)",   {100, 100, 100, 255});
+}
+
+// gamecore-wasm-shutdown
+// Man hinh shutdown cho WASM: hien nut RELOAD giua man hinh.
+// FIX: hint text duoc chia 2 dong ngan <= 270px thay vi 1 dong dai tran vien.
+//   Dong 1: "Press F5 or click RELOAD"   -- 25 chars x 8px = 200px (OK)
+//   Dong 2: "to start a new game"        -- 19 chars x 8px = 152px (OK)
+// Khoang cach dong: 14px (dong nhat voi cac text khac trong game).
+static void drawWasmShutdownScreen(SDL_Renderer* renderer, const GameState& state) {
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+
+    SDL_Color btnBg = state.reloadHover ? SDL_Color{ 90, 130, 200, 255}
+                                        : SDL_Color{ 60, 100, 170, 255};
+    SDL_SetRenderDrawColor(renderer, btnBg.r, btnBg.g, btnBg.b, 255);
+    SDL_RenderFillRect(renderer, &RELOAD_BTN);
+    SDL_SetRenderDrawColor(renderer, SOFT_WHITE.r, SOFT_WHITE.g, SOFT_WHITE.b, 255);
+    SDL_RenderRect(renderer, &RELOAD_BTN);
+
+    const char* label = "RELOAD";
+    int ll = (int)SDL_strlen(label);
+    SDL_RenderDebugText(renderer,
+                        RELOAD_BTN.x + (RELOAD_BTN.w - ll * 8.0f) / 2.0f,
+                        RELOAD_BTN.y + (RELOAD_BTN.h - 8.0f) / 2.0f,
+                        label);
+
+    // Hint 2 dong -- moi dong <= 270px, khong bi tran vien
+    float hintY = RELOAD_BTN.y + RELOAD_BTN.h + 16.0f;
+    const char* hint1 = "Press F5 or click RELOAD";   // 25 chars = 200px
+    const char* hint2 = "to start a new game";         // 19 chars = 152px
+    int h1l = (int)SDL_strlen(hint1);
+    int h2l = (int)SDL_strlen(hint2);
+    SDL_SetRenderDrawColor(renderer, SOFT_WHITE.r, SOFT_WHITE.g, SOFT_WHITE.b, 255);
+    SDL_RenderDebugText(renderer,
+                        (CORE_SCREEN_WIDTH - h1l * 8.0f) / 2.0f,
+                        hintY, hint1);
+    SDL_RenderDebugText(renderer,
+                        (CORE_SCREEN_WIDTH - h2l * 8.0f) / 2.0f,
+                        hintY + 14.0f, hint2);
 }
 
 static void renderBoard(SDL_Renderer* renderer, const GameState& state) {
@@ -470,11 +561,21 @@ static void togglePause(GameState& state) {
 }
 
 // gamecore-soft-drop-09
-// gamecore-pause-quit-buttons-10
 static void onAction(GameState& state, SDL_Keycode keyEquiv) {
     if (state.showQuitPopup || state.isPaused || state.isGameOver) return;
     if (keyEquiv == SDLK_SPACE) { state.softDrop = true; return; }
     applyMoveOrRotate(state, keyEquiv);
+}
+
+static void handleQuitAction(GameState& state) {
+#ifdef __EMSCRIPTEN__
+    state.wasmShutdown = true;
+    state.showQuitPopup = false;
+    state.isPaused = true;
+#else
+    state.exitCode = 0;
+    state.wasmShutdown = false;
+#endif
 }
 
 // gamecore-xu-ly-roi-03
@@ -489,16 +590,60 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
     SDL_Event event;
     Uint32 lastFallTime = SDL_GetTicks();
     const Uint32 FALL_INTERVAL_NORMAL = 500;
-    const Uint32 FALL_INTERVAL_FAST   = 500 / 3;
+    const Uint32 FALL_INTERVAL_FAST   = 500 / 5;
+
+    bool quitRequested = false;
+    // Swipe gesture state (touch / mobile)
+    bool  swipeActive    = false;
+    float swipeStartX    = 0.0f;
+    float swipeStartY    = 0.0f;
+    bool  swipeOnBlock   = false;   // true = finger started on falling block
+    const float SWIPE_THRESHOLD = 15.0f;
 
     while (true) {
-        // softDrop tinh moi frame: bat khi SPACE giu hoac chuot giu nut booster
+        Uint32 nowMs = SDL_GetTicks();
+
+        if (state.gameStartTime == 0) {
+            state.gameStartTime = nowMs;
+            state.wasRunning    = true;
+        }
+
         state.softDrop = false;
 
         while (SDL_PollEvent(&event)) {
+            if (state.wasmShutdown) {
+                if (event.type == SDL_EVENT_QUIT) {
+                    state.exitCode = 0;
+                    quitRequested = true;
+                    break;
+                }
+                if (event.type == SDL_EVENT_MOUSE_MOTION) {
+                    state.reloadHover = hitTest(RELOAD_BTN, event.motion.x, event.motion.y);
+                }
+                if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
+                    event.button.button == SDL_BUTTON_LEFT) {
+                    if (hitTest(RELOAD_BTN, event.button.x, event.button.y)) {
+#ifdef __EMSCRIPTEN__
+                        emscripten_run_script("window.location.reload();");
+#endif
+                    }
+                }
+                if (event.type == SDL_EVENT_KEY_DOWN) {
+                    SDL_Keycode k = event.key.key;
+                    if (k == SDLK_F5 || k == SDLK_RETURN ||
+                        k == SDLK_KP_ENTER || k == SDLK_SPACE) {
+#ifdef __EMSCRIPTEN__
+                        emscripten_run_script("window.location.reload();");
+#endif
+                    }
+                }
+                continue;
+            }
+
             if (event.type == SDL_EVENT_QUIT) {
                 state.exitCode = 0;
-                goto END;
+                quitRequested = true;
+                break;
             }
 
             if (event.type == SDL_EVENT_KEY_DOWN) {
@@ -520,45 +665,113 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
                 if (state.showQuitPopup) {
                     if (hitTest(POPUP_CLOSE, mx, my) || hitTest(POPUP_CANCEL, mx, my)) {
                         state.showQuitPopup = false;
-                        // giu pause
                     } else if (hitTest(POPUP_RESTART, mx, my)) {
                         resetGame(state);
                         lastFallTime = SDL_GetTicks();
                     } else if (hitTest(POPUP_CONSOLE, mx, my)) {
                         state.exitCode = 2;
-                        goto END;
+                        quitRequested = true;
+                        break;
                     } else if (hitTest(POPUP_QUIT, mx, my)) {
-                        state.exitCode = 0;
-                        goto END;
+                        handleQuitAction(state);
+                        if (!state.wasmShutdown) {
+                            quitRequested = true;
+                            break;
+                        }
                     }
                 } else {
-                    // Sidebar
-                    if (hitTest(RECT_QUIT, mx, my))            openQuitPopup(state);
-                    else if (hitTest(RECT_PAUSE, mx, my))      togglePause(state);
-                    // 4 mui ten = phim mui ten
-                    else if (hitTest(RECT_ARR_UP, mx, my))     onAction(state, SDLK_UP);
-                    else if (hitTest(RECT_ARR_DOWN, mx, my))   onAction(state, SDLK_DOWN);
-                    else if (hitTest(RECT_ARR_LEFT, mx, my))   onAction(state, SDLK_LEFT);
-                    else if (hitTest(RECT_ARR_RIGHT, mx, my))  onAction(state, SDLK_RIGHT);
-                    // Speed booster: bat trang thai held; soft-drop chinh duoc tinh moi frame
-                    else if (hitTest(RECT_SPEED_BTN, mx, my))  state.speedHeld = true;
+                    if (hitTest(RECT_QUIT, mx, my)) {
+                        state.mouseHeldQuit = true;
+                        openQuitPopup(state);
+                    } else if (hitTest(RECT_PAUSE, mx, my)) {
+                        state.mouseHeldPause = true;
+                        togglePause(state);
+                    } else if (hitTest(RECT_ARR_UP, mx, my)) {
+                        state.mouseHeldArrUp = true;
+                        onAction(state, SDLK_UP);
+                    } else if (hitTest(RECT_ARR_DOWN, mx, my)) {
+                        state.mouseHeldArrDown = true;
+                        onAction(state, SDLK_DOWN);
+                    } else if (hitTest(RECT_ARR_LEFT, mx, my)) {
+                        state.mouseHeldArrLeft = true;
+                        onAction(state, SDLK_LEFT);
+                    } else if (hitTest(RECT_ARR_RIGHT, mx, my)) {
+                        state.mouseHeldArrRight = true;
+                        onAction(state, SDLK_RIGHT);
+                    } else if (hitTest(RECT_SPEED_BTN, mx, my)) {
+                        state.speedHeld = true;
+                    }
+                    // Board-zone swipe start: record only when game is live and touch is left of sidebar
+                    if (mx < (float)BOARD_W && !state.showQuitPopup &&
+                        !state.isPaused && !state.isGameOver) {
+                        swipeActive  = true;
+                        swipeStartX  = mx;
+                        swipeStartY  = my;
+                        swipeOnBlock = isTouchOnFallingBlock(state, mx, my);
+                    }
                 }
             }
 
             if (event.type == SDL_EVENT_MOUSE_BUTTON_UP &&
                 event.button.button == SDL_BUTTON_LEFT) {
-                state.speedHeld = false;
+                // Swipe gesture recognition — fires on finger lift
+                if (swipeActive) {
+                        float dx  = event.button.x - swipeStartX;
+                    float dy  = event.button.y - swipeStartY;
+                    float adx = (dx < 0) ? -dx : dx;
+                    float ady = (dy < 0) ? -dy : dy;
+                    if (swipeOnBlock) {
+                        // Finger started on falling block -> horizontal swipe = move
+                        if (adx > SWIPE_THRESHOLD && adx > ady)
+                            onAction(state, dx < 0 ? SDLK_LEFT : SDLK_RIGHT);
+                    } else {
+                        // Finger started on board background -> vertical swipe = rotate
+                        if (ady > SWIPE_THRESHOLD && ady > adx)
+                            onAction(state, dy < 0 ? SDLK_UP : SDLK_DOWN);
+                    }
+                    swipeActive = false;
+                }
+                state.speedHeld         = false;
+                state.mouseHeldQuit     = false;
+                state.mouseHeldPause    = false;
+                state.mouseHeldArrUp    = false;
+                state.mouseHeldArrDown  = false;
+                state.mouseHeldArrLeft  = false;
+                state.mouseHeldArrRight = false;
             }
         }
 
-        // SPACE giu HOAC giu chuot tren nut booster -> soft drop
+        if (quitRequested) break;
+
+        if (state.wasmShutdown) {
+            drawWasmShutdownScreen(renderer, state);
+            SDL_RenderPresent(renderer);
+            SDL_Delay(16);
+            continue;
+        }
+
         const bool* keys = SDL_GetKeyboardState(NULL);
         bool active = !state.isPaused && !state.showQuitPopup && !state.isGameOver;
         if (active && (keys[SDL_SCANCODE_SPACE] || state.speedHeld)) {
             state.softDrop = true;
         }
 
-        // Logic roi
+        bool nowRunning = active;
+        if (state.wasRunning && !nowRunning) {
+            state.pauseStartTime = nowMs;
+        }
+        if (!state.wasRunning && nowRunning) {
+            state.totalPausedMs += nowMs - state.pauseStartTime;
+        }
+        state.wasRunning = nowRunning;
+
+        Uint32 elapsedMs;
+        if (nowRunning) {
+            elapsedMs = nowMs - state.gameStartTime - state.totalPausedMs;
+        } else {
+            elapsedMs = state.pauseStartTime - state.gameStartTime - state.totalPausedMs;
+        }
+
         if (active) {
             Uint32 currentTime = SDL_GetTicks();
             Uint32 interval = state.softDrop ? FALL_INTERVAL_FAST : FALL_INTERVAL_NORMAL;
@@ -574,16 +787,15 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
             }
         }
 
-        // Render
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
         renderBoard(renderer, state);
-        drawSidebar(renderer, state);
-        if (state.showQuitPopup) drawQuitPopup(renderer, state);
+        drawSidebar(renderer, state, keys, elapsedMs);
+        if (state.showQuitPopup) drawQuitPopup(renderer, state, elapsedMs);
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
-END:
+
     return state.exitCode;
 }
 
@@ -591,7 +803,7 @@ END:
 int main(int argc, char* argv[]) {
     (void)argc; (void)argv;
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_Window* window = SDL_CreateWindow("Game Core - Standalone",
+    SDL_Window* window = SDL_CreateWindow("Game Core \xC2\xA9 - Standalone",
                                           CORE_SCREEN_WIDTH, CORE_SCREEN_HEIGHT, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
     runGameCore(window, renderer);

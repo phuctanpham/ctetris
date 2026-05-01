@@ -1,4 +1,3 @@
-**/build
 # Prerequisites
 *.d
 
@@ -82,3 +81,4 @@ bld/
 *.svclog
 *.scc
 **/build
+**/libs
