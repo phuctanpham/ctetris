@@ -98,7 +98,7 @@ jobs:
           path: public
 
   # ---------------------------------------------------------------------------
-  # Job 2: DEPLOY GITHUB PAGES
+  # Job 2: DEPLOY GITHUB PAGE
   # ---------------------------------------------------------------------------
   deploy:
     name: Deploy to GitHub Pages
