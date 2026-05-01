@@ -81,3 +81,4 @@ bld/
 *.svclog
 *.scc
 **/build
+**/libs
