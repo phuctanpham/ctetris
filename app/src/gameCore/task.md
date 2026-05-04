@@ -97,7 +97,7 @@
     - Comment codeblock này trong gameCore/app.cpp là: gamecore-hieu-ung-khi-xoa-dong-18
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 17 và trên 19.
     - tạo hiệu ứng chớp tắt 3 lần báo hiệu để người chơi cảm nhận là dòng sắp bị xoá.
-[ ] Task 2.5: viết v2 gameCore/app.cpp - tăng điểm thưởng khi xoá nhiều dòng cùng thời điểm.
+[ ] Task 2.5: viết v2 gameCore/app.cpp - tăng điểm thưởng khi xoá nhiều dòng cùng thời điểm kèm hiệu ứng giao diện hiển thị chúc mừng.
     - Comment codeblock này trong gameCore/app.cpp là: gamecore-diem-thuong-khi-xoa-nhieu-dong-19
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 18 và trên 20.
     - tổng số hàng được được xoá nhân với tổng số hàng được xoá. Ví dụ: mỗi hàng đang 1 điểm, xoá 2 hàng cùng lúc là (2x2) 4 điểm, xoá 3 hàng cùng lúc là (3x3) 9 điểm, xoá 4 hàng cùng lúc là (3x3) 16 điểm.
