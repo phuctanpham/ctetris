@@ -24,7 +24,7 @@
 % 2. Table of Content
 % ==============================================
 \setcounter{tocdepth}{2}
-\input{src/index.tex}
+\input{src/libs/index.tex}
 
 % ==============================================
 % 3. Main Content
@@ -44,6 +44,14 @@
 
 % Ngăn TOC quét tự động các thẻ \section bên trong file phụ lục
 \addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
+
+% Thêm tiêu đề "Phụ lục" vào TOC như một heading riêng (không số, có bookmark)
+\pdfbookmark[0]{Phụ lục}{appendix-toc-heading}
+\addtocontents{toc}{%
+    \protect\vspace{1em}%
+    \protect\noindent{\protect\large\protect\bfseries Phụ lục}\protect\par%
+    \protect\vspace{0.3em}%
+}
 
 % Hàm ánh xạ tên file thành Tiêu đề hiển thị (dành cho TOC và Bookmark)
 \newcommand{\getAppTitle}[1]{%
