@@ -89,7 +89,7 @@
     - Comment codeblock này trong gameCore/app.cpp là: gamecore-tang-do-kho-16
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 15 và trên 17.
     - Logic tăng độ khó linh động dựa trên mốc điểm thay vì rơi đều đặn với `FALL_INTERVAL_NORMAL = 500`.
-[ ] Task 2.3: viết v2 gameCore/app.cpp - dự báo 3 khối liên tiếp
+[ ] Task 2.3: viết v2 gameCore/app.cpp - dự báo 3 khối liên tiếp với góc xoay ngẫu nhiên.
     - Comment codeblock này trong gameCore/app.cpp là: gamecore-du-bao-ba-khoi-xep-hinh-lien-tiep-17
     - Đặt thứ tự codeblock này từ trên xuống ở vị trí sau 16 và trên 18.
     - Nâng cấp từ dự báo 1 khối (v1) lên hiển thị 3 khối ở các slot NEXT-1, NEXT-2, NEXT-3.
