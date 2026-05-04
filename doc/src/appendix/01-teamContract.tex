@@ -42,7 +42,7 @@
     \item \textbf{vint:} Tuân thủ deadline đã cam kết. Nếu gặp sự cố phải thông báo ngay cho các thành viên khác hỗ trợ.
     \item \textbf{truongtm:} Trong giai đoạn cao điểm, các thành viên phải duy trì trạng thái "Online" trên Slack trong khung giờ quy định. Không tự ý thay đổi cấu trúc tệp .tex mà không có sự đồng ý của người quản lý trực tiếp.
     \item \textbf{thaidg:} Mỗi thành viên phải chịu trách nhiệm với phần việc của mình và không làm ảnh hưởng tiến độ chung của nhóm.
-    \item \textbf{kiennt:} làm việc nhóm cần tuân thủ thời gian
+    \item \textbf{kiennt:} Làm việc trong Trello, không tự ý can thiệp nhánh Git của người khác, và mọi thay đổi mã nguồn đều bắt buộc phải thông qua Pull Request để review.
 \end{enumerate}
 
 \section{Giải Quyết Xung Đột}
@@ -51,7 +51,7 @@
     \item \textbf{vint:} Quyết định theo hình thức bỏ phiếu số đông.
     \item \textbf{truongtm:} Có quyền yêu cầu rà soát lại bảng phân công hoặc họp nhanh qua Google Meet nếu quá tải hoặc bất đồng quan điểm.
     \item \textbf{thaidg:} Mọi mâu thuẫn sẽ được thảo luận công khai và quyết định theo đa số, các thành viên có trách nhiệm tôn trọng và thực hiện.
-    \item \textbf{kiennt:} Cần phân loại độ ưu tiên trước khi giải quyết xung đột.
+    \item \textbf{kiennt:} Nếu hai bên không thể tự thống nhất bằng logic, quyết định cuối cùng sẽ do Trưởng nhóm phán quyết dựa trên biểu quyết hoặc tài liệu thiết kế gốc.
 \end{enumerate}
 
 \section{Các mốc thời gian quan trọng}
@@ -60,8 +60,8 @@
     node distance=0.35cm,
     block/.style={rectangle, draw, fill=blue!10, text width=2.25cm, text centered, rounded corners, minimum height=1cm, font=\scriptsize},
     line/.style={draw, -{Stealth[scale=1.2]}, line width=1pt, color=black}
-% !TEX TS-program = xelatex
-% !TEX encoding = UTF-8 Unicode
+]
+    \node [block] (m1) {\textbf{Phân tích / Phân công} \\ (Ngày 12/04/2026)};
     \node [block, right=of m1] (m2) {\textbf{Rà soát / Hiệu chỉnh} \\ (Ngày 15/04/2026)};
     \node [block, right=of m2] (m3) {\textbf{Phát triển / Tích hợp} \\ (Ngày 19/04/2026)};
     \node [block, right=of m3] (m4) {\textbf{Kiểm thử / Hoàn thiện} \\ (Ngày 22/04/2026)};
