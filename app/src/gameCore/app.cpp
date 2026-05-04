@@ -103,27 +103,8 @@ static void applyMoveOrRotate(GameState& state, SDL_Keycode key) {
 }
 
 // gamecore-xu-ly-xoa-dong-06
-// Hàm độc lập 1: Chỉ chịu trách nhiệm xoá dòng và dịch chuyển bảng
-/* Chỗ này comment vì yêu cầu đồ án tuần 2, nhóm trưởng phải gỡ hàm remove line
-static void clearLines(GameState& state) {
-    for (int r = BOARD_ROWS - 1; r >= 0; r--) {
-        bool full = true;
-        for (int c = 0; c < BOARD_COLS; c++) {
-            if (state.board[r][c] == 0) { full = false; break; }
-        }
-        if (full) {
-            for (int y = r; y > 0; y--) {
-                for (int x = 0; x < BOARD_COLS; x++)
-                    state.board[y][x] = state.board[y - 1][x];
-            }
-            r++;
-        }
-    }
-}
-*/
 // gamecore-tinh-diem-07
-// Hàm độc lập 2: Chỉ chịu trách nhiệm quét bảng và cộng điểm
-static void calculateScore(GameState& state) {
+static void clearLines(GameState& state) {
     int linesCleared = 0;
     for (int r = BOARD_ROWS - 1; r >= 0; r--) {
         bool full = true;
@@ -132,39 +113,15 @@ static void calculateScore(GameState& state) {
         }
         if (full) {
             linesCleared++;
+            for (int y = r; y > 0; y--) {
+                for (int x = 0; x < BOARD_COLS; x++)
+                    state.board[y][x] = state.board[y - 1][x];
+            }
+            r++;
         }
     }
-    
     state.score += linesCleared;
     if (state.score > 99999) state.score = 99999;
-}
-
-// gamecore-xu-ly-cham-05
-static void lockBlock(GameState& state) {
-    for (int i = 0; i < 4; i++) {
-        int nx = state.currentBlock.x + state.currentBlock.blocks[i].x;
-        int ny = state.currentBlock.y + state.currentBlock.blocks[i].y;
-        if (ny >= 0 && ny < BOARD_ROWS && nx >= 0 && nx < BOARD_COLS) {
-            state.board[ny][nx] = state.currentBlock.colorID;
-        }
-    }
-    calculateScore(state);
-    
-    /* Chỗ này comment vì yêu cầu đồ án tuần 2, nhóm trưởng phải gỡ hàm remove line
-    
-    clearLines(state);
-    
-    */
-
-    state.currentBlock = state.nextBlock;
-    state.currentBlock.x = BOARD_COLS / 2 - 1;
-    state.currentBlock.y = 0;
-    state.nextBlock = spawnBlock();
-    if (checkCollision(state, state.currentBlock)) {
-        state.isGameOver    = true;
-        state.isPaused      = true;
-        state.showQuitPopup = true;
-    }
 }
 
 static void resetGame(GameState& state) {
@@ -191,6 +148,28 @@ static void resetGame(GameState& state) {
     state.mouseHeldArrLeft  = false;
     state.mouseHeldArrRight = false;
 }
+
+// gamecore-xu-ly-cham-05
+static void lockBlock(GameState& state) {
+    for (int i = 0; i < 4; i++) {
+        int nx = state.currentBlock.x + state.currentBlock.blocks[i].x;
+        int ny = state.currentBlock.y + state.currentBlock.blocks[i].y;
+        if (ny >= 0 && ny < BOARD_ROWS && nx >= 0 && nx < BOARD_COLS) {
+            state.board[ny][nx] = state.currentBlock.colorID;
+        }
+    }
+    clearLines(state);
+    state.currentBlock = state.nextBlock;
+    state.currentBlock.x = BOARD_COLS / 2 - 1;
+    state.currentBlock.y = 0;
+    state.nextBlock = spawnBlock();
+    if (checkCollision(state, state.currentBlock)) {
+        state.isGameOver    = true;
+        state.isPaused      = true;
+        state.showQuitPopup = true;
+    }
+}
+
 // =========================================================
 // Sidebar 12 component dong nhat 30x40
 // =========================================================
