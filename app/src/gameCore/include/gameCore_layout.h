@@ -58,6 +58,10 @@ struct GameState {
     bool mouseHeldArrLeft  = false;
     bool mouseHeldArrRight = false;
 
+    // Theo doi chuong trinh hieu ung khi nhieu dong duoc xoa cung luc.
+    int  lastClearCount        = 0;
+    Uint32 clearCelebrationUntil = 0;
+
     // WASM-only: khi user click Quit tren web build, khong the goi exit() vi
     // canvas van song. Thay vao do bat co nay -> man hinh chi con 1 nut RELOAD
     // tac dung tuong tu F5 / refresh button cua browser.
