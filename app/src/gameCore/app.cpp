@@ -104,7 +104,9 @@ static void applyMoveOrRotate(GameState& state, SDL_Keycode key) {
 
 // gamecore-xu-ly-xoa-dong-06
 // gamecore-tinh-diem-07
-static void clearLines(GameState& state) {
+// gamecore-hieu-ung-khi-xoa-dong-18
+static void startFlashingLines(GameState& state) {
+    state.flashingRows.clear();
     int linesCleared = 0;
     for (int r = BOARD_ROWS - 1; r >= 0; r--) {
         bool full = true;
@@ -112,16 +114,30 @@ static void clearLines(GameState& state) {
             if (state.board[r][c] == 0) { full = false; break; }
         }
         if (full) {
+            state.flashingRows.push_back(r);
             linesCleared++;
-            for (int y = r; y > 0; y--) {
-                for (int x = 0; x < BOARD_COLS; x++)
-                    state.board[y][x] = state.board[y - 1][x];
-            }
-            r++;
         }
     }
+    if (!state.flashingRows.empty()) {
+        state.flashFrame = 6; // 3 lan chop tat (on-off-on-off-on-off)
+    }
     state.score += linesCleared;
-    if (state.score > 99999) state.score = 99999;
+    if (state.score > 999999) state.score = 999999; // cap nhat gioi han theo task 1.9
+}
+
+static void finishClearLines(GameState& state) {
+    // Sap xep flashingRows giam dan de xoa tu duoi len
+    std::sort(state.flashingRows.begin(), state.flashingRows.end(), std::greater<int>());
+    for (int r : state.flashingRows) {
+        for (int y = r; y > 0; y--) {
+            for (int x = 0; x < BOARD_COLS; x++)
+                state.board[y][x] = state.board[y - 1][x];
+        }
+        // Xoa dong tren cung
+        for (int x = 0; x < BOARD_COLS; x++)
+            state.board[0][x] = 0;
+    }
+    state.flashingRows.clear();
 }
 
 static void resetGame(GameState& state) {
@@ -147,6 +163,10 @@ static void resetGame(GameState& state) {
     state.mouseHeldArrDown  = false;
     state.mouseHeldArrLeft  = false;
     state.mouseHeldArrRight = false;
+
+    // Reset hieu ung chop tat
+    state.flashingRows.clear();
+    state.flashFrame = 0;
 }
 
 // gamecore-xu-ly-cham-05
@@ -158,7 +178,7 @@ static void lockBlock(GameState& state) {
             state.board[ny][nx] = state.currentBlock.colorID;
         }
     }
-    clearLines(state);
+    startFlashingLines(state);
     state.currentBlock = state.nextBlock;
     state.currentBlock.x = BOARD_COLS / 2 - 1;
     state.currentBlock.y = 0;
@@ -536,6 +556,12 @@ static void renderBoard(SDL_Renderer* renderer, const GameState& state) {
     };
 
     for (int r = 0; r < BOARD_ROWS; r++) {
+        bool isFlashing = false;
+        for (int fr : state.flashingRows) {
+            if (fr == r) { isFlashing = true; break; }
+        }
+        if (isFlashing && (state.flashFrame % 2 == 1)) continue; // chop tat: khong ve trong frame le
+
         for (int c = 0; c < BOARD_COLS; c++) {
             if (state.board[r][c] != 0) drawCell(c, r, COLORS[state.board[r][c]]);
         }
@@ -793,6 +819,15 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
         drawSidebar(renderer, state, keys, elapsedMs);
         if (state.showQuitPopup) drawQuitPopup(renderer, state, elapsedMs);
         SDL_RenderPresent(renderer);
+
+        // Xu ly hieu ung chop tat sau khi render
+        if (state.flashFrame > 0) {
+            state.flashFrame--;
+            if (state.flashFrame == 0) {
+                finishClearLines(state);
+            }
+        }
+
         SDL_Delay(16);
     }
 
