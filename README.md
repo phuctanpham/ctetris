@@ -1,2 +1,0 @@
-# phucpt: README.md
-# ctetris
