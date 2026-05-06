@@ -6,8 +6,13 @@ using namespace std;
 #define W 15
 char board[H][W] = {};
 
+class Blocks {
+public:
+    char shape[4][4];
+};
+
 int x, y, b;
-char blocks[][4][4] ={
+Blocks blocks[] = {
     // I - 2 rotations
     {{' ','I',' ',' '},
      {' ','I',' ',' '},
@@ -101,7 +106,7 @@ char blocks[][4][4] ={
 bool canMove(int dx, int dy){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b][i][j] != ' ') {
+            if (blocks[b].shape[i][j] != ' ') {
                 int xt = x + j + dx;
                 int yt = y + i + dy;
                 if (xt < 1 || xt >= W-1 || yt >= H-1 ) return false;
@@ -112,13 +117,13 @@ bool canMove(int dx, int dy){
 void block2Board(){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b][i][j] != ' ')
-                board[y+i][x+j] = blocks[b][i][j];
+            if (blocks[b].shape[i][j] != ' ')
+                board[y+i][x+j] = blocks[b].shape[i][j];
 }
 void boardDelBlock(){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b][i][j] != ' ')
+            if (blocks[b].shape[i][j] != ' ')
                 board[y+i][x+j] = ' ';
 }
 void initBoard(){
