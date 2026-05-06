@@ -5,21 +5,8 @@ Block::Block() {
     memset(shape, ' ', sizeof(shape));
 }
 
-IBlock::IBlock() : rotation(0) {
-    shapes = {
-        " I  \n I  \n I  \n I  ",
-        "    \nIIII\n    \n    "
-    };
-    // Initialize shape with first rotation
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[0][i*4 + j];
-        }
-    }
-}
-
-void IBlock::rotate() {
-    rotation = (rotation + 1) % 2;
+// RotatableBlock implementation
+void RotatableBlock::updateShape() {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             shape[i][j] = shapes[rotation][i*4 + j];
@@ -27,6 +14,21 @@ void IBlock::rotate() {
     }
 }
 
+void RotatableBlock::rotate() {
+    rotation = (rotation + 1) % shapes.size();
+    updateShape();
+}
+
+// IBlock
+IBlock::IBlock() {
+    shapes = {
+        " I  \n I  \n I  \n I  ",
+        "    \nIIII\n    \n    "
+    };
+    updateShape();
+}
+
+// OBlock
 OBlock::OBlock() {
     std::string s = "    \n OO \n OO \n    ";
     for (int i = 0; i < 4; i++) {
@@ -36,113 +38,53 @@ OBlock::OBlock() {
     }
 }
 
-TBlock::TBlock() : rotation(0) {
+// TBlock
+TBlock::TBlock() {
     shapes = {
         " T  \nTTT \n    \n    ",
         " T  \n TT \n T  \n    ",
         "    \nTTT \n T  \n    ",
         " T  \nTT  \n T  \n    "
     };
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[0][i*4 + j];
-        }
-    }
+    updateShape();
 }
 
-void TBlock::rotate() {
-    rotation = (rotation + 1) % 4;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[rotation][i*4 + j];
-        }
-    }
-}
-
-SBlock::SBlock() : rotation(0) {
+// SBlock
+SBlock::SBlock() {
     shapes = {
         " SS \nSS  \n    \n    ",
         " S  \n SS \n  S \n    "
     };
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[0][i*4 + j];
-        }
-    }
+    updateShape();
 }
 
-void SBlock::rotate() {
-    rotation = (rotation + 1) % 2;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[rotation][i*4 + j];
-        }
-    }
-}
-
-ZBlock::ZBlock() : rotation(0) {
+// ZBlock
+ZBlock::ZBlock() {
     shapes = {
         " Z  \n ZZ \n  Z \n    ",
         "ZZ  \n ZZ \n    \n    "
     };
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[0][i*4 + j];
-        }
-    }
+    updateShape();
 }
 
-void ZBlock::rotate() {
-    rotation = (rotation + 1) % 2;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[rotation][i*4 + j];
-        }
-    }
-}
-
-JBlock::JBlock() : rotation(0) {
+// JBlock
+JBlock::JBlock() {
     shapes = {
         " J  \nJJJ \n    \n    ",
         "JJ  \n J  \n J  \n    ",
         "    \nJJJ \n  J \n    ",
         " J  \n J  \nJJ  \n    "
     };
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[0][i*4 + j];
-        }
-    }
+    updateShape();
 }
 
-void JBlock::rotate() {
-    rotation = (rotation + 1) % 4;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[rotation][i*4 + j];
-        }
-    }
-}
-
-LBlock::LBlock() : rotation(0) {
+// LBlock
+LBlock::LBlock() {
     shapes = {
         " L  \nLLL \n    \n    ",
         " L  \n L  \n LL \n    ",
         "    \nLLL \nL   \n    ",
         "LL  \n L  \n L  \n    "
     };
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[0][i*4 + j];
-        }
-    }
-}
-
-void LBlock::rotate() {
-    rotation = (rotation + 1) % 4;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            shape[i][j] = shapes[rotation][i*4 + j];
-        }
-    }
+    updateShape();
 }
