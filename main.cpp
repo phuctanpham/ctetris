@@ -1,5 +1,7 @@
 #include <iostream>
 #include <conio.h>
+#include <cstdlib>
+#include <ctime>
 #include "Blocks.h"
 
 using namespace std;
@@ -7,102 +9,26 @@ using namespace std;
 #define W 15
 char board[H][W] = {};
 
-int x, y, b;
-Blocks blocks[] = {
-    // I - 2 rotations
-    {{' ','I',' ',' '},
-     {' ','I',' ',' '},
-     {' ','I',' ',' '},
-     {' ','I',' ',' '}},
-    {{' ',' ',' ',' '},
-     {'I','I','I','I'},
-     {' ',' ',' ',' '},
-     {' ',' ',' ',' '}},
-    
-    // O - 1 rotation
-    {{' ',' ',' ',' '},
-     {' ','O','O',' '},
-     {' ','O','O',' '},
-     {' ',' ',' ',' '}},
-    
-    // T - 4 rotations
-    {{' ','T',' ',' '},
-     {'T','T','T',' '},
-     {' ',' ',' ',' '},
-     {' ',' ',' ',' '}},
-    {{' ','T',' ',' '},
-     {' ','T','T',' '},
-     {' ','T',' ',' '},
-     {' ',' ',' ',' '}},
-    {{' ',' ',' ',' '},
-     {'T','T','T',' '},
-     {' ','T',' ',' '},
-     {' ',' ',' ',' '}},
-    {{' ','T',' ',' '},
-     {'T','T',' ',' '},
-     {' ','T',' ',' '},
-     {' ',' ',' ',' '}},
-    
-    // S - 2 rotations
-    {{' ','S','S',' '},
-     {'S','S',' ',' '},
-     {' ',' ',' ',' '},
-     {' ',' ',' ',' '}},
-    {{' ','S',' ',' '},
-     {' ','S','S',' '},
-     {' ',' ','S',' '},
-     {' ',' ',' ',' '}},
-    
-    // Z - 2 rotations
-    {{' ','Z',' ',' '},
-     {' ','Z','Z',' '},
-     {' ',' ','Z',' '},
-     {' ',' ',' ',' '}},
-    {{'Z','Z',' ',' '},
-     {' ','Z','Z',' '},
-     {' ',' ',' ',' '},
-     {' ',' ',' ',' '}},
-    
-    // J - 4 rotations
-    {{' ','J',' ',' '},
-     {'J','J','J',' '},
-     {' ',' ',' ',' '},
-     {' ',' ',' ',' '}},
-    {{'J','J',' ',' '},
-     {' ','J',' ',' '},
-     {' ','J',' ',' '},
-     {' ',' ',' ',' '}},
-    {{' ',' ',' ',' '},
-     {'J','J','J',' '},
-     {' ',' ','J',' '},
-     {' ',' ',' ',' '}},
-    {{' ','J',' ',' '},
-     {' ','J',' ',' '},
-     {'J','J',' ',' '},
-     {' ',' ',' ',' '}},
-    
-    // L - 4 rotations
-    {{' ','L',' ',' '},
-     {'L','L','L',' '},
-     {' ',' ',' ',' '},
-     {' ',' ',' ',' '}},
-    {{' ','L',' ',' '},
-     {' ','L',' ',' '},
-     {' ','L','L',' '},
-     {' ',' ',' ',' '}},
-    {{' ',' ',' ',' '},
-     {'L','L','L',' '},
-     {'L',' ',' ',' '},
-     {' ',' ',' ',' '}},
-    {{'L','L',' ',' '},
-     {' ','L',' ',' '},
-     {' ','L',' ',' '},
-     {' ',' ',' ',' '}}
-};
+int x, y;
+Block* currentBlock;
+
+Block* createRandomBlock() {
+    int r = rand() % 7;
+    switch (r) {
+        case 0: return new IBlock();
+        case 1: return new OBlock();
+        case 2: return new TBlock();
+        case 3: return new SBlock();
+        case 4: return new ZBlock();
+        case 5: return new JBlock();
+        case 6: return new LBlock();
+    }
+    return nullptr;
+}
 bool canMove(int dx, int dy){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b].shape[i][j] != ' ') {
+            if (currentBlock->shape[i][j] != ' ') {
                 int xt = x + j + dx;
                 int yt = y + i + dy;
                 if (xt < 1 || xt >= W-1 || yt >= H-1 ) return false;
@@ -113,13 +39,13 @@ bool canMove(int dx, int dy){
 void block2Board(){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b].shape[i][j] != ' ')
-                board[y+i][x+j] = blocks[b].shape[i][j];
+            if (currentBlock->shape[i][j] != ' ')
+                board[y+i][x+j] = currentBlock->shape[i][j];
 }
 void boardDelBlock(){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b].shape[i][j] != ' ')
+            if (currentBlock->shape[i][j] != ' ')
                 board[y+i][x+j] = ' ';
 }
 void initBoard(){
@@ -163,7 +89,7 @@ void draw(){
 int main()
 {
     srand(time(0));
-    x = 5; y = 0; b = rand()%19;
+    x = 5; y = 0; currentBlock = createRandomBlock();
     initBoard();
     while (1){
         boardDelBlock();
@@ -172,16 +98,23 @@ int main()
             if (c == 'a' && canMove(-1,0)) x--;
             if (c == 'd' && canMove( 1,0)) x++;
             if (c == 'x' && canMove( 0,1)) y++;
+            if (c == 'w') {
+                currentBlock->rotate();
+                if (!canMove(0,0)) currentBlock->rotate(); // revert if can't rotate
+            }
             if (c == 'q') break;
         }
         if (canMove(0,1)) y++;
         else{
             block2Board();
-            x = 5; y = 0; b = rand()%19;
+            removeLine();
+            delete currentBlock;
+            x = 5; y = 0; currentBlock = createRandomBlock();
         }
         block2Board();
         draw();
         _sleep(500);
     }
+    delete currentBlock;
     return 0;
 }
