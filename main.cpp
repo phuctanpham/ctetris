@@ -4,17 +4,20 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/select.h>
+#include <algorithm>
 
 using namespace std;
 #define H 20
 #define W 15
 char board[H][W] = {};
+char currentPiece[4][4];
 
 int x, y;
 int blockType, rotationIndex;
 const int rotationCount[] = {2, 1, 4, 2, 2, 4, 4};
+const int shapeOffsets[8] = {0, 2, 3, 7, 9, 11, 15, 19};
 struct termios oldTermios;
-char shapes[7][4][4] = {
+char shapes[19][4][4] = {
     // I - 2 rotations
     {{' ','I',' ',' '},
      {' ','I',' ',' '},
@@ -114,15 +117,7 @@ void rotateMatrixCCW(const char src[4][4], char dst[4][4]){
 void buildCurrentPiece(){
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
-            currentPiece[i][j] = shapes[blockType][i][j];
-
-    for (int r = 0; r < rotationIndex; r++){
-        char tmp[4][4];
-        rotateMatrixCCW(currentPiece, tmp);
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-                currentPiece[i][j] = tmp[i][j];
-    }
+            currentPiece[i][j] = shapes[shapeOffsets[blockType] + rotationIndex][i][j];
 }
 
 bool canMove(int dx, int dy){
@@ -179,7 +174,8 @@ void initBoard(){
             if (i == 0 || i == H-1 || j ==0 || j == W-1) board[i][j] = '#';
             else board[i][j] = ' ';
 }
-void removeLine(){
+int removeLine(){
+    int linesRemoved = 0;
     for (int i = H-2; i > 0; i--) {
         bool full = true;
         for (int j = 1; j < W-1; j++) {
@@ -189,6 +185,7 @@ void removeLine(){
             }
         }
         if (full) {
+            linesRemoved++;
             for (int k = i; k > 1; k--) {
                 for (int j = 1; j < W-1; j++) {
                     board[k][j] = board[k-1][j];
@@ -200,6 +197,7 @@ void removeLine(){
             i++;
         }
     }
+    return linesRemoved;
 }
 void draw(){
     system("clear");
@@ -250,6 +248,7 @@ int main()
     buildCurrentPiece();
     x = 5; y = 0;
     initBoard();
+    int speed = 500;
     while (1){
         boardDelBlock();
         if (kbhit()){
@@ -263,6 +262,8 @@ int main()
         if (canMove(0,1)) y++;
         else{
             block2Board();
+            int removed = removeLine();
+            speed = max(50, speed - removed * 50);
             blockType = rand() % 7;
             rotationIndex = rand() % rotationCount[blockType];
             buildCurrentPiece();
@@ -270,7 +271,7 @@ int main()
         }
         block2Board();
         draw();
-        sleepMs(500);
+        sleepMs(speed);
     }
     resetTerminal();
     return 0;
