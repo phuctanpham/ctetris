@@ -10,12 +10,11 @@ using namespace std;
 #define W 15
 char board[H][W] = {};
 
-int x, y, b;
+int x, y;
 int blockType, rotationIndex;
-const int rotationStart[] = {0, 2, 3, 7, 9, 11, 15};
 const int rotationCount[] = {2, 1, 4, 2, 2, 4, 4};
 struct termios oldTermios;
-char blocks[][4][4] ={
+char shapes[7][4][4] = {
     // I - 2 rotations
     {{' ','I',' ',' '},
      {' ','I',' ',' '},
@@ -106,10 +105,30 @@ char blocks[][4][4] ={
      {' ','L',' ',' '},
      {' ',' ',' ',' '}}
 };
+void rotateMatrixCCW(const char src[4][4], char dst[4][4]){
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            dst[i][j] = src[j][3 - i];
+}
+
+void buildCurrentPiece(){
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            currentPiece[i][j] = shapes[blockType][i][j];
+
+    for (int r = 0; r < rotationIndex; r++){
+        char tmp[4][4];
+        rotateMatrixCCW(currentPiece, tmp);
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                currentPiece[i][j] = tmp[i][j];
+    }
+}
+
 bool canMove(int dx, int dy){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b][i][j] != ' ') {
+            if (currentPiece[i][j] != ' ') {
                 int xt = x + j + dx;
                 int yt = y + i + dy;
                 if (xt < 1 || xt >= W-1 || yt >= H-1 ) return false;
@@ -117,12 +136,13 @@ bool canMove(int dx, int dy){
             }
     return true;
 }
+
 bool canRotate(){
-    int nextRotation = (rotationIndex + 1) % rotationCount[blockType];
-    int nextBlock = rotationStart[blockType] + nextRotation;
+    char rotated[4][4];
+    rotateMatrixCCW(currentPiece, rotated);
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[nextBlock][i][j] != ' ') {
+            if (rotated[i][j] != ' ') {
                 int xt = x + j;
                 int yt = y + i;
                 if (xt < 1 || xt >= W-1 || yt >= H-1 ) return false;
@@ -130,20 +150,27 @@ bool canRotate(){
             }
     return true;
 }
+
 void rotateBlock(){
+    char tmp[4][4];
+    rotateMatrixCCW(currentPiece, tmp);
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            currentPiece[i][j] = tmp[i][j];
     rotationIndex = (rotationIndex + 1) % rotationCount[blockType];
-    b = rotationStart[blockType] + rotationIndex;
 }
+
 void block2Board(){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b][i][j] != ' ')
-                board[y+i][x+j] = blocks[b][i][j];
+            if (currentPiece[i][j] != ' ')
+                board[y+i][x+j] = currentPiece[i][j];
 }
+
 void boardDelBlock(){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b][i][j] != ' ')
+            if (currentPiece[i][j] != ' ')
                 board[y+i][x+j] = ' ';
 }
 void initBoard(){
@@ -218,9 +245,9 @@ int main()
 {
     srand(time(0));
     initTerminal();
-    blockType = rand()%7;
-    rotationIndex = rand()%rotationCount[blockType];
-    b = rotationStart[blockType] + rotationIndex;
+    blockType = rand() % 7;
+    rotationIndex = rand() % rotationCount[blockType];
+    buildCurrentPiece();
     x = 5; y = 0;
     initBoard();
     while (1){
@@ -236,9 +263,9 @@ int main()
         if (canMove(0,1)) y++;
         else{
             block2Board();
-            blockType = rand()%7;
-            rotationIndex = rand()%rotationCount[blockType];
-            b = rotationStart[blockType] + rotationIndex;
+            blockType = rand() % 7;
+            rotationIndex = rand() % rotationCount[blockType];
+            buildCurrentPiece();
             x = 5; y = 0;
         }
         block2Board();
