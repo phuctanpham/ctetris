@@ -14,13 +14,25 @@ public:
     char getShape(int i, int j) const { return shape[i][j]; }
 };
 
-class IBlock : public Block {
-private:
+// Base class for rotatableblocks - implements rotation logic
+class RotatableBlock : public Block {
+protected:
     int rotation;
     std::vector<std::string> shapes;
+    
+    // Helper method to update shape from shapes vector
+    void updateShape();
+    
+public:
+    RotatableBlock() : rotation(0) {}
+    virtual ~RotatableBlock() {}
+    
+    void rotate() override;
+};
+
+class IBlock : public RotatableBlock {
 public:
     IBlock();
-    void rotate() override;
     Block* clone() const override { return new IBlock(*this); }
 };
 
@@ -31,53 +43,33 @@ public:
     Block* clone() const override { return new OBlock(*this); }
 };
 
-class TBlock : public Block {
-private:
-    int rotation;
-    std::vector<std::string> shapes;
+class TBlock : public RotatableBlock {
 public:
     TBlock();
-    void rotate() override;
     Block* clone() const override { return new TBlock(*this); }
 };
 
-class SBlock : public Block {
-private:
-    int rotation;
-    std::vector<std::string> shapes;
+class SBlock : public RotatableBlock {
 public:
     SBlock();
-    void rotate() override;
     Block* clone() const override { return new SBlock(*this); }
 };
 
-class ZBlock : public Block {
-private:
-    int rotation;
-    std::vector<std::string> shapes;
+class ZBlock : public RotatableBlock {
 public:
     ZBlock();
-    void rotate() override;
     Block* clone() const override { return new ZBlock(*this); }
 };
 
-class JBlock : public Block {
-private:
-    int rotation;
-    std::vector<std::string> shapes;
+class JBlock : public RotatableBlock {
 public:
     JBlock();
-    void rotate() override;
     Block* clone() const override { return new JBlock(*this); }
 };
 
-class LBlock : public Block {
-private:
-    int rotation;
-    std::vector<std::string> shapes;
+class LBlock : public RotatableBlock {
 public:
     LBlock();
-    void rotate() override;
     Block* clone() const override { return new LBlock(*this); }
 };
 
