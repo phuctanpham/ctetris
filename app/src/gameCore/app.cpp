@@ -104,6 +104,7 @@ static void applyMoveOrRotate(GameState& state, SDL_Keycode key) {
 
 // gamecore-xu-ly-xoa-dong-06
 // gamecore-tinh-diem-07
+// gamecore-diem-thuong-khi-xoa-nhieu-dong-19
 static void clearLines(GameState& state) {
     int linesCleared = 0;
     for (int r = BOARD_ROWS - 1; r >= 0; r--) {
@@ -120,8 +121,15 @@ static void clearLines(GameState& state) {
             r++;
         }
     }
-    state.score += linesCleared;
-    if (state.score > 99999) state.score = 99999;
+    if (linesCleared > 0) {
+        int bonus = linesCleared * linesCleared;
+        state.score += bonus;
+        if (state.score > 99999) state.score = 99999;
+        state.lastClearCount = linesCleared;
+        state.clearCelebrationUntil = SDL_GetTicks() + 1000;
+    } else {
+        state.lastClearCount = 0;
+    }
 }
 
 static void resetGame(GameState& state) {
@@ -137,6 +145,8 @@ static void resetGame(GameState& state) {
     state.currentBlock = spawnBlock();
     state.nextBlock    = spawnBlock();
 
+    state.lastClearCount        = 0;
+    state.clearCelebrationUntil = 0;
     state.gameStartTime  = SDL_GetTicks();
     state.pauseStartTime = 0;
     state.totalPausedMs  = 0;
@@ -342,6 +352,27 @@ static void drawNextPreview(SDL_Renderer* renderer, const SDL_FRect& slot, const
                            CELL_INNER, CELL_INNER };
         SDL_RenderFillRect(renderer, &cell);
     }
+}
+
+static void drawClearBonusOverlay(SDL_Renderer* renderer, const GameState& state, Uint32 nowMs) {
+    if (state.lastClearCount <= 1) return;
+    if (nowMs >= state.clearCelebrationUntil) return;
+
+    float alpha = (float)(state.clearCelebrationUntil - nowMs) / 1000.0f;
+    if (alpha < 0.0f) alpha = 0.0f;
+    Uint8 fade = (Uint8)(alpha * 255.0f);
+
+    char buf[32];
+    SDL_snprintf(buf, sizeof(buf), "BONUS x%d!", state.lastClearCount);
+    float textX = 48.0f;
+    float textY = 210.0f;
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, fade / 2);
+    SDL_FRect bg = { textX - 6.0f, textY - 4.0f, 174.0f, 20.0f };
+    SDL_RenderFillRect(renderer, &bg);
+
+    SDL_SetRenderDrawColor(renderer, 255, 240, 120, fade);
+    SDL_RenderDebugText(renderer, textX, textY, buf);
 }
 
 static void drawScoreInSlot(SDL_Renderer* renderer, const SDL_FRect& host, int score) {
@@ -790,6 +821,7 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
         renderBoard(renderer, state);
+        drawClearBonusOverlay(renderer, state, nowMs);
         drawSidebar(renderer, state, keys, elapsedMs);
         if (state.showQuitPopup) drawQuitPopup(renderer, state, elapsedMs);
         SDL_RenderPresent(renderer);
