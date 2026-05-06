@@ -1,15 +1,11 @@
 #include <iostream>
 #include <conio.h>
+#include "Blocks.h"
 
 using namespace std;
 #define H 20
 #define W 15
 char board[H][W] = {};
-
-class Blocks {
-public:
-    char shape[4][4];
-};
 
 int x, y, b;
 Blocks blocks[] = {
