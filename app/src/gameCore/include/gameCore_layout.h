@@ -1,6 +1,7 @@
 #pragma once
 // gamecore-tao-giao-dien-169-00
-#include <SDL3/SDL.h>  // Lay kieu Uint32 cho cac truong timer ben duoi
+#include <SDL3/SDL.h>
+#include <vector>  // Lay kieu Uint32 cho cac truong timer ben duoi
 
 const int CORE_SCREEN_WIDTH  = 270;
 const int CORE_SCREEN_HEIGHT = 480;
@@ -66,4 +67,8 @@ struct GameState {
     bool wasmShutdown = false;
     // Hover state cua nut Reload tren man hinh shutdown (de bat hieu ung)
     bool reloadHover  = false;
+
+    // Hieu ung chop tat khi xoa dong (task 2.4)
+    std::vector<int> flashingRows; // danh sach cac dong dang chop tat
+    int flashFrame = 0; // so frame con lai cho hieu ung chop tat (6 = 3 lan chop)
 };
