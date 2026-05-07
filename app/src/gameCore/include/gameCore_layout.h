@@ -1,6 +1,7 @@
 #pragma once
 // gamecore-tao-giao-dien-169-00
-#include <SDL3/SDL.h>  // Lay kieu Uint32 cho cac truong timer ben duoi
+#include <SDL3/SDL.h>
+#include <vector>  // Lay kieu Uint32 cho cac truong timer ben duoi
 
 const int CORE_SCREEN_WIDTH  = 270;
 const int CORE_SCREEN_HEIGHT = 480;
@@ -33,6 +34,8 @@ struct GameState {
     int board[BOARD_ROWS][BOARD_COLS] = {0};
     Tetromino currentBlock;
     Tetromino nextBlock;
+    Tetromino nextBlock2;
+    Tetromino nextBlock3;
     int  score = 0;
     bool isGameOver    = false;
     bool isPaused      = false;
@@ -58,10 +61,18 @@ struct GameState {
     bool mouseHeldArrLeft  = false;
     bool mouseHeldArrRight = false;
 
+    // Theo doi chuong trinh hieu ung khi nhieu dong duoc xoa cung luc.
+    int  lastClearCount        = 0;
+    Uint32 clearCelebrationUntil = 0;
+
     // WASM-only: khi user click Quit tren web build, khong the goi exit() vi
     // canvas van song. Thay vao do bat co nay -> man hinh chi con 1 nut RELOAD
     // tac dung tuong tu F5 / refresh button cua browser.
     bool wasmShutdown = false;
     // Hover state cua nut Reload tren man hinh shutdown (de bat hieu ung)
     bool reloadHover  = false;
+
+    // Hieu ung chop tat khi xoa dong (task 2.4)
+    std::vector<int> flashingRows; // danh sach cac dong dang chop tat
+    int flashFrame = 0; // so frame con lai cho hieu ung chop tat (6 = 3 lan chop)
 };

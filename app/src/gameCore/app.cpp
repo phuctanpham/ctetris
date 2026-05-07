@@ -103,27 +103,9 @@ static void applyMoveOrRotate(GameState& state, SDL_Keycode key) {
 }
 
 // gamecore-xu-ly-xoa-dong-06
-// Hàm độc lập 1: Chỉ chịu trách nhiệm xoá dòng và dịch chuyển bảng
-/* Chỗ này comment vì yêu cầu đồ án tuần 2, nhóm trưởng phải gỡ hàm remove line
-static void clearLines(GameState& state) {
-    for (int r = BOARD_ROWS - 1; r >= 0; r--) {
-        bool full = true;
-        for (int c = 0; c < BOARD_COLS; c++) {
-            if (state.board[r][c] == 0) { full = false; break; }
-        }
-        if (full) {
-            for (int y = r; y > 0; y--) {
-                for (int x = 0; x < BOARD_COLS; x++)
-                    state.board[y][x] = state.board[y - 1][x];
-            }
-            r++;
-        }
-    }
-}
-*/
 // gamecore-tinh-diem-07
-// Hàm độc lập 2: Chỉ chịu trách nhiệm quét bảng và cộng điểm
-static void calculateScore(GameState& state) {
+// gamecore-diem-thuong-khi-xoa-nhieu-dong-19
+static void clearLines(GameState& state) {
     int linesCleared = 0;
     for (int r = BOARD_ROWS - 1; r >= 0; r--) {
         bool full = true;
@@ -131,39 +113,18 @@ static void calculateScore(GameState& state) {
             if (state.board[r][c] == 0) { full = false; break; }
         }
         if (full) {
+            state.flashingRows.push_back(r);
             linesCleared++;
         }
     }
-    
-    state.score += linesCleared;
-    if (state.score > 99999) state.score = 99999;
-}
-
-// gamecore-xu-ly-cham-05
-static void lockBlock(GameState& state) {
-    for (int i = 0; i < 4; i++) {
-        int nx = state.currentBlock.x + state.currentBlock.blocks[i].x;
-        int ny = state.currentBlock.y + state.currentBlock.blocks[i].y;
-        if (ny >= 0 && ny < BOARD_ROWS && nx >= 0 && nx < BOARD_COLS) {
-            state.board[ny][nx] = state.currentBlock.colorID;
-        }
-    }
-    calculateScore(state);
-    
-    /* Chỗ này comment vì yêu cầu đồ án tuần 2, nhóm trưởng phải gỡ hàm remove line
-    
-    clearLines(state);
-    
-    */
-
-    state.currentBlock = state.nextBlock;
-    state.currentBlock.x = BOARD_COLS / 2 - 1;
-    state.currentBlock.y = 0;
-    state.nextBlock = spawnBlock();
-    if (checkCollision(state, state.currentBlock)) {
-        state.isGameOver    = true;
-        state.isPaused      = true;
-        state.showQuitPopup = true;
+    if (linesCleared > 0) {
+        int bonus = linesCleared * linesCleared;
+        state.score += bonus;
+        if (state.score > 99999) state.score = 99999;
+        state.lastClearCount = linesCleared;
+        state.clearCelebrationUntil = SDL_GetTicks() + 1000;
+    } else {
+        state.lastClearCount = 0;
     }
 }
 
@@ -177,9 +138,14 @@ static void resetGame(GameState& state) {
     state.showQuitPopup = false;
     state.softDrop = false;
     state.speedHeld = false;
+    // gamecore-du-bao-ba-khoi-xep-hinh-lien-tiep-17
     state.currentBlock = spawnBlock();
     state.nextBlock    = spawnBlock();
+    state.nextBlock2   = spawnBlock();
+    state.nextBlock3   = spawnBlock();
 
+    state.lastClearCount        = 0;
+    state.clearCelebrationUntil = 0;
     state.gameStartTime  = SDL_GetTicks();
     state.pauseStartTime = 0;
     state.totalPausedMs  = 0;
@@ -190,7 +156,35 @@ static void resetGame(GameState& state) {
     state.mouseHeldArrDown  = false;
     state.mouseHeldArrLeft  = false;
     state.mouseHeldArrRight = false;
+
+    // Reset hieu ung chop tat
+    state.flashingRows.clear();
+    state.flashFrame = 0;
 }
+
+// gamecore-xu-ly-cham-05
+static void lockBlock(GameState& state) {
+    for (int i = 0; i < 4; i++) {
+        int nx = state.currentBlock.x + state.currentBlock.blocks[i].x;
+        int ny = state.currentBlock.y + state.currentBlock.blocks[i].y;
+        if (ny >= 0 && ny < BOARD_ROWS && nx >= 0 && nx < BOARD_COLS) {
+            state.board[ny][nx] = state.currentBlock.colorID;
+        }
+    }
+    startFlashingLines(state);
+    state.currentBlock = state.nextBlock;
+    state.currentBlock.x = BOARD_COLS / 2 - 1;
+    state.currentBlock.y = 0;
+    state.nextBlock = state.nextBlock2;
+    state.nextBlock2 = state.nextBlock3;
+    state.nextBlock3 = spawnBlock();
+    if (checkCollision(state, state.currentBlock)) {
+        state.isGameOver    = true;
+        state.isPaused      = true;
+        state.showQuitPopup = true;
+    }
+}
+
 // =========================================================
 // Sidebar 12 component dong nhat 30x40
 // =========================================================
@@ -365,6 +359,27 @@ static void drawNextPreview(SDL_Renderer* renderer, const SDL_FRect& slot, const
     }
 }
 
+static void drawClearBonusOverlay(SDL_Renderer* renderer, const GameState& state, Uint32 nowMs) {
+    if (state.lastClearCount <= 1) return;
+    if (nowMs >= state.clearCelebrationUntil) return;
+
+    float alpha = (float)(state.clearCelebrationUntil - nowMs) / 1000.0f;
+    if (alpha < 0.0f) alpha = 0.0f;
+    Uint8 fade = (Uint8)(alpha * 255.0f);
+
+    char buf[32];
+    SDL_snprintf(buf, sizeof(buf), "BONUS x%d!", state.lastClearCount);
+    float textX = 48.0f;
+    float textY = 210.0f;
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, fade / 2);
+    SDL_FRect bg = { textX - 6.0f, textY - 4.0f, 174.0f, 20.0f };
+    SDL_RenderFillRect(renderer, &bg);
+
+    SDL_SetRenderDrawColor(renderer, 255, 240, 120, fade);
+    SDL_RenderDebugText(renderer, textX, textY, buf);
+}
+
 static void drawScoreInSlot(SDL_Renderer* renderer, const SDL_FRect& host, int score) {
     char buf[12];
     SDL_snprintf(buf, sizeof(buf), "%05d", score);
@@ -411,7 +426,10 @@ static void drawSidebar(SDL_Renderer* renderer, const GameState& state,
     drawPauseIcon(renderer, RECT_PAUSE, state.isPaused, aPause);
     drawScoreInSlot(renderer, RECT_SCORE, state.score);
     drawTimerInSlot(renderer, RECT_TIMER, elapsedMs);
+    // gamecore-du-bao-ba-khoi-xep-hinh-lien-tiep-17
     drawNextPreview(renderer, RECT_NEXT1, state.nextBlock);
+    drawNextPreview(renderer, RECT_NEXT2, state.nextBlock2);
+    drawNextPreview(renderer, RECT_NEXT3, state.nextBlock3);
     drawArrowIcon(renderer, RECT_ARR_UP,    0, aUp);
     drawArrowIcon(renderer, RECT_ARR_DOWN,  1, aDown);
     drawArrowIcon(renderer, RECT_ARR_LEFT,  2, aLeft);
@@ -557,6 +575,12 @@ static void renderBoard(SDL_Renderer* renderer, const GameState& state) {
     };
 
     for (int r = 0; r < BOARD_ROWS; r++) {
+        bool isFlashing = false;
+        for (int fr : state.flashingRows) {
+            if (fr == r) { isFlashing = true; break; }
+        }
+        if (isFlashing && (state.flashFrame % 2 == 1)) continue; // chop tat: khong ve trong frame le
+
         for (int c = 0; c < BOARD_COLS; c++) {
             if (state.board[r][c] != 0) drawCell(c, r, COLORS[state.board[r][c]]);
         }
@@ -599,6 +623,24 @@ static void handleQuitAction(GameState& state) {
 #endif
 }
 
+// gamecore-tang-do-kho-16
+// Tính toán fall interval dựa trên điểm số (tốc độ rơi nhanh dần)
+// Mỗi 100 điểm giảm 50ms từ FALL_INTERVAL_NORMAL, tối thiểu 100ms
+static Uint32 calculateFallInterval(int score, bool softDrop) {
+    const Uint32 FALL_INTERVAL_NORMAL = 500;
+    const Uint32 FALL_INTERVAL_FAST   = 500 / 5;
+    const Uint32 MIN_INTERVAL = 100;
+    
+    if (softDrop) return FALL_INTERVAL_FAST;
+    
+    // Tăng độ khó: mỗi 100 điểm giảm 50ms
+    Uint32 reduction = (score / 100) * 50;
+    Uint32 interval = (reduction < FALL_INTERVAL_NORMAL - MIN_INTERVAL) 
+                      ? (FALL_INTERVAL_NORMAL - reduction)
+                      : MIN_INTERVAL;
+    return interval;
+}
+
 // gamecore-xu-ly-roi-03
 int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
     (void)window;
@@ -610,8 +652,6 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
 
     SDL_Event event;
     Uint32 lastFallTime = SDL_GetTicks();
-    const Uint32 FALL_INTERVAL_NORMAL = 500;
-    const Uint32 FALL_INTERVAL_FAST   = 500 / 5;
 
     bool quitRequested = false;
     // Swipe gesture state (touch / mobile)
@@ -795,7 +835,7 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
 
         if (active) {
             Uint32 currentTime = SDL_GetTicks();
-            Uint32 interval = state.softDrop ? FALL_INTERVAL_FAST : FALL_INTERVAL_NORMAL;
+            Uint32 interval = calculateFallInterval(state.score, state.softDrop);
             if (currentTime - lastFallTime > interval) {
                 Tetromino nextT = state.currentBlock;
                 nextT.y += 1;
@@ -811,9 +851,19 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
         renderBoard(renderer, state);
+        drawClearBonusOverlay(renderer, state, nowMs);
         drawSidebar(renderer, state, keys, elapsedMs);
         if (state.showQuitPopup) drawQuitPopup(renderer, state, elapsedMs);
         SDL_RenderPresent(renderer);
+
+        // Xu ly hieu ung chop tat sau khi render
+        if (state.flashFrame > 0) {
+            state.flashFrame--;
+            if (state.flashFrame == 0) {
+                finishClearLines(state);
+            }
+        }
+
         SDL_Delay(16);
     }
 
