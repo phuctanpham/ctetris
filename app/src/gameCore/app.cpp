@@ -578,6 +578,24 @@ static void handleQuitAction(GameState& state) {
 #endif
 }
 
+// gamecore-tang-do-kho-16
+// Tính toán fall interval dựa trên điểm số (tốc độ rơi nhanh dần)
+// Mỗi 100 điểm giảm 50ms từ FALL_INTERVAL_NORMAL, tối thiểu 100ms
+static Uint32 calculateFallInterval(int score, bool softDrop) {
+    const Uint32 FALL_INTERVAL_NORMAL = 500;
+    const Uint32 FALL_INTERVAL_FAST   = 500 / 5;
+    const Uint32 MIN_INTERVAL = 100;
+    
+    if (softDrop) return FALL_INTERVAL_FAST;
+    
+    // Tăng độ khó: mỗi 100 điểm giảm 50ms
+    Uint32 reduction = (score / 100) * 50;
+    Uint32 interval = (reduction < FALL_INTERVAL_NORMAL - MIN_INTERVAL) 
+                      ? (FALL_INTERVAL_NORMAL - reduction)
+                      : MIN_INTERVAL;
+    return interval;
+}
+
 // gamecore-xu-ly-roi-03
 int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
     (void)window;
@@ -589,8 +607,6 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
 
     SDL_Event event;
     Uint32 lastFallTime = SDL_GetTicks();
-    const Uint32 FALL_INTERVAL_NORMAL = 500;
-    const Uint32 FALL_INTERVAL_FAST   = 500 / 5;
 
     bool quitRequested = false;
     // Swipe gesture state (touch / mobile)
@@ -774,7 +790,7 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
 
         if (active) {
             Uint32 currentTime = SDL_GetTicks();
-            Uint32 interval = state.softDrop ? FALL_INTERVAL_FAST : FALL_INTERVAL_NORMAL;
+            Uint32 interval = calculateFallInterval(state.score, state.softDrop);
             if (currentTime - lastFallTime > interval) {
                 Tetromino nextT = state.currentBlock;
                 nextT.y += 1;
