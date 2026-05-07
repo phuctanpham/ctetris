@@ -134,8 +134,11 @@ static void resetGame(GameState& state) {
     state.showQuitPopup = false;
     state.softDrop = false;
     state.speedHeld = false;
+    // gamecore-du-bao-ba-khoi-xep-hinh-lien-tiep-17
     state.currentBlock = spawnBlock();
     state.nextBlock    = spawnBlock();
+    state.nextBlock2   = spawnBlock();
+    state.nextBlock3   = spawnBlock();
 
     state.gameStartTime  = SDL_GetTicks();
     state.pauseStartTime = 0;
@@ -159,10 +162,13 @@ static void lockBlock(GameState& state) {
         }
     }
     clearLines(state);
+    // gamecore-du-bao-ba-khoi-xep-hinh-lien-tiep-17
     state.currentBlock = state.nextBlock;
     state.currentBlock.x = BOARD_COLS / 2 - 1;
     state.currentBlock.y = 0;
-    state.nextBlock = spawnBlock();
+    state.nextBlock = state.nextBlock2;
+    state.nextBlock2 = state.nextBlock3;
+    state.nextBlock3 = spawnBlock();
     if (checkCollision(state, state.currentBlock)) {
         state.isGameOver    = true;
         state.isPaused      = true;
@@ -390,7 +396,10 @@ static void drawSidebar(SDL_Renderer* renderer, const GameState& state,
     drawPauseIcon(renderer, RECT_PAUSE, state.isPaused, aPause);
     drawScoreInSlot(renderer, RECT_SCORE, state.score);
     drawTimerInSlot(renderer, RECT_TIMER, elapsedMs);
+    // gamecore-du-bao-ba-khoi-xep-hinh-lien-tiep-17
     drawNextPreview(renderer, RECT_NEXT1, state.nextBlock);
+    drawNextPreview(renderer, RECT_NEXT2, state.nextBlock2);
+    drawNextPreview(renderer, RECT_NEXT3, state.nextBlock3);
     drawArrowIcon(renderer, RECT_ARR_UP,    0, aUp);
     drawArrowIcon(renderer, RECT_ARR_DOWN,  1, aDown);
     drawArrowIcon(renderer, RECT_ARR_LEFT,  2, aLeft);
