@@ -168,10 +168,6 @@ int main()
             if (c == 'd' && canMove( 1,0)) x++;
             if (c == 'w' && canRotate()) rotateBlock();
             if (c == 'x' && canMove( 0,1)) y++;
-            if (c == 'w') {
-                currentBlock->rotate();
-                if (!canMove(0,0)) currentBlock->rotate(); // revert if can't rotate
-            }
             if (c == 'q') break;
         }
         if (canMove(0,1)) y++;
