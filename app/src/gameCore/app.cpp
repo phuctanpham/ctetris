@@ -150,8 +150,11 @@ static void resetGame(GameState& state) {
     state.showQuitPopup = false;
     state.softDrop = false;
     state.speedHeld = false;
+    // gamecore-du-bao-ba-khoi-xep-hinh-lien-tiep-17
     state.currentBlock = spawnBlock();
     state.nextBlock    = spawnBlock();
+    state.nextBlock2   = spawnBlock();
+    state.nextBlock3   = spawnBlock();
 
     state.gameStartTime  = SDL_GetTicks();
     state.pauseStartTime = 0;
@@ -178,11 +181,18 @@ static void lockBlock(GameState& state) {
             state.board[ny][nx] = state.currentBlock.colorID;
         }
     }
+<<<<<<< kiennt/gameCore-ham-removeline-xoa-dong-task-2-4
     startFlashingLines(state);
+=======
+    clearLines(state);
+    // gamecore-du-bao-ba-khoi-xep-hinh-lien-tiep-17
+>>>>>>> phucpt/tich-hop-v2
     state.currentBlock = state.nextBlock;
     state.currentBlock.x = BOARD_COLS / 2 - 1;
     state.currentBlock.y = 0;
-    state.nextBlock = spawnBlock();
+    state.nextBlock = state.nextBlock2;
+    state.nextBlock2 = state.nextBlock3;
+    state.nextBlock3 = spawnBlock();
     if (checkCollision(state, state.currentBlock)) {
         state.isGameOver    = true;
         state.isPaused      = true;
@@ -410,7 +420,10 @@ static void drawSidebar(SDL_Renderer* renderer, const GameState& state,
     drawPauseIcon(renderer, RECT_PAUSE, state.isPaused, aPause);
     drawScoreInSlot(renderer, RECT_SCORE, state.score);
     drawTimerInSlot(renderer, RECT_TIMER, elapsedMs);
+    // gamecore-du-bao-ba-khoi-xep-hinh-lien-tiep-17
     drawNextPreview(renderer, RECT_NEXT1, state.nextBlock);
+    drawNextPreview(renderer, RECT_NEXT2, state.nextBlock2);
+    drawNextPreview(renderer, RECT_NEXT3, state.nextBlock3);
     drawArrowIcon(renderer, RECT_ARR_UP,    0, aUp);
     drawArrowIcon(renderer, RECT_ARR_DOWN,  1, aDown);
     drawArrowIcon(renderer, RECT_ARR_LEFT,  2, aLeft);
@@ -604,6 +617,24 @@ static void handleQuitAction(GameState& state) {
 #endif
 }
 
+// gamecore-tang-do-kho-16
+// Tính toán fall interval dựa trên điểm số (tốc độ rơi nhanh dần)
+// Mỗi 100 điểm giảm 50ms từ FALL_INTERVAL_NORMAL, tối thiểu 100ms
+static Uint32 calculateFallInterval(int score, bool softDrop) {
+    const Uint32 FALL_INTERVAL_NORMAL = 500;
+    const Uint32 FALL_INTERVAL_FAST   = 500 / 5;
+    const Uint32 MIN_INTERVAL = 100;
+    
+    if (softDrop) return FALL_INTERVAL_FAST;
+    
+    // Tăng độ khó: mỗi 100 điểm giảm 50ms
+    Uint32 reduction = (score / 100) * 50;
+    Uint32 interval = (reduction < FALL_INTERVAL_NORMAL - MIN_INTERVAL) 
+                      ? (FALL_INTERVAL_NORMAL - reduction)
+                      : MIN_INTERVAL;
+    return interval;
+}
+
 // gamecore-xu-ly-roi-03
 int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
     (void)window;
@@ -615,8 +646,6 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
 
     SDL_Event event;
     Uint32 lastFallTime = SDL_GetTicks();
-    const Uint32 FALL_INTERVAL_NORMAL = 500;
-    const Uint32 FALL_INTERVAL_FAST   = 500 / 5;
 
     bool quitRequested = false;
     // Swipe gesture state (touch / mobile)
@@ -800,7 +829,7 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
 
         if (active) {
             Uint32 currentTime = SDL_GetTicks();
-            Uint32 interval = state.softDrop ? FALL_INTERVAL_FAST : FALL_INTERVAL_NORMAL;
+            Uint32 interval = calculateFallInterval(state.score, state.softDrop);
             if (currentTime - lastFallTime > interval) {
                 Tetromino nextT = state.currentBlock;
                 nextT.y += 1;

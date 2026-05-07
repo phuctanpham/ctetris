@@ -34,6 +34,8 @@ struct GameState {
     int board[BOARD_ROWS][BOARD_COLS] = {0};
     Tetromino currentBlock;
     Tetromino nextBlock;
+    Tetromino nextBlock2;
+    Tetromino nextBlock3;
     int  score = 0;
     bool isGameOver    = false;
     bool isPaused      = false;
