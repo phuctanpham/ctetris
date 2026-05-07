@@ -1,10 +1,8 @@
 #include <iostream>
+#include <conio.h>
+#include <cstdlib>
 #include <ctime>
-#include <unistd.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <sys/select.h>
-#include <algorithm>
+#include "Blocks.h"
 
 using namespace std;
 #define H 20
@@ -12,100 +10,26 @@ using namespace std;
 char board[H][W] = {};
 char currentPiece[4][4];
 
-class Blocks {
-public:
-    char shape[4][4];
-    
-    Blocks() {
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-                shape[i][j] = ' ';
+int x, y;
+Block* currentBlock;
+
+Block* createRandomBlock() {
+    int r = rand() % 7;
+    switch (r) {
+        case 0: return new IBlock();
+        case 1: return new OBlock();
+        case 2: return new TBlock();
+        case 3: return new SBlock();
+        case 4: return new ZBlock();
+        case 5: return new JBlock();
+        case 6: return new LBlock();
     }
-};
-
-int x, y, b;
-Blocks blocks[16] = {
-    {{{' ','I',' ',' '},
-      {' ','I',' ',' '},
-      {' ','I',' ',' '},
-      {' ','I',' ',' '}}},
-    {{{' ','I',' ',' '},
-      {' ','I',' ',' '},
-      {' ','I',' ',' '},
-      {' ','I',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ','O','O',' '},
-      {' ','O','O',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ','O','O',' '},
-      {' ','O','O',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ','O','O',' '},
-      {' ','O','O',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ','O','O',' '},
-      {' ','O','O',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ','O','O',' '},
-      {' ','O','O',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ','O','O',' '},
-      {' ','O','O',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ','O','O',' '},
-      {' ','O','O',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {'I','I','I','I'},
-      {' ',' ',' ',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ','O','O',' '},
-      {' ','O','O',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ','T',' ',' '},
-      {'T','T','T',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ','S','S',' '},
-      {'S','S',' ',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {'Z','Z',' ',' '},
-      {' ','Z','Z',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {'J',' ',' ',' '},
-      {'J','J','J',' '},
-      {' ',' ',' ',' '}}},
-    {{{' ',' ',' ',' '},
-      {' ',' ','L',' '},
-      {'L','L','L',' '},
-      {' ',' ',' ',' '}}}
-};
-void rotateMatrixCCW(const char src[4][4], char dst[4][4]){
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            dst[i][j] = src[j][3 - i];
+    return nullptr;
 }
-
-void buildCurrentPiece(){
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            currentPiece[i][j] = shapes[shapeOffsets[blockType] + rotationIndex][i][j];
-}
-
 bool canMove(int dx, int dy){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b].shape[i][j] != ' ') {
+            if (currentBlock->shape[i][j] != ' ') {
                 int xt = x + j + dx;
                 int yt = y + i + dy;
                 if (xt < 1 || xt >= W-1 || yt >= H-1 ) return false;
@@ -140,14 +64,14 @@ void rotateBlock(){
 void block2Board(){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b].shape[i][j] != ' ')
-                board[y+i][x+j] = blocks[b].shape[i][j];
+            if (currentBlock->shape[i][j] != ' ')
+                board[y+i][x+j] = currentBlock->shape[i][j];
 }
 
 void boardDelBlock(){
     for (int i = 0; i < 4; i++ )
         for (int j = 0; j < 4; j++ )
-            if (blocks[b].shape[i][j] != ' ')
+            if (currentBlock->shape[i][j] != ' ')
                 board[y+i][x+j] = ' ';
 }
 void initBoard(){
@@ -234,11 +158,7 @@ void sleepMs(int ms){
 int main()
 {
     srand(time(0));
-    initTerminal();
-    blockType = rand() % 7;
-    rotationIndex = rand() % rotationCount[blockType];
-    buildCurrentPiece();
-    x = 5; y = 0;
+    x = 5; y = 0; currentBlock = createRandomBlock();
     initBoard();
     int speed = 500;
     while (1){
@@ -249,18 +169,23 @@ int main()
             if (c == 'd' && canMove( 1,0)) x++;
             if (c == 'w' && canRotate()) rotateBlock();
             if (c == 'x' && canMove( 0,1)) y++;
+            if (c == 'w') {
+                currentBlock->rotate();
+                if (!canMove(0,0)) currentBlock->rotate(); // revert if can't rotate
+            }
             if (c == 'q') break;
         }
         if (canMove(0,1)) y++;
         else{
             block2Board();
             removeLine();
-            x = 5; y = 0; b = rand()%7;
+            delete currentBlock;
+            x = 5; y = 0; currentBlock = createRandomBlock();
         }
         block2Board();
         draw();
         sleepMs(speed);
     }
-    resetTerminal();
+    delete currentBlock;
     return 0;
 }
