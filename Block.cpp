@@ -22,15 +22,15 @@ void RotatableBlock::rotate() {
 // IBlock
 IBlock::IBlock() {
     shapes = {
-        " I  \n I  \n I  \n I  ",
-        "    \nIIII\n    \n    "
+        " I   I   I   I  ",
+        "    IIII        "
     };
     updateShape();
 }
 
 // OBlock
 OBlock::OBlock() {
-    std::string s = "    \n OO \n OO \n    ";
+    std::string s = "     OO  OO     ";
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             shape[i][j] = s[i*4 + j];
@@ -41,10 +41,10 @@ OBlock::OBlock() {
 // TBlock
 TBlock::TBlock() {
     shapes = {
-        " T  \nTTT \n    \n    ",
-        " T  \n TT \n T  \n    ",
-        "    \nTTT \n T  \n    ",
-        " T  \nTT  \n T  \n    "
+        " T  TTT         ",
+        " T   TT  T      ",
+        "    TTT  T      ",
+        " T  TT   T      "
     };
     updateShape();
 }
@@ -52,8 +52,8 @@ TBlock::TBlock() {
 // SBlock
 SBlock::SBlock() {
     shapes = {
-        " SS \nSS  \n    \n    ",
-        " S  \n SS \n  S \n    "
+        " SS SS          ",
+        " S   SS   S     "
     };
     updateShape();
 }
@@ -61,8 +61,8 @@ SBlock::SBlock() {
 // ZBlock
 ZBlock::ZBlock() {
     shapes = {
-        " Z  \n ZZ \n  Z \n    ",
-        "ZZ  \n ZZ \n    \n    "
+        " Z   ZZ   Z     ",
+        "ZZ   ZZ         "
     };
     updateShape();
 }
@@ -70,10 +70,10 @@ ZBlock::ZBlock() {
 // JBlock
 JBlock::JBlock() {
     shapes = {
-        " J  \nJJJ \n    \n    ",
-        "JJ  \n J  \n J  \n    ",
-        "    \nJJJ \n  J \n    ",
-        " J  \n J  \nJJ  \n    "
+        " J  JJJ         ",
+        "JJ   J   J      ",
+        "    JJJ   J     ",
+        " J   J  JJ      "
     };
     updateShape();
 }
@@ -81,10 +81,10 @@ JBlock::JBlock() {
 // LBlock
 LBlock::LBlock() {
     shapes = {
-        " L  \nLLL \n    \n    ",
-        " L  \n L  \n LL \n    ",
-        "    \nLLL \nL   \n    ",
-        "LL  \n L  \n L  \n    "
+        " L  LLL         ",
+        " L   L   LL     ",
+        "    LLL L       ",
+        "LL   L   L      "
     };
     updateShape();
 }
