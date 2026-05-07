@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    File brandkit/logo.svg = LOGO CHINH HONG cua game cTetris.
+    Day la SOURCE-OF-TRUTH duy nhat cho moi noi can hien thi logo:
+      - WASM favicon (build/wasm/<os>/favicon.svg)
+      - Desktop app icon (build/desktop/<os>/cTetris.icns / .ico / .svg)
+      - In-game logo render (qua header gameStory_logo_svg.h da embed san)
+    Quy tac: NEU thay logo -> chi can sua file nay, build.sh / build.ps1
+    se tu re-process cho moi target.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="320" height="320">
+  
+  <!-- 
+    Thêm thẻ <g> để gom nhóm.
+    scale(0.75): Thu nhỏ toàn bộ các khối bên trong xuống 75%
+    translate(40, 40): Dịch chuyển khối vào giữa (Padding 40px mỗi cạnh) để chống drop góc trên macOS
+  -->
+  <g transform="translate(40, 40) scale(0.75)">
+    <!-- Hàng 1 -->
+    <rect x="0" y="0" width="100" height="100" fill="#FFFF00"/>
+    <rect x="110" y="0" width="100" height="100" fill="#FFFF00"/>
+    <rect x="220" y="0" width="100" height="100" fill="#0000FF"/>
+
+    <!-- Hàng 2 -->
+    <rect x="0" y="110" width="100" height="100" fill="#FFFF00"/>
+    <rect x="110" y="110" width="100" height="100" fill="#0000FF"/>
+    <rect x="220" y="110" width="100" height="100" fill="#0000FF"/>
+
+    <!-- Hàng 3 -->
+    <rect x="0" y="220" width="100" height="100" fill="#FFFF00"/>
+    <rect x="110" y="220" width="100" height="100" fill="#FFFF00"/>
+    <rect x="220" y="220" width="100" height="100" fill="#0000FF"/>
+  </g>
+  
+</svg>
