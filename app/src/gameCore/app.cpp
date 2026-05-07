@@ -104,9 +104,8 @@ static void applyMoveOrRotate(GameState& state, SDL_Keycode key) {
 
 // gamecore-xu-ly-xoa-dong-06
 // gamecore-tinh-diem-07
-// gamecore-hieu-ung-khi-xoa-dong-18
-static void startFlashingLines(GameState& state) {
-    state.flashingRows.clear();
+// gamecore-diem-thuong-khi-xoa-nhieu-dong-19
+static void clearLines(GameState& state) {
     int linesCleared = 0;
     for (int r = BOARD_ROWS - 1; r >= 0; r--) {
         bool full = true;
@@ -118,26 +117,15 @@ static void startFlashingLines(GameState& state) {
             linesCleared++;
         }
     }
-    if (!state.flashingRows.empty()) {
-        state.flashFrame = 6; // 3 lan chop tat (on-off-on-off-on-off)
+    if (linesCleared > 0) {
+        int bonus = linesCleared * linesCleared;
+        state.score += bonus;
+        if (state.score > 99999) state.score = 99999;
+        state.lastClearCount = linesCleared;
+        state.clearCelebrationUntil = SDL_GetTicks() + 1000;
+    } else {
+        state.lastClearCount = 0;
     }
-    state.score += linesCleared;
-    if (state.score > 999999) state.score = 999999; // cap nhat gioi han theo task 1.9
-}
-
-static void finishClearLines(GameState& state) {
-    // Sap xep flashingRows giam dan de xoa tu duoi len
-    std::sort(state.flashingRows.begin(), state.flashingRows.end(), std::greater<int>());
-    for (int r : state.flashingRows) {
-        for (int y = r; y > 0; y--) {
-            for (int x = 0; x < BOARD_COLS; x++)
-                state.board[y][x] = state.board[y - 1][x];
-        }
-        // Xoa dong tren cung
-        for (int x = 0; x < BOARD_COLS; x++)
-            state.board[0][x] = 0;
-    }
-    state.flashingRows.clear();
 }
 
 static void resetGame(GameState& state) {
@@ -156,6 +144,8 @@ static void resetGame(GameState& state) {
     state.nextBlock2   = spawnBlock();
     state.nextBlock3   = spawnBlock();
 
+    state.lastClearCount        = 0;
+    state.clearCelebrationUntil = 0;
     state.gameStartTime  = SDL_GetTicks();
     state.pauseStartTime = 0;
     state.totalPausedMs  = 0;
@@ -181,12 +171,7 @@ static void lockBlock(GameState& state) {
             state.board[ny][nx] = state.currentBlock.colorID;
         }
     }
-<<<<<<< kiennt/gameCore-ham-removeline-xoa-dong-task-2-4
     startFlashingLines(state);
-=======
-    clearLines(state);
-    // gamecore-du-bao-ba-khoi-xep-hinh-lien-tiep-17
->>>>>>> phucpt/tich-hop-v2
     state.currentBlock = state.nextBlock;
     state.currentBlock.x = BOARD_COLS / 2 - 1;
     state.currentBlock.y = 0;
@@ -372,6 +357,27 @@ static void drawNextPreview(SDL_Renderer* renderer, const SDL_FRect& slot, const
                            CELL_INNER, CELL_INNER };
         SDL_RenderFillRect(renderer, &cell);
     }
+}
+
+static void drawClearBonusOverlay(SDL_Renderer* renderer, const GameState& state, Uint32 nowMs) {
+    if (state.lastClearCount <= 1) return;
+    if (nowMs >= state.clearCelebrationUntil) return;
+
+    float alpha = (float)(state.clearCelebrationUntil - nowMs) / 1000.0f;
+    if (alpha < 0.0f) alpha = 0.0f;
+    Uint8 fade = (Uint8)(alpha * 255.0f);
+
+    char buf[32];
+    SDL_snprintf(buf, sizeof(buf), "BONUS x%d!", state.lastClearCount);
+    float textX = 48.0f;
+    float textY = 210.0f;
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, fade / 2);
+    SDL_FRect bg = { textX - 6.0f, textY - 4.0f, 174.0f, 20.0f };
+    SDL_RenderFillRect(renderer, &bg);
+
+    SDL_SetRenderDrawColor(renderer, 255, 240, 120, fade);
+    SDL_RenderDebugText(renderer, textX, textY, buf);
 }
 
 static void drawScoreInSlot(SDL_Renderer* renderer, const SDL_FRect& host, int score) {
@@ -845,6 +851,7 @@ int runGameCore(SDL_Window* window, SDL_Renderer* renderer) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
         renderBoard(renderer, state);
+        drawClearBonusOverlay(renderer, state, nowMs);
         drawSidebar(renderer, state, keys, elapsedMs);
         if (state.showQuitPopup) drawQuitPopup(renderer, state, elapsedMs);
         SDL_RenderPresent(renderer);
