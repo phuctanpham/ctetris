@@ -9,7 +9,7 @@
 ## Mentor:
  * ThS. Nguyễn Văn Toàn
 ## Milestones and Expected Deliveries:
-  ** Tuần 1: Thử nghiệm và Nghiên cứu SFML / SDL3 và EMSDK để tập làm quen với các thư viện âm thanh và đồ họa trên đa nền tảng (Desktop và Web Application)
-  ** Tuần 2: Làm lại từ đầu theo hướng dẫn gợi ý để viết ứng dụng trên 1 file main.cpp duy nhất.
-  ** Tuần 3: Chuyển qua hướng đối tượng theo hướng dẫn gợi ý
-  ** Tuần 4: Kế thừa các thí nghiệm và nghiên cứa với SFML / SDL3 và EMSDK để nâng cao chất lượng mã nguồn dự án.
+ *Tuần 1: Thử nghiệm và Nghiên cứu SFML / SDL3 và EMSDK để tập làm quen với các thư viện âm thanh và đồ họa trên đa nền tảng (Desktop và Web Application)
+ *Tuần 2: Làm lại từ đầu theo hướng dẫn gợi ý để viết ứng dụng trên 1 file main.cpp duy nhất.
+ *Tuần 3: Chuyển qua hướng đối tượng theo hướng dẫn gợi ý
+ *Tuần 4: Kế thừa các thí nghiệm và nghiên cứa với SFML / SDL3 và EMSDK để nâng cao chất lượng mã nguồn dự án.
