@@ -87,17 +87,27 @@ static SvgTexture createSvgTexture(SDL_Renderer* renderer,
     nsvgDeleteRasterizer(rast);
     nsvgDelete(image);
 
-    // Tao SDL_Surface tu pixel buffer (byte order R-G-B-A khop nanosvg)
-    SDL_Surface* surface = SDL_CreateSurfaceFrom(outW, outH,
-                                                 SDL_PIXELFORMAT_RGBA32,
-                                                 pixels, outW * 4);
-    if (!surface) { SDL_free(pixels); return result; }
+    SDL_Surface* tempSurface = SDL_CreateSurfaceFrom(outW, outH,
+                                                     SDL_PIXELFORMAT_RGBA32,
+                                                     pixels, outW * 4);
+    if (!tempSurface) {
+        SDL_free(pixels);
+        return result;
+    }
 
-    // CreateTextureFromSurface COPY pixel data sang GPU memory ->
-    // sau buoc nay free surface va buffer deu an toan.
+    SDL_Surface* surface = SDL_CreateSurface(outW, outH, SDL_PIXELFORMAT_RGBA32);
+    if (!surface) {
+        SDL_DestroySurface(tempSurface);
+        SDL_free(pixels);
+        return result;
+    }
+
+    SDL_BlitSurface(tempSurface, NULL, surface, NULL);
+    SDL_DestroySurface(tempSurface);
+    SDL_free(pixels);
+
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_DestroySurface(surface);
-    SDL_free(pixels);
 
     if (texture) {
         SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
