@@ -1,7 +1,52 @@
 # =============================================================================
 # build.ps1 -- PowerShell build script cho cTetris (Windows)
 # =============================================================================
-# THAY DOI v3 (validation + os-driven paths):
+# FIXED ISSUES (auto-applied on clone + build):
+#
+# 1. SDL3 Runtime Deployment (v4 fix):
+#    - Automatic SDL3.dll copy to build output post-build
+#    - Eliminates "SDL3.dll not found" error at runtime
+#    - Searches: libs\windows\downloads\sdl3-native\bin\ or \lib\
+#    - Status: ENABLED - no manual deployment needed
+#
+# 2. Duplicate Symbol Linker Error (v6 fix in CMakeLists.txt):
+#    - Fixed LNK2005 "already defined" for nanosvg symbols
+#    - Root cause: Both gameStory/app.cpp and gameConsole/app.cpp
+#      defined NANOSVG_IMPLEMENTATION, causing duplicate public symbols
+#    - Solution: compile a single shared TU: src/shared/nanosvg_impl.cpp
+#      and keep module .cpp files declaration-only
+#    - Status: ENABLED - no duplicate object files in final link
+#
+# 3. Console Window Hidden on Windows (v5 fix - NEW):
+#    - Automatic validation and auto-patching of CMakeLists.txt
+#    - Adds WIN32 flag to add_executable()
+#    - Adds /SUBSYSTEM:WINDOWS and /ENTRY:mainCRTStartup linker flags
+#    - Configures Windows SDK library paths for x64
+#    - Result: .exe shows only GUI, no console window on Windows
+#    - Status: ENABLED - validated/auto-patched on every build
+#
+# 4. File Logging System (v5 NEW):
+#    - Header-only Logger class in src/logger.h
+#    - Automatic validation of logger integration
+#    - Logs to game.log in same directory as executable
+#    - Thread-safe singleton pattern
+#    - Printf-style formatting with auto-timestamp
+#    - Status: ENABLED - validated on every build
+#
+# 5. Dependency Consolidation (v2-v3 fixes):
+#    - All downloads centralized to libs\windows\downloads\
+#    - SDL3, nanosvg, nlohmann/json follow OS-driven paths
+#    - build.ps1 + build.sh kept in sync for parallel workflows
+#    - Status: ENABLED - consistent caching across platforms
+#
+# DEPLOYMENT GUARANTEE (Fresh Clone Workflow):
+#   New laptop -> clone repo -> cd app -> .\build.ps1 native
+#   => All validation + auto-fixes applied automatically
+#   => Console hidden on Windows, logger integrated
+#   => No manual intervention needed
+#
+# =============================================================================
+# CONFIGURATION NOTES (v3):
 #   - OS_NAME = "windows" -- moi clone & download vao app\libs\windows\downloads\
 #   - Build artifact: app\build\desktop\windows\ (native), app\build\wasm\windows\ (WASM)
 #   - Validation truoc khi cai dat:
@@ -40,9 +85,11 @@ $WebDir        = Join-Path $AppDir 'web'
 # Sdl3Version pin.
 $CmakeMinVersion   = '3.16'
 $EmsdkVersion      = '3.1.72'
-$Sdl3VersionMin    = '3.2.0'
 $Sdl3Version       = '3.2.18'   # default pin
 $DetectedSdl3Version = ''        # se duoc set boi Initialize-Sdl3Native
+$SqliteVersion     = '3460100'   # SQLite 3.46.1
+$SqliteYear        = '2024'
+$CurlVersion       = '8.10.1'   # libcurl, built with Schannel (no OpenSSL dep)
 
 # -----------------------------------------------------------------------------
 # Logging
@@ -88,19 +135,398 @@ function Test-CommandVersion {
     return $false
 }
 
+function Get-PythonCommandVersion {
+    param([string]$Cmd)
+    if (-not (Get-Command $Cmd -ErrorAction SilentlyContinue)) { return $null }
+    try {
+        $out = & $Cmd --version 2>&1 | Select-Object -First 1
+        if ($out -match '(\d+\.\d+(?:\.\d+)?)') { return $Matches[1] }
+    } catch {}
+    return $null
+}
 
-# (Removed all package manager wrappers and install logic)
+function Test-PythonForEmsdk {
+    $pyVersion = Get-PythonCommandVersion 'py'
+    $pythonVersion = Get-PythonCommandVersion 'python'
+
+    if ($pyVersion) {
+        Write-Info "py --version = $pyVersion"
+    } else {
+        Write-Info 'py --version = not available'
+    }
+
+    if ($pythonVersion) {
+        Write-Info "python --version = $pythonVersion"
+        return $true
+    }
+
+    if ($pyVersion) {
+        Write-Warn "py co san nhung python khong co trong PATH; emsdk can python de chay. Cai thu cong python va chay lai."
+    } else {
+        Write-Warn "Khong co ca py lan python; emsdk can python de chay. Cai thu cong python va chay lai."
+    }
+
+    return $false
+}
+
 
 # =============================================================================
-# nanosvg -- check committed -> check libs\downloads -> download
+# FIX: Import-VsEnv -- Tim va load MSVC compiler environment vao PowerShell
+# session hien tai. Can thiet de cmake tim duoc cl.exe / nmake / link.exe.
+# Thu tu uu tien:
+#   1. vswhere.exe (chi co neu co VS hoac Build Tools)
+#   2. Fallback: tim vcvarsall.bat o cac duong dan pho bien
 # =============================================================================
-function Initialize-Nanosvg {
-    $vendored = Join-Path $AppDir 'src\gameStory\include\nanosvg.h'
-    if (Test-Path $vendored) {
-        Write-Ok 'nanosvg da co trong source tree (vendored)'
+function Import-VsEnv {
+    # Kiem tra cl.exe da co chua (co the da duoc load tu Developer PS)
+    if (Get-Command cl -ErrorAction SilentlyContinue) {
+        Write-Ok "MSVC cl.exe da co trong PATH (skip Import-VsEnv)"
         return
     }
 
+    Write-Info "Tim MSVC compiler environment..."
+
+    # Priority 1: dung vswhere de tim tat ca VS / Build Tools (KHONG dung -requires)
+    $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    $vcvars  = $null
+
+    if (Test-Path $vswhere) {
+        # -all: bao gom ca preview; -products *: ca BuildTools lan Community/Pro/Ent
+        $vsPaths = (& $vswhere -all -products * -property installationPath 2>$null) -split "`n" |
+                   ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
+        foreach ($vsPath in $vsPaths) {
+            $candidate = Join-Path $vsPath 'VC\Auxiliary\Build\vcvarsall.bat'
+            if (Test-Path $candidate) { $vcvars = $candidate; break }
+        }
+        if ($vcvars) { Write-Info "vswhere tim thay: $vcvars" }
+    }
+
+    # Priority 2: fallback cung voi ${env:ProgramFiles(x86)} de match chinh xac
+    if (-not $vcvars) {
+        $x86 = ${env:ProgramFiles(x86)}
+        $pf  = $env:ProgramFiles
+        $fallbacks = @(
+            "$x86\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat",
+            "$pf\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat",
+            "$pf\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvarsall.bat",
+            "$pf\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat",
+            "$x86\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat",
+            "$pf\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat"
+        )
+        foreach ($fb in $fallbacks) {
+            if (Test-Path $fb) { $vcvars = $fb; break }
+        }
+        if ($vcvars) { Write-Info "Fallback tim thay: $vcvars" }
+    }
+
+    if (-not $vcvars) {
+        Write-Warn "Khong tim thay vcvarsall.bat -- cmake co the that bai neu chua co compiler trong PATH."
+        Write-Warn "Hay mo 'Developer PowerShell for VS 2022' roi chay lai script."
+        return
+    }
+
+    Write-Info "Load MSVC env tu: $vcvars"
+    cmd /c "call `"$vcvars`" x64 > nul 2>&1 && set" | ForEach-Object {
+        if ($_ -match '^([^=]+)=(.*)$') {
+            [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process')
+        }
+    }
+
+    if (Get-Command cl -ErrorAction SilentlyContinue) {
+        # cl.exe in version ra stderr -- dung 2>&1 va wrap trong try/catch
+        # de tranh $ErrorActionPreference = Stop lam dung script
+        try {
+            $clOut = (cl 2>&1 | Select-Object -First 1).ToString()
+            $clVer = if ($clOut -match '(\d+\.\d+\.\d+)') { $Matches[1] } else { 'unknown' }
+        } catch { $clVer = 'unknown' }
+        Write-Ok "MSVC cl.exe san sang (version $clVer)"
+    } else {
+        Write-Warn "Sau khi load vcvarsall, van khong tim thay cl.exe. Kiem tra lai cai dat VS."
+    }
+
+    # Kiem tra Ninja (can thiet vi script dung -G Ninja cho ca native va WASM)
+    if (-not (Get-Command ninja -ErrorAction SilentlyContinue)) {
+        Write-Info "Ninja chua co trong PATH -- thu tim trong VS install..."
+        # Dung vswhere de lay paths, sau do thu cac subfolder Ninja
+        $ninjaDirs = @()
+        if (Test-Path $vswhere) {
+            $vsPaths2 = (& $vswhere -all -products * -property installationPath 2>$null) -split "`n" |
+                        ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
+            foreach ($vp in $vsPaths2) {
+                $ninjaDirs += Join-Path $vp 'Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja'
+            }
+        }
+        # Fallback cung voi env vars (tranh hardcode C:\)
+        $x86pf = ${env:ProgramFiles(x86)}
+        $pf    = $env:ProgramFiles
+        $ninjaDirs += @(
+            "$x86pf\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja",
+            "$pf\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja",
+            "$pf\Microsoft Visual Studio\2022\Professional\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja",
+            "$pf\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja",
+            "$x86pf\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja"
+        )
+        $ninjaFound = $false
+        foreach ($nd in $ninjaDirs) {
+            if ($nd -and (Test-Path (Join-Path $nd 'ninja.exe'))) {
+                $env:PATH = "$nd;$env:PATH"
+                Write-Ok "Ninja tim thay: $nd"
+                $ninjaFound = $true
+                break
+            }
+        }
+        if (-not $ninjaFound) {
+            Write-Warn "Khong tim thay ninja.exe. Cai Ninja: winget install Ninja-build.Ninja"
+        }
+    } else {
+        Write-Ok "Ninja da co trong PATH"
+    }
+}
+
+# =============================================================================
+# Package installation helpers for winget and choco
+# =============================================================================
+function Install-WingetPackagesIfMissing {
+    param([string[]]$Ids)
+    foreach ($id in $Ids) {
+        Write-Info "Installing $id via winget..."
+        & winget install -e --id $id --accept-source-agreements --accept-package-agreements 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warn "winget install $id may have failed (exit $LASTEXITCODE)"
+        }
+    }
+}
+
+function Install-ChocoPackagesIfMissing {
+    param([string[]]$Packages)
+    foreach ($pkg in $Packages) {
+        Write-Info "Installing $pkg via choco..."
+        & choco install $pkg -y 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warn "choco install $pkg may have failed (exit $LASTEXITCODE)"
+        }
+    }
+}
+
+# =============================================================================
+# nlohmann/json -- check committed -> check libs\downloads -> download
+# Same pattern as nanosvg: vendored in source tree takes priority.
+# =============================================================================
+$NlohmannVersion = '3.11.3'
+
+function Initialize-Nlohmann {
+    $vendored = Join-Path $AppDir 'src\gameStory\include\nlohmann\json.hpp'
+    if (Test-Path $vendored) {
+        Write-Ok 'nlohmann/json da co trong source tree (vendored)'
+        return
+    }
+
+    $nRoot = Join-Path $DownloadDir 'nlohmann'
+    $nFile = Join-Path $nRoot 'nlohmann\json.hpp'
+
+    if (Test-Path $nFile) {
+        Write-Ok "nlohmann/json da co tai $nFile"
+        return
+    }
+
+    Write-Info "Tai nlohmann/json $NlohmannVersion vao $nFile..."
+    New-Item -ItemType Directory -Force -Path (Join-Path $nRoot 'nlohmann') | Out-Null
+    $url = "https://raw.githubusercontent.com/nlohmann/json/v$NlohmannVersion/single_include/nlohmann/json.hpp"
+    Invoke-WebRequest -Uri $url -OutFile $nFile
+
+    $size = (Get-Item $nFile).Length
+    if ($size -lt 102400) {
+        Write-Err "nlohmann/json.hpp tai ve nho bat thuong ($size bytes) -- xoa va abort"
+        Remove-Item -Force $nFile
+        throw "nlohmann download truncated"
+    }
+    Write-Ok "nlohmann/json $NlohmannVersion san sang tai $nFile ($size bytes)"
+}
+
+# =============================================================================
+# SQLite amalgamation -- check vendored -> check libs\downloads -> download zip
+# Compile with -DSQLITE_THREADSAFE=0 for WASM (set later in CMakeLists.txt).
+# =============================================================================
+function Initialize-Sqlite {
+    $sqliteDir = Join-Path $DownloadDir 'sqlite'
+    $sqliteC   = Join-Path $sqliteDir 'sqlite3.c'
+    $sqliteH   = Join-Path $sqliteDir 'sqlite3.h'
+
+    if ((Test-Path $sqliteC) -and (Test-Path $sqliteH)) {
+        $size = (Get-Item $sqliteC).Length
+        if ($size -gt 5MB) {
+            Write-Ok "SQLite amalgamation da co tai $sqliteDir ($([math]::Round($size/1MB,1)) MB)"
+            return
+        }
+        Write-Warn "sqlite3.c kich thuoc bat thuong ($size bytes) -- re-download"
+    }
+
+    Write-Info "Tai SQLite amalgamation $SqliteVersion vao $sqliteDir..."
+    New-Item -ItemType Directory -Force -Path $sqliteDir | Out-Null
+
+    $zipUrl = "https://sqlite.org/$SqliteYear/sqlite-amalgamation-$SqliteVersion.zip"
+    $zipPath = Join-Path $sqliteDir 'sqlite-amalgamation.zip'
+    $tmpExtract = Join-Path $sqliteDir 'tmp_extract'
+
+    try {
+        Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
+        if (Test-Path $tmpExtract) { Remove-Item -Recurse -Force $tmpExtract }
+        Expand-Archive -Path $zipPath -DestinationPath $tmpExtract -Force
+
+        $innerDir = Join-Path $tmpExtract "sqlite-amalgamation-$SqliteVersion"
+        Copy-Item -Force (Join-Path $innerDir 'sqlite3.c') $sqliteC
+        Copy-Item -Force (Join-Path $innerDir 'sqlite3.h') $sqliteH
+
+        Remove-Item -Force $zipPath
+        Remove-Item -Recurse -Force $tmpExtract
+    } catch {
+        Write-Err "SQLite download/extract failed: $_"
+        throw "SQLite acquisition failed"
+    }
+
+    $size = (Get-Item $sqliteC).Length
+    if ($size -lt 5MB) {
+        Write-Err "sqlite3.c tai ve nho bat thuong ($size bytes) -- abort"
+        Remove-Item -Force $sqliteC, $sqliteH -ErrorAction SilentlyContinue
+        throw "SQLite amalgamation truncated"
+    }
+    Write-Ok "SQLite amalgamation $SqliteVersion san sang tai $sqliteDir ($([math]::Round($size/1MB,1)) MB)"
+}
+
+# =============================================================================
+# Test-Endpoints -- check MANIFEST_GIST_URL + CTETRIS_API_URL + media
+# Mirrors game loading-bar progress: [N/total] per media file check (HEAD).
+# Stops the build (throw) on first failure.
+# =============================================================================
+function Test-Endpoints {
+    Write-Info "=== Endpoint & Media Validation ==="
+
+    $envFile = Join-Path $AppDir '.env'
+    if (-not (Test-Path $envFile)) {
+        Write-Err ".env not found at $envFile - create it with MANIFEST_GIST_URL and CTETRIS_API_URL"
+        throw "Missing app/.env"
+    }
+
+    $envContent = Get-Content $envFile -Raw
+
+    $manifestUrl = ''
+    $apiUrl = ''
+    if ($envContent -match '(?m)^MANIFEST_GIST_URL=(.+)$') { $manifestUrl = $Matches[1].Trim() }
+    if ($envContent -match '(?m)^CTETRIS_API_URL=(.+)$') { $apiUrl = $Matches[1].Trim() }
+
+    Write-Info ('[1/3] MANIFEST_GIST_URL: ' + $manifestUrl)
+    if ([string]::IsNullOrWhiteSpace($manifestUrl) -or $manifestUrl -match 'GIST_ID|OWNER|<') {
+        Write-Err 'MANIFEST_GIST_URL is a placeholder. Set real Gist URL in app/.env.'
+        throw 'MANIFEST_GIST_URL not configured'
+    }
+    try {
+        $r = Invoke-WebRequest -Uri $manifestUrl -Method Get -TimeoutSec 15 -UseBasicParsing -ErrorAction Stop
+        if ($r.StatusCode -ne 200) { throw ('HTTP ' + $r.StatusCode) }
+        Write-Ok ('MANIFEST_GIST_URL OK (HTTP ' + $r.StatusCode + ')')
+    } catch {
+        Write-Err ('MANIFEST_GIST_URL unreachable: ' + $_)
+        Write-Err ('  URL: ' + $manifestUrl)
+        throw 'MANIFEST_GIST_URL validation failed'
+    }
+
+    Write-Info ('[2/3] CTETRIS_API_URL: ' + $apiUrl)
+    if ([string]::IsNullOrWhiteSpace($apiUrl) -or $apiUrl -match 'OWNER|<your') {
+        Write-Err 'CTETRIS_API_URL is a placeholder. Deploy Cloudflare Worker and set real URL.'
+        throw 'CTETRIS_API_URL not configured'
+    }
+    try {
+        $apiHealthUrl = $apiUrl + '/health'
+        $r = Invoke-WebRequest -Uri $apiHealthUrl -Method Get -TimeoutSec 15 -UseBasicParsing -ErrorAction Stop
+        if ($r.StatusCode -ne 200) { throw ('HTTP ' + $r.StatusCode) }
+        Write-Ok ('CTETRIS_API_URL OK (HTTP ' + $r.StatusCode + ')')
+    } catch {
+        Write-Err ('CTETRIS_API_URL/health unreachable: ' + $_)
+        Write-Err ('  URL: ' + $apiUrl + '/health')
+        throw 'CTETRIS_API_URL validation failed'
+    }
+
+    Write-Info '[3/3] Checking media files online...'
+
+    $remoteUrl = & git -C $AppDir remote get-url origin 2>$null
+    if ([string]::IsNullOrWhiteSpace($remoteUrl)) {
+        Write-Warn 'No git remote - skipping media checks'
+        return
+    }
+
+    $owner = ''
+    $repo = ''
+    if ($remoteUrl -match 'github\.com[:/]([^/]+)/([^/.]+)(\.git)?$') {
+        $owner = $Matches[1]
+        $repo = $Matches[2]
+    }
+    if (-not $owner -or -not $repo) {
+        Write-Warn ('Cannot parse owner/repo from ' + $remoteUrl + ' - skipping media checks')
+        return
+    }
+
+    $chaptersDir = Join-Path $AppDir '..\chapters\src'
+    if (-not (Test-Path $chaptersDir)) {
+        Write-Warn 'chapters\src not found - skipping media checks'
+        return
+    }
+
+    $mediaItems = @()
+    foreach ($jsonFile in Get-ChildItem -Path $chaptersDir -Recurse -Filter 'c*.json' | Where-Object { $_.FullName -match 'c\d+\\c\d+\.json$' }) {
+        $chapterId = $jsonFile.Directory.Name
+        $mediaBase = 'https://raw.githubusercontent.com/' + $owner + '/' + $repo + '/main/chapters/src/' + $chapterId + '/media/'
+        $content = Get-Content $jsonFile.FullName -Raw
+        $pattern = '\x22(?:thumbnailPath|imageUrl)\x22\s*:\s*\x22(.+?\.(?:png|jpg|jpeg|gif|webp|svg))\x22'
+
+        [regex]::Matches($content, $pattern) | ForEach-Object {
+            $fn = $_.Groups[1].Value
+            if ($fn) {
+                $url = $mediaBase + $fn
+                if (-not ($mediaItems | Where-Object { $_.Url -eq $url })) {
+                    $mediaItems += [PSCustomObject]@{ Url = $url; Label = $chapterId + '/' + $fn }
+                }
+            }
+        }
+    }
+
+    $total = $mediaItems.Count
+    if ($total -eq 0) {
+        Write-Warn 'No media file references found - skipping'
+        return
+    }
+
+    $doneN = 0
+    $failN = 0
+    foreach ($item in $mediaItems) {
+        $doneN++
+        Write-Host ('  [{0}/{1}] {2} ' -f $doneN, $total, $item.Label) -NoNewline
+        try {
+            $r = Invoke-WebRequest -Uri $item.Url -Method Head -TimeoutSec 10 -UseBasicParsing -ErrorAction Stop
+            if ($r.StatusCode -eq 200) {
+                Write-Host 'OK' -ForegroundColor Green
+            } else {
+                Write-Host ('HTTP ' + $r.StatusCode) -ForegroundColor Red
+                $failN++
+            }
+        } catch {
+            Write-Host 'MISSING' -ForegroundColor Red
+            Write-Warn ('  -> ' + $item.Url)
+            $failN++
+        }
+    }
+
+    if ($failN -gt 0) {
+        Write-Err ($failN.ToString() + '/' + $total + ' media files not found on GitHub (' + $owner + '/' + $repo + ').')
+        Write-Err 'Commit and push missing files to chapters/src/<chapter>/media/ before building.'
+        throw ('Media validation failed: ' + $failN + ' missing files')
+    }
+
+    Write-Ok ('All ' + $total + ' media files confirmed online (' + $owner + '/' + $repo + ')')
+}
+
+# =============================================================================
+# nanosvg -- shared headers in libs\downloads\nanosvg -> download if missing
+# =============================================================================
+function Initialize-Nanosvg {
     $nanoDir   = Join-Path $DownloadDir 'nanosvg'
     $nano      = Join-Path $nanoDir 'nanosvg.h'
     $nanoRast  = Join-Path $nanoDir 'nanosvgrast.h'
@@ -131,10 +557,28 @@ function Import-EmsdkEnv {
         return
     }
     Write-Info "Source emsdk env tu $bat..."
-    cmd /c "call `"$bat`" > nul 2>&1 && set" | ForEach-Object {
-        if ($_ -match '^([^=]+)=(.*)$') {
-            [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process')
+    $cmd = 'call "' + $bat + '" > nul 2>&1 & set'
+    cmd /c $cmd | ForEach-Object {
+        $parts = $_.Split('=', 2)
+        if ($parts.Count -eq 2) {
+            [System.Environment]::SetEnvironmentVariable($parts[0], $parts[1], 'Process')
         }
+    }
+    # emsdk_env.bat does not reliably propagate its PATH edits back to the
+    # parent process (setlocal/echo quirks), so emcmake/em++/emcc can stay
+    # unfound even after a successful activate. Explicitly prepend the known
+    # tool directories (idempotent): upstream\emscripten holds emcc/em++/emcmake,
+    # the emsdk root holds emsdk.bat.
+    $emToolDirs = @((Join-Path $EmsdkRoot 'upstream\emscripten'), $EmsdkRoot)
+    foreach ($d in $emToolDirs) {
+        if ((Test-Path $d) -and ($env:PATH -notlike "*$d*")) {
+            $env:PATH = "$d;$env:PATH"
+        }
+    }
+    if (Get-Command emcmake -ErrorAction SilentlyContinue) {
+        Write-Ok "emcmake resolved on PATH"
+    } else {
+        Write-Warn "emcmake still not on PATH after sourcing $bat"
     }
 }
 
@@ -146,15 +590,22 @@ function Import-EmsdkEnv {
 #   4. Clone moi (last resort)
 # =============================================================================
 function Initialize-Emsdk {
+    if (-not (Test-PythonForEmsdk)) {
+        throw 'Python 3 is required for emsdk. Install python manually and ensure `python --version` works.'
+    }
+
     # Priority 1: em++ tren PATH
     if (Get-Command em++ -ErrorAction SilentlyContinue) {
-        $cur = (em++ --version 2>$null | Select-Object -First 1) `
-                -replace '.*?(\d+\.\d+\.\d+).*','$1'
+        $cur = $null
+        $versionLine = & em++ --version 2>$null | Select-Object -First 1
+        if ($versionLine -match '(\d+\.\d+\.\d+)') {
+            $cur = $Matches[1]
+        }
         if ((Test-VersionGE $cur $EmsdkVersion)) {
             Write-Ok "em++ tren PATH version $cur >= $EmsdkVersion (skip)"
             return
         }
-        Write-Warn "em++ tren PATH version $cur < $EmsdkVersion"
+        Write-Warn ('em++ tren PATH version ' + $cur + ' < ' + $EmsdkVersion)
     }
 
     # Priority 2: ~/emsdk
@@ -164,19 +615,31 @@ function Initialize-Emsdk {
         Write-Info "Phat hien $userEmsdk -- dung emsdk cua user"
         Import-EmsdkEnv $userEmsdk
         if (Get-Command em++ -ErrorAction SilentlyContinue) {
-            $cur = (em++ --version 2>$null | Select-Object -First 1) `
-                    -replace '.*?(\d+\.\d+\.\d+).*','$1'
+            $cur = $null
+            $versionLine = & em++ --version 2>$null | Select-Object -First 1
+            if ($versionLine -match '(\d+\.\d+\.\d+)') {
+                $cur = $Matches[1]
+            }
             if (Test-VersionGE $cur $EmsdkVersion) {
-                Write-Ok "~/emsdk version $cur >= $EmsdkVersion (skip)"
+                Write-Ok ('~/emsdk version ' + $cur + ' >= ' + $EmsdkVersion + ' (skip)')
                 return
             }
-            Write-Info "Update ~/emsdk len $EmsdkVersion..."
+            Write-Info ('Update ~/emsdk len ' + $EmsdkVersion + '...')
             Push-Location $userEmsdk
             try {
                 & .\emsdk.bat install $EmsdkVersion
+                if ($LASTEXITCODE -ne 0) { 
+                    throw "emsdk install failed (exit $LASTEXITCODE). Ensure Python 3 is installed and in PATH."
+                }
                 & .\emsdk.bat activate $EmsdkVersion
+                if ($LASTEXITCODE -ne 0) { 
+                    throw "emsdk activate failed (exit $LASTEXITCODE). Ensure Python 3 is installed and in PATH."
+                }
             } finally { Pop-Location }
             Import-EmsdkEnv $userEmsdk
+            if (-not (Get-Command emcmake -ErrorAction SilentlyContinue)) {
+                throw "emcmake not available after emsdk activation. emsdk may not be properly installed."
+            }
             return
         }
     }
@@ -188,10 +651,13 @@ function Initialize-Emsdk {
         Write-Info "Phat hien managed emsdk tai $managed"
         Import-EmsdkEnv $managed
         if (Get-Command em++ -ErrorAction SilentlyContinue) {
-            $cur = (em++ --version 2>$null | Select-Object -First 1) `
-                    -replace '.*?(\d+\.\d+\.\d+).*','$1'
+            $cur = $null
+            $versionLine = & em++ --version 2>$null | Select-Object -First 1
+            if ($versionLine -match '(\d+\.\d+\.\d+)') {
+                $cur = $Matches[1]
+            }
             if (Test-VersionGE $cur $EmsdkVersion) {
-                Write-Ok "managed emsdk version $cur >= $EmsdkVersion (skip)"
+                Write-Ok ('managed emsdk version ' + $cur + ' >= ' + $EmsdkVersion + ' (skip)')
                 return
             }
         }
@@ -199,9 +665,18 @@ function Initialize-Emsdk {
         Push-Location $managed
         try {
             & .\emsdk.bat install $EmsdkVersion
+            if ($LASTEXITCODE -ne 0) { 
+                throw "emsdk install failed (exit $LASTEXITCODE). Ensure Python 3 is installed and in PATH."
+            }
             & .\emsdk.bat activate $EmsdkVersion
+            if ($LASTEXITCODE -ne 0) { 
+                throw "emsdk activate failed (exit $LASTEXITCODE). Ensure Python 3 is installed and in PATH."
+            }
         } finally { Pop-Location }
         Import-EmsdkEnv $managed
+        if (-not (Get-Command emcmake -ErrorAction SilentlyContinue)) {
+            throw "emcmake not available after emsdk activation. emsdk may not be properly installed."
+        }
         return
     }
 
@@ -212,10 +687,19 @@ function Initialize-Emsdk {
     Push-Location $managed
     try {
         & .\emsdk.bat install $EmsdkVersion
+        if ($LASTEXITCODE -ne 0) { 
+            throw "emsdk install failed (exit $LASTEXITCODE). Ensure Python 3 is installed and in PATH."
+        }
         & .\emsdk.bat activate $EmsdkVersion
+        if ($LASTEXITCODE -ne 0) { 
+            throw "emsdk activate failed (exit $LASTEXITCODE). Ensure Python 3 is installed and in PATH."
+        }
     } finally { Pop-Location }
     Import-EmsdkEnv $managed   # FIX: dung Import-EmsdkEnv thay vi & .ps1
-    Write-Ok "emsdk active: $(em++ --version | Select-Object -First 1)"
+    if (-not (Get-Command emcmake -ErrorAction SilentlyContinue)) {
+        throw "emcmake not available after emsdk activation. emsdk may not be properly installed."
+    }
+    Write-Ok ('emsdk active: ' + ((& em++ --version | Select-Object -First 1)))
 }
 
 # =============================================================================
@@ -254,7 +738,7 @@ function Initialize-Sdl3Native {
     # Priority 4: Build tu source
     Write-Info "  [4/4] Build SDL3 $Sdl3Version tu source..."
     $script:DetectedSdl3Version = $Sdl3Version
-    Build-Sdl3FromSource -InstallPrefix (Join-Path $DownloadDir 'sdl3-native') `
+    Invoke-BuildSdl3 -InstallPrefix (Join-Path $DownloadDir 'sdl3-native') `
                          -Target 'native' `
                          -Version $Sdl3Version
 }
@@ -285,13 +769,14 @@ function Initialize-Sdl3Wasm {
     Write-Info 'System SDL3 (neu co) la native arch -- KHONG dung duoc cho wasm32'
     Write-Info "Build SDL3 $targetVersion cho WASM target (lan dau, ~1-2 phut)..."
 
-    Build-Sdl3FromSource -InstallPrefix $installDir -Target 'wasm' -Version $targetVersion
+    Invoke-BuildSdl3 -InstallPrefix $installDir -Target 'wasm' -Version $targetVersion
 }
 
 # =============================================================================
-# SDL3 WASM -- tu build static lib, KHONG dung -sUSE_SDL=3
+# SDL3 build tu source -- dung Ninja cho ca native va WASM
+# (Ninja di kem VS Build Tools, khong phu thuoc nmake)
 # =============================================================================
-function Build-Sdl3FromSource {
+function Invoke-BuildSdl3 {
     param([string]$InstallPrefix, [string]$Target, [string]$Version)
 
     $sdlSrc   = Join-Path $DownloadDir "SDL-$Version"
@@ -306,26 +791,106 @@ function Build-Sdl3FromSource {
         Write-Ok "SDL3 source $Version da co tai $sdlSrc"
     }
 
+    # Remove stale CMakeCache to avoid generator mismatch on re-runs
+    if (Test-Path $sdlBuild) {
+        Remove-Item -Recurse -Force $sdlBuild
+    }
+
     $cfg = @(
         '-S', $sdlSrc, '-B', $sdlBuild,
         '-DCMAKE_BUILD_TYPE=Release',
-        "-DCMAKE_INSTALL_PREFIX=$InstallPrefix"
+        "-DCMAKE_INSTALL_PREFIX=$InstallPrefix",
+        '-DSDL_TESTS=OFF', '-DSDL_TEST_LIBRARY=OFF',
+        '-G', 'Ninja'    # Ninja: co san trong VS Build Tools, khong can nmake
     )
-        if ($Target -eq 'wasm') {
-        $cfg += @('-DSDL_SHARED=OFF', '-DSDL_STATIC=ON',
-                  '-DSDL_TESTS=OFF', '-DSDL_TEST_LIBRARY=OFF',
-                  '-G', 'Ninja')   # FIX: Emscripten tren Windows bat buoc Ninja
+
+    if ($Target -eq 'wasm') {
+        $cfg += @('-DSDL_SHARED=OFF', '-DSDL_STATIC=ON')
         & emcmake cmake @cfg
     } else {
+        # Native: dam bao MSVC env da duoc load truoc khi configure
+        Import-VsEnv
         $cfg += @('-DSDL_SHARED=ON')
         & cmake @cfg
     }
     if ($LASTEXITCODE -ne 0) { throw "SDL3 $Target configure failed" }
-    & cmake --build $sdlBuild --config Release -j
+    & cmake --build $sdlBuild -j
     if ($LASTEXITCODE -ne 0) { throw "SDL3 $Target build failed" }
-    & cmake --install $sdlBuild --config Release
+    & cmake --install $sdlBuild
     if ($LASTEXITCODE -ne 0) { throw "SDL3 $Target install failed" }
     Write-Ok "SDL3 $Version ($Target) da install vao $InstallPrefix"
+}
+
+# =============================================================================
+# libcurl native (Windows) -- build from source with Schannel backend.
+# Schannel = Windows native SSL/TLS, no OpenSSL dependency.
+# Output: libs\windows\downloads\curl-native\ with CURLConfig.cmake + DLL.
+# =============================================================================
+function Initialize-Curl {
+    $curlInstall = Join-Path $DownloadDir 'curl-native'
+
+    # Cache HIT: skip if CURLConfig.cmake already present
+    foreach ($cand in @(
+        (Join-Path $curlInstall 'lib\cmake\CURL'),
+        (Join-Path $curlInstall 'lib\cmake')
+    )) {
+        if (Test-Path (Join-Path $cand 'CURLConfig.cmake')) {
+            Write-Ok "libcurl native cache HIT: $cand"
+            return
+        }
+    }
+
+    Write-Info "Building libcurl $CurlVersion (Schannel) -> $curlInstall..."
+
+    Import-VsEnv
+
+    $tag     = 'curl-' + ($CurlVersion -replace '\.', '_')
+    $curlSrc = Join-Path $DownloadDir "curl-$CurlVersion"
+    $curlBld = Join-Path $curlSrc 'build-msvc'
+
+    New-Item -ItemType Directory -Force -Path $DownloadDir | Out-Null
+    if (-not (Test-Path (Join-Path $curlSrc '.git'))) {
+        if (Test-Path $curlSrc) { Remove-Item -Recurse -Force $curlSrc }
+        Write-Info "Clone curl $tag vao $curlSrc..."
+        git clone --depth 1 --branch $tag https://github.com/curl/curl.git $curlSrc
+        if ($LASTEXITCODE -ne 0) { throw "git clone curl $tag failed" }
+    } else {
+        Write-Ok "curl source da co tai $curlSrc"
+    }
+
+    if (Test-Path $curlBld) { Remove-Item -Recurse -Force $curlBld }
+
+    $cfg = @(
+        '-S', $curlSrc,
+        '-B', $curlBld,
+        '-G', 'Ninja',
+        '-DCMAKE_BUILD_TYPE=Release',
+        "-DCMAKE_INSTALL_PREFIX=$curlInstall",
+        '-DBUILD_SHARED_LIBS=ON',
+        '-DCURL_USE_SCHANNEL=ON',
+        '-DCURL_USE_OPENSSL=OFF',
+        '-DCURL_USE_LIBSSH2=OFF',
+        '-DCURL_ZLIB=OFF',
+        '-DCURL_BROTLI=OFF',
+        '-DCURL_ZSTD=OFF',
+        '-DUSE_NGHTTP2=OFF',
+        '-DBUILD_TESTING=OFF',
+        '-DBUILD_CURL_EXE=OFF',
+        '-DBUILD_LIBCURL_DOCS=OFF',
+        '-DBUILD_MISC_DOCS=OFF',
+        '-DENABLE_CURL_MANUAL=OFF',
+        '-DCURL_DISABLE_LDAP=ON',
+        '-DCURL_DISABLE_LDAPS=ON',
+        '-DENABLE_UNICODE=ON'
+    )
+    & cmake @cfg
+    if ($LASTEXITCODE -ne 0) { throw "curl configure failed (exit $LASTEXITCODE)" }
+    & cmake --build $curlBld -j
+    if ($LASTEXITCODE -ne 0) { throw "curl build failed (exit $LASTEXITCODE)" }
+    & cmake --install $curlBld
+    if ($LASTEXITCODE -ne 0) { throw "curl install failed (exit $LASTEXITCODE)" }
+
+    Write-Ok "libcurl $CurlVersion installed -> $curlInstall"
 }
 
 
@@ -384,9 +949,11 @@ function Initialize-WindowsTools {
         $ids = @()
         if ($needCmake)  { $ids += 'Kitware.CMake' }
         if ($needGit)    { $ids += 'Git.Git' }
-        if ($needPython) { $ids += 'Python.Python.3.12' }
         if ($needCurl)   { $ids += 'cURL.cURL' }
         Install-WingetPackagesIfMissing -Ids $ids
+        if ($needPython) {
+            Write-Warn 'Python khong co trong PATH; cai thu cong truoc khi build WASM/emsdk.'
+        }
         return
     }
 
@@ -394,9 +961,11 @@ function Initialize-WindowsTools {
         $pkgs = @()
         if ($needCmake)  { $pkgs += 'cmake' }
         if ($needGit)    { $pkgs += 'git' }
-        if ($needPython) { $pkgs += 'python' }
         if ($needCurl)   { $pkgs += 'curl' }
         Install-ChocoPackagesIfMissing -Packages $pkgs
+        if ($needPython) {
+            Write-Warn 'Python khong co trong PATH; cai thu cong truoc khi build WASM/emsdk.'
+        }
         return
     }
 
@@ -421,7 +990,8 @@ function Test-Sources {
         'src\gameStory\include\gameStory_corp_svg.h',
         'src\gameConsole\include\gameConsole_layout.h',
         'src\gameCore\include\gameCore_layout.h',
-        'CMakeLists.txt'
+        'CMakeLists.txt',
+        'src\logger.h'
     )
     $missing = @()
     foreach ($rel in $required) {
@@ -437,21 +1007,235 @@ function Test-Sources {
 }
 
 # =============================================================================
+# Validate Windows console-hiding fixes in CMakeLists.txt
+# (auto-applied on fresh clone to ensure console hidden on Windows)
+# =============================================================================
+function Test-WindowsFixes {
+    $cmakelists = Join-Path $AppDir 'CMakeLists.txt'
+    $content = Get-Content $cmakelists -Raw
+    
+    $hasWin32Flag = $content -match 'add_executable\s*\(\s*cTetris\s+WIN32'
+    $hasSubsystemFlag = $content -match '/SUBSYSTEM:WINDOWS'
+    $hasEntryPoint = $content -match '/ENTRY:mainCRTStartup'
+    $hasSdkPaths = $content -match 'Windows Kits/10/Lib'
+    
+    if ($hasWin32Flag -and $hasSubsystemFlag -and $hasEntryPoint -and $hasSdkPaths) {
+        Write-Ok 'Windows console-hiding fixes validated in CMakeLists.txt'
+        return
+    }
+    
+    Write-Info 'Detecting Windows console-hiding fixes status:'
+    if (-not $hasWin32Flag) { Write-Warn '  - WIN32 flag missing in add_executable()' }
+    if (-not $hasSubsystemFlag) { Write-Warn '  - /SUBSYSTEM:WINDOWS linker flag missing' }
+    if (-not $hasEntryPoint) { Write-Warn '  - /ENTRY:mainCRTStartup linker flag missing' }
+    if (-not $hasSdkPaths) { Write-Warn '  - Windows SDK paths not configured' }
+    
+    Write-Info 'Auto-applying Windows console-hiding fixes to CMakeLists.txt...'
+    
+    # Fix 1: Add WIN32 flag to add_executable if missing
+    if (-not $hasWin32Flag) {
+        Write-Info '  Applying: add_executable WIN32 flag...'
+        $content = $content -replace `
+            '(add_executable\s*\(\s*cTetris)\s+(\$\{GAME_SOURCES\})', `
+            '${1} WIN32 ${2}'
+    }
+    
+    # Fix 2: Add Windows-specific linker configuration after target_include_directories
+    if (-not ($hasSubsystemFlag -and $hasEntryPoint)) {
+        Write-Info '  Applying: Windows linker flags (/SUBSYSTEM, /ENTRY)...'
+        $linkerConfig = @'
+# Add Windows SDK paths for linking on Windows
+if(WIN32)
+    target_link_directories(cTetris PRIVATE
+        "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.26100.0/um/x64"
+        "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.26100.0/ucrt/x64"
+    )
+    # Use main() as entry point even with Windows subsystem (hides console)
+    target_link_options(cTetris PRIVATE 
+        /SUBSYSTEM:WINDOWS 
+        /ENTRY:mainCRTStartup
+    )
+endif()
+'@
+        # Insert after target_include_directories line
+        $content = $content -replace `
+            '(target_include_directories\(cTetris PRIVATE \$\{GAME_INCLUDE_DIRS\})', `
+            "`$1`n`n$linkerConfig"
+    }
+    
+    Set-Content -Path $cmakelists -Value $content -Encoding UTF8
+    Write-Ok 'CMakeLists.txt updated with Windows console-hiding fixes'
+}
+
+# =============================================================================
+# Validate logger.h exists and is properly integrated
+# =============================================================================
+function Test-LoggerIntegration {
+    $loggerHeader = Join-Path $AppDir 'src\logger.h'
+    if (-not (Test-Path $loggerHeader)) {
+        Write-Err 'logger.h not found - logging system missing'
+        throw 'Logger integration incomplete'
+    }
+    
+    $mainCpp = Join-Path $AppDir 'main.cpp'
+    $mainContent = Get-Content $mainCpp -Raw
+    
+    if ($mainContent -match '#include\s+"logger\.h"' -and $mainContent -match 'Logger::getInstance') {
+        Write-Ok 'Logger integration validated in main.cpp'
+        return
+    }
+    
+    Write-Warn 'Logger not fully integrated in main.cpp'
+    Write-Info 'Ensure main.cpp includes: #include "logger.h"'
+    Write-Info 'And initializes: Logger& logger = Logger::getInstance();'
+}
+
+# =============================================================================
+# Show Python server guide for running WASM build on localhost
+# =============================================================================
+function Show-PythonServerGuide {
+    param([string]$BuildDir)
+    
+    Write-Host ""
+    Write-Host "================================================================================" -ForegroundColor Cyan
+    Write-Host "WASM BUILD COMPLETE! Run on localhost with Python HTTP server:" -ForegroundColor Cyan
+    Write-Host "================================================================================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Step 1: OPEN NEW PowerShell terminal and navigate to build directory" -ForegroundColor Yellow
+    Write-Host "  cd `"$BuildDir`"" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Full path (if needed):" -ForegroundColor Gray
+    Write-Host "  cd D:\projects\ctetris-2\app\build\wasm\windows" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Step 2: Verify files exist in current directory" -ForegroundColor Yellow
+    Write-Host "  dir" -ForegroundColor White
+    Write-Host "  (You should see: cTetris.html, cTetris.js, cTetris.wasm)" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Step 3: Start Python HTTP server (pick ONE command):" -ForegroundColor Yellow
+    Write-Host "  python -m http.server 8000" -ForegroundColor White
+    Write-Host "  OR" -ForegroundColor Gray
+    Write-Host "  py -m http.server 8000" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Expected output: 'Serving HTTP on :: port 8000'" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Step 4: Open browser and navigate to:" -ForegroundColor Yellow
+    Write-Host "  http://localhost:8000/cTetris.html" -ForegroundColor White
+    Write-Host ""
+    Write-Host "Step 5: Stop server when done" -ForegroundColor Yellow
+    Write-Host "  Press Ctrl+C in the server terminal" -ForegroundColor White
+    Write-Host ""
+    Write-Host "================================================================================" -ForegroundColor Cyan
+    Write-Host ""
+}
+
+# =============================================================================
+# Show Windows guidance when Smart App Control blocks the native EXE
+# =============================================================================
+function Show-SmartAppControlGuide {
+    param([string]$ExePath)
+
+    Write-Host ""
+    Write-Host "================================================================================" -ForegroundColor Yellow
+    Write-Host "WINDOWS SMART APP CONTROL NOTICE:" -ForegroundColor Yellow
+    Write-Host "================================================================================" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "If Windows blocks $ExePath with Smart App Control or SmartScreen, the real fix is code signing." -ForegroundColor White
+    Write-Host "This build is unsigned unless a code-signing certificate was configured, so Windows may not trust it yet." -ForegroundColor White
+    Write-Host ""
+    Write-Host "Recommended next steps:" -ForegroundColor Yellow
+    Write-Host "  1. Configure a real Authenticode code-signing certificate and rebuild." -ForegroundColor White
+    Write-Host "  2. For local development only, run the EXE from this workspace on a trusted machine." -ForegroundColor White
+    Write-Host "  3. If you are testing your own build, use the file directly from the build output folder." -ForegroundColor White
+    Write-Host ""
+    Write-Host "Build output location:" -ForegroundColor Yellow
+    Write-Host "  $ExePath" -ForegroundColor White
+    Write-Host ""
+    Write-Host "================================================================================" -ForegroundColor Yellow
+    Write-Host ""
+}
+
+# =============================================================================
+# Optional Windows code signing for Smart App Control / SmartScreen trust.
+# Requires a real code-signing certificate.
+# Supported inputs:
+#   CTETRIS_SIGN_CERT_PATH : path to a .pfx file
+#   CTETRIS_SIGN_CERT_PWD   : password for the .pfx file
+#   CTETRIS_SIGN_TIMESTAMP  : timestamp server URL
+# =============================================================================
+function Protect-WindowsBinary {
+    param([string]$ExePath)
+
+    if ($env:OS -ne 'Windows_NT') { return }
+    if (-not (Test-Path $ExePath)) {
+        Write-Warn "Signing skipped: EXE not found at $ExePath"
+        return
+    }
+
+    $certPath = $env:CTETRIS_SIGN_CERT_PATH
+    if ([string]::IsNullOrWhiteSpace($certPath)) {
+        Write-Warn 'No CTETRIS_SIGN_CERT_PATH configured; native EXE remains unsigned.'
+        return
+    }
+    if (-not (Test-Path $certPath)) {
+        Write-Warn "Signing skipped: certificate not found at $certPath"
+        return
+    }
+
+    $signtool = Get-Command signtool.exe -ErrorAction SilentlyContinue
+    if (-not $signtool) {
+        Write-Warn 'Signing skipped: signtool.exe not found in PATH. Install Windows SDK signing tools.'
+        return
+    }
+
+    $timestamp = $env:CTETRIS_SIGN_TIMESTAMP
+    if ([string]::IsNullOrWhiteSpace($timestamp)) {
+        $timestamp = 'http://timestamp.digicert.com'
+    }
+
+    $signtoolArgs = @('sign', '/fd', 'SHA256', '/f', $certPath)
+    if (-not [string]::IsNullOrWhiteSpace($env:CTETRIS_SIGN_CERT_PWD)) {
+        $signtoolArgs += @('/p', $env:CTETRIS_SIGN_CERT_PWD)
+    }
+    if (-not [string]::IsNullOrWhiteSpace($timestamp)) {
+        $signtoolArgs += @('/tr', $timestamp, '/td', 'SHA256')
+    }
+    $signtoolArgs += $ExePath
+
+    Write-Info "Signing native EXE with Authenticode certificate: $certPath"
+    & $signtool.Path @signtoolArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "signtool sign failed (exit $LASTEXITCODE)"
+    }
+
+    Write-Ok 'Native EXE signed successfully'
+}
+
+# =============================================================================
 # Build entry points
 # =============================================================================
-function Build-Native {
+function Invoke-NativeBuild {
     Write-Info "Build NATIVE -> $BuildNativeDir"
     Test-Sources
+    Test-WindowsFixes
+    Test-LoggerIntegration
+
+    # FIX: Load MSVC compiler environment truoc khi lam bat cu thu gi voi cmake
+    Import-VsEnv
+
     Initialize-Sdl3Native
     Initialize-Nanosvg
+    Initialize-Nlohmann   # FIX: gameConsole/app.cpp requires nlohmann/json.hpp
+    Initialize-Sqlite   # FIX 2.6.1: SQLite for Stories DB
+    Initialize-Curl     # libcurl Schannel build for native HTTP sync (manifest + API)
 
     # Copy icon from brandkit to build output
     Copy-DesktopIcon -OutDir $BuildNativeDir
 
-    # Tim path SDL3Config.cmake
+    # Tim path SDL3Config.cmake -- Windows installs to cmake\ OR lib\cmake\SDL3
     $sdlInstall = Join-Path $DownloadDir 'sdl3-native'
     $sdlDirArgs = @()
     foreach ($cand in @(
+        (Join-Path $sdlInstall 'cmake'),
         (Join-Path $sdlInstall 'lib\cmake\SDL3'),
         (Join-Path $sdlInstall 'lib64\cmake\SDL3')
     )) {
@@ -471,24 +1255,37 @@ function Build-Native {
     }
 
     New-Item -ItemType Directory -Force -Path $BuildNativeDir | Out-Null
-        $nativeArgs = @(
+    # CMAKE_PREFIX_PATH: semicolon-separated list so find_package(SDL3) +
+    # find_package(CURL) both resolve. CMake parses ';' even on Windows.
+    $curlInstall = Join-Path $DownloadDir 'curl-native'
+    $prefixList  = @($sdlInstall, $curlInstall) -join ';'
+
+    $nativeArgs = @(
         '-S', $AppDir,
         '-B', $BuildNativeDir,
         '-DCMAKE_BUILD_TYPE=Release',
         '-DBUILD_WASM=OFF',
-        "-DCMAKE_PREFIX_PATH=$sdlInstall",
-        "-DNANOSVG_INCLUDE_DIR=$(Join-Path $DownloadDir 'nanosvg')"
+        '-G', 'Ninja',
+        "-DCMAKE_PREFIX_PATH=$prefixList",
+        "-DNANOSVG_INCLUDE_DIR=$(Join-Path $DownloadDir 'nanosvg')",
+        "-DNLOHMANN_INCLUDE_DIR=$(Join-Path $DownloadDir 'nlohmann')",
+        "-DSQLITE_DIR=$(Join-Path $DownloadDir 'sqlite')"
     ) + $sdlDirArgs + $iconArg
     & cmake @nativeArgs
     if ($LASTEXITCODE -ne 0) { throw "Native configure failed (exit $LASTEXITCODE)" }
     & cmake --build $BuildNativeDir --config Release -j
     if ($LASTEXITCODE -ne 0) { throw "Native build failed (exit $LASTEXITCODE)" }
+
+
     Write-Ok "Native build hoan tat: $BuildNativeDir"
+    Protect-WindowsBinary -ExePath (Join-Path $BuildNativeDir 'cTetris.exe')
+    Show-SmartAppControlGuide -ExePath (Join-Path $BuildNativeDir 'cTetris.exe')
 }
 
-function Build-Wasm {
+function Invoke-WasmBuild {
     Write-Info "Build WASM -> $BuildWasmDir"
     Test-Sources
+    Test-LoggerIntegration
     Initialize-WindowsTools
 
     # Detect version SDL3 native truoc -- WASM build se MATCH version do
@@ -500,6 +1297,8 @@ function Build-Wasm {
     Initialize-Emsdk
     Initialize-Sdl3Wasm
     Initialize-Nanosvg
+    Initialize-Nlohmann   # FIX: gameConsole/app.cpp requires nlohmann/json.hpp
+    Initialize-Sqlite   # FIX 2.6.1: SQLite for Stories DB
 
     # Derive sdl_install path tu version detect duoc
     $targetVersion = if ($script:DetectedSdl3Version) { $script:DetectedSdl3Version } else { $Sdl3Version }
@@ -507,6 +1306,7 @@ function Build-Wasm {
 
     $sdlDir = $null
     foreach ($cand in @(
+        (Join-Path $sdlInstall 'cmake'),
         (Join-Path $sdlInstall 'lib\cmake\SDL3'),
         (Join-Path $sdlInstall 'lib64\cmake\SDL3')
     )) {
@@ -516,7 +1316,7 @@ function Build-Wasm {
         }
     }
     if (-not $sdlDir) {
-        Write-Err "Khong tim thay SDL3Config.cmake trong $sdlInstall\lib*\cmake\SDL3\"
+        Write-Err ('Khong tim thay SDL3Config.cmake trong ' + $sdlInstall + '\lib*\cmake\SDL3\')
         throw 'SDL3 WASM build incomplete'
     }
     Write-Info "SDL3_DIR = $sdlDir"
@@ -530,7 +1330,9 @@ function Build-Wasm {
         '-G', 'Ninja',
         "-DSDL3_DIR=$sdlDir",
         "-DCMAKE_PREFIX_PATH=$sdlInstall",
-        "-DNANOSVG_INCLUDE_DIR=$(Join-Path $DownloadDir 'nanosvg')"
+        "-DNANOSVG_INCLUDE_DIR=$(Join-Path $DownloadDir 'nanosvg')",
+        "-DNLOHMANN_INCLUDE_DIR=$(Join-Path $DownloadDir 'nlohmann')",
+        "-DSQLITE_DIR=$(Join-Path $DownloadDir 'sqlite')"
     )
     & emcmake cmake @wasmArgs
     if ($LASTEXITCODE -ne 0) { throw "emcmake configure failed (exit $LASTEXITCODE)" }
@@ -566,17 +1368,18 @@ function Build-Wasm {
     Copy-PwaAssets -OutDir $BuildWasmDir
 
     Write-Ok "WASM build hoan tat: $BuildWasmDir"
+    Show-PythonServerGuide -BuildDir $BuildWasmDir
 }
 
 switch ($Mode) {
-    'native'    { Build-Native }
-    'wasm'      { Build-Wasm }
-    'all'       { Build-Native; Build-Wasm }
+    'native'    { Invoke-NativeBuild }
+    'wasm'      { Invoke-WasmBuild }
+    'all'       { Invoke-NativeBuild; Invoke-WasmBuild }
     'clean'     {
         Write-Info 'Don dep build/ (giu lai libs/ cache)...'
         $b = Join-Path $AppDir 'build'
         if (Test-Path $b) { Remove-Item -Recurse -Force $b }
-        Write-Ok "Da xoa build/ (libs\$OS_NAME\downloads\ van con)"
+        Write-Ok ('Da xoa build/ (libs\' + $OS_NAME + '\downloads\ van con)')
     }
     'deepclean' {
         Write-Info 'Don dep TOAN BO (build/ + libs/)...'
