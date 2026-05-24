@@ -1,0 +1,123 @@
+% !TEX TS-program = lualatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass[12pt,a4paper]{article}
+
+% Load libraries directly
+\IfFileExists{src/libs/body.tex}{
+  \input{src/libs/body.tex}
+  \input{src/libs/header.tex}
+  \input{src/libs/footer.tex}
+}{
+  \input{libs/body.tex}
+  \input{libs/header.tex}
+  \input{libs/footer.tex}
+}
+
+\usepackage{docmute}
+\usepackage{lastpage}
+\hypersetup{pdftitle={Báo cáo Kỹ năng nghề nghiệp - Nội dung}}
+
+\setlength{\headheight}{15.1pt}
+\addtolength{\topmargin}{-0.6pt}
+\usepackage{titlesec}
+% Reconfigure \paragraph to have a line break (hang) instead of running in
+\titleformat{\paragraph}[hang]
+  {\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}
+  {0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+\begin{document}
+
+% FIX 1: Disable sub-document footer overrides to maintain the global total page count
+\renewcommand{\StandaloneDocumentSetup}[2]{} 
+\renewcommand{\StandaloneSectionSetup}[2]{}  
+\onehalfspacing
+
+% Numbering definitions
+\renewcommand{\thesection}{\Roman{section}}
+\renewcommand{\thesubsection}{\arabic{subsection}}
+\newcounter{contentgroup}
+\renewcommand{\theHsection}{cg\arabic{contentgroup}.sec\arabic{section}}
+\renewcommand{\theHsubsection}{cg\arabic{contentgroup}.sec\arabic{section}.sub\arabic{subsection}}
+\renewcommand{\theHsubsubsection}{cg\arabic{contentgroup}.sec\arabic{section}.sub\arabic{subsection}.ssub\arabic{subsubsection}}
+
+% Group Heading
+\newcommand{\ContentGroup}[2]{%
+  \clearpage
+  \stepcounter{contentgroup}%
+  \phantomsection
+  \addcontentsline{toc}{part}{\textbf{#1.\ \MakeUppercase{#2}}}%
+  \vspace*{0.4cm}%
+  {\centering\large\bfseries #1.\ \MakeUppercase{#2}\par}% 
+  \vspace{0.4cm}%
+}
+
+\newcommand{\InputContentFile}[1]{%
+  % Dynamically apply the current filename to the footer. 
+  % We use the built-in "LastPage" label (from the lastpage package) because manual labels at the end of the document can sometimes fail to resolve.
+  \ApplyStandardFooter{#1}{LastPage}%
+  \IfFileExists{src/content/#1}{\input{src/content/#1}}{\input{content/#1}}%
+}
+
+% FIX 2: Smooth out the bookmark hierarchy to prevent jump warnings.
+\newcommand{\InputGroupedContentFile}[1]{%
+  {%
+    \let\section\subsection
+    \let\subsection\subsubsection
+    \let\subsubsection\paragraph
+    %
+    \let\origaddcontentsline\addcontentsline
+    \renewcommand{\addcontentsline}[3]{%
+      \def\tempa{##2}%
+      \def\tempc{subsection}%
+      \def\tempd{subsubsection}%
+      \def\tempe{paragraph}%
+      % Map the original commands to sequential outline levels
+      \ifx\tempa\tempc
+        \origaddcontentsline{##1}{section}{##3}%
+      \else\ifx\tempa\tempd
+        \origaddcontentsline{##1}{subsection}{##3}%
+      \else\ifx\tempa\tempe
+        \origaddcontentsline{##1}{subsubsection}{##3}%
+      \else
+        \origaddcontentsline{##1}{##2}{##3}%
+      \fi\fi\fi
+    }%
+    \InputContentFile{#1}%
+  }%
+}
+
+% --- NỘI DUNG CHÍNH ---
+
+% Preface
+\InputContentFile{01-Preface.tex}
+
+% A/ TÀI LIỆU ĐẶC TẢ YÊU CẦU (SRS)
+\ContentGroup{A}{đặc tả yêu cầu (SRS)}
+\InputGroupedContentFile{02-gameRequirements.tex} \clearpage
+
+% B/ TÀI LIỆU ĐẶC TẢ KỸ THUẬT (SDS)
+\ContentGroup{B}{đặc tả kỹ thuật (SDS)}
+\InputGroupedContentFile{03-gameEngineering.tex} \clearpage
+
+% C/ HƯỚNG DẪN CÀI ĐẶT VÀ SỬ DỤNG
+\ContentGroup{C}{Hướng dẫn sử dụng}
+\InputGroupedContentFile{04-gameGuide.tex} \clearpage
+
+% D/ KIỂM THỬ VÀ KIỂM SOÁT CHẤT LƯỢNG
+\ContentGroup{D}{Kiểm thử và kiểm soát chất lượng}
+\InputGroupedContentFile{05-gameTest.tex} \clearpage
+
+% E/ QUẢN LÝ DỰ ÁN
+\ContentGroup{E}{Quản lý}
+\InputGroupedContentFile{06-gameMilestones.tex} \clearpage
+
+% F/ QUY HOẠCH TÀI NGUYÊN VÀ ĐỊNH HƯỚNG NHÂN LỰC
+\ContentGroup{F}{Quy hoạch}
+\InputGroupedContentFile{07-gameTechnologies.tex} \clearpage
+\InputGroupedContentFile{08-gameSkills.tex}
+
+% G/ CÁC NỘI DUNG KHÁC
+\ContentGroup{G}{Tài liệu tham khảo}
+\InputGroupedContentFile{00-References.tex} \clearpage
+
+\end{document}
