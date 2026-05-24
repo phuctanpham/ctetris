@@ -81,4 +81,5 @@ bld/
 *.svclog
 *.scc
 **/build
+**/node_modules
 app/libs
