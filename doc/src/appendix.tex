@@ -1,0 +1,78 @@
+% !TEX TS-program = lualatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass[12pt,a4paper]{article} 
+
+\IfFileExists{src/libs/body.tex}{\input{src/libs/body.tex}}{\input{../libs/body.tex}} 
+\IfFileExists{src/libs/header.tex}{\input{src/libs/header.tex}}{\input{../libs/header.tex}} 
+\IfFileExists{src/libs/footer.tex}{\input{src/libs/footer.tex}}{\input{../libs/footer.tex}} 
+\usepackage{docmute} 
+\hypersetup{pdftitle={Báo cáo Kỹ năng nghề nghiệp - Phụ lục}} 
+
+\begin{document}
+% Removed blank lines to prevent LaTeX from generating an empty first page
+\setlength{\parindent}{0pt} 
+\setlength{\parskip}{0pt} 
+\singlespacing 
+\small 
+
+\newcommand{\InputAppendixFile}[1]{%
+	\IfFileExists{src/appendix/#1}{\input{src/appendix/#1}}{%
+		\IfFileExists{appendix/#1}{\input{appendix/#1}}{\input{../appendix/#1}}%
+	}%
+} 
+
+\makeatletter
+% FIX: Safely capture the exact hyperlink anchor (\@currentHref) and write it to the .toa file
+\newcommand{\IncludeAppendixPDF}[3]{%
+    \clearpage
+    % Reset numbering for each appendix file so the footer shows page 1/total.
+    \pagenumbering{arabic}\setcounter{page}{1}%
+    % FIX: Define the hyperref page anchor to prevent "duplicate destination" warnings
+    \def\theHpage{pdf.#3.\arabic{page}}%
+    % Ensure footer is aware this file's last-page label (we'll create it after the included pages)
+    \ApplyStandardFooter{#1}{#3}%
+    \phantomsection
+    \pdfbookmark[1]{#2}{#3}% Adds bookmark to the PDF Viewer Pane at level 1
+    % Writes to the printed Phụ lục TOC (no page number) with the perfect anchor target
+    \protected@write\@auxout{}{\string\@writefile{toa}{\string\contentsline{section}{#2}{}{\@currentHref}}}%
+    \IfFileExists{src/appendix/#1}{%
+        \includepdf[pages=-,pagecommand={\thispagestyle{plain}}]{src/appendix/#1}%
+    }{%
+        \IfFileExists{appendix/#1}{%
+            \includepdf[pages=-,pagecommand={\thispagestyle{plain}}]{appendix/#1}%
+        }{%
+            \includepdf[pages=-,pagecommand={\thispagestyle{plain}}]{../appendix/#1}%
+        }%
+    }%
+    % Apply the label once at the end, decrementing the page counter to capture the correct final page number
+    \addtocounter{page}{-1}%
+    \label{#3}%
+    \addtocounter{page}{1}%
+}
+
+% FIX: Apply the exact same robust linking to .tex files so they appear in the .toa file
+\providecommand{\InputAppendixUnit}[2]{%
+    \clearpage
+    % Reset numbering for each appendix file so the footer shows page 1/total.
+    \pagenumbering{arabic}\setcounter{page}{1}%
+    % FIX: Define the hyperref page anchor to prevent "duplicate destination" warnings
+    \def\theHpage{unit.#1.\arabic{page}}%
+    % Apply footer for this unit;
+    % the included .tex is expected to provide a \label for its last page
+    \ApplyStandardFooter{#1}{app:#1}%
+    \phantomsection
+    \pdfbookmark[1]{#2}{app:#1}%
+    \protected@write\@auxout{}{\string\@writefile{toa}{\string\contentsline{section}{#2}{}{\@currentHref}}}%
+    \InputAppendixFile{#1}%
+}
+\makeatother
+
+% --- Phụ lục Nội Dung ---
+
+\IncludeAppendixPDF{01-teamContract.pdf}{Phụ lục 1: Hợp đồng nhóm}{app:contract}
+
+\InputAppendixUnit{02-teamContractValidation.tex}{Phụ lục 2: Đánh giá hợp đồng nhóm}
+\InputAppendixUnit{03-meetingMinute.tex}{Phụ lục 3: Các biên bản cuộc họp}
+\InputAppendixUnit{04-teamConflictSolving.tex}{Phụ lục 4: Mô tả quá trình làm việc nhóm}
+
+\end{document}
