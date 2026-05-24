@@ -1,9 +1,10 @@
-name: Deploy WASM to GitHub Pages
+name: Deploy WASM
 
 on:
   push:
     branches:
       - main
+      - test
     paths:
       - 'app/src/**'
       - 'app/main.cpp'
@@ -11,17 +12,19 @@ on:
       - 'app/brandkit/**'
       - 'app/CMakeLists.txt'
       - 'app/build.sh'
+      - 'app/build.ps1'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
-# ✅ Opt into Node.js 24 for all jobs before June 2 deadline
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  BUILD_OS: windows   # ← Change to: 'ubuntu' | 'windows' | 'macos'
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
+  actions: write    # ← Added to allow the cleanup step to delete artifacts
 
 concurrency:
   group: pages
@@ -29,36 +32,84 @@ concurrency:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Job 1: BUILD
+  # Job 0: CONFIG  
+  # ---------------------------------------------------------------------------
+  config:
+    name: Resolve runner
+    runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.pick.outputs.runner }}
+    steps:
+      - id: pick
+        shell: bash
+        run: |
+          if [ "${{ env.BUILD_OS }}" = "windows" ]; then
+            echo "runner=windows-latest" >> $GITHUB_OUTPUT
+          elif [ "${{ env.BUILD_OS }}" = "macos" ]; then
+            echo "runner=macos-latest" >> $GITHUB_OUTPUT
+          else
+            echo "runner=ubuntu-latest" >> $GITHUB_OUTPUT
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Job 1: BUILD & UPLOAD
   # ---------------------------------------------------------------------------
   build:
     name: Build WASM
-    runs-on: ubuntu-latest
+    needs: config
+    runs-on: ${{ needs.config.outputs.runner }}
     steps:
-      # -----------------------------------------------------------------
-      # Step 1: Checkout source code
-      # -----------------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
-      # -----------------------------------------------------------------
-
-      # Cache only heavy downloads for build.sh (libs/ubuntu/downloads/)
-      - name: Cache heavy downloads (libs/ubuntu/downloads/)
+      - name: Cache heavy downloads
         uses: actions/cache@v4
         with:
-          path: app/libs/ubuntu/downloads
-          key: libs-ubuntu-${{ hashFiles('app/build.sh') }}-${{ runner.os }}
+          path: app/libs/${{ env.BUILD_OS }}/downloads
+          key: libs-${{ env.BUILD_OS }}-${{ hashFiles('app/build.sh', 'app/build.ps1') }}-${{ runner.os }}
           restore-keys: |
-            libs-ubuntu-
+            libs-${{ env.BUILD_OS }}-
 
-      # Build WASM (all logic in build.sh, including dependency git clone and artifact generation)
-      - name: Build WASM
+      # ---------- OS-Specific Setup ----------
+      - name: Install build tools (Ubuntu)
+        if: env.BUILD_OS == 'ubuntu'
+        run: sudo apt-get install -y ninja-build
+
+      - name: Install Ninja (macOS)
+        if: env.BUILD_OS == 'macos'
+        run: brew install ninja
+
+      - name: Install Ninja (Windows)
+        if: env.BUILD_OS == 'windows'
+        shell: pwsh
+        run: choco install ninja -y --no-progress
+
+      # ===================================================================
+      # Build WASM -- Unix (Ubuntu & macOS)
+      # ===================================================================
+      - name: Build WASM (Unix)
+        if: env.BUILD_OS == 'ubuntu' || env.BUILD_OS == 'macos'
         working-directory: app
+        shell: bash
         run: |
-          set -o pipefail
-          chmod +x build.sh
-          ./build.sh wasm 2>&1 | tee build.log
+          EMSDK_DIR="libs/${{ env.BUILD_OS }}/downloads/emsdk"
+          mkdir -p "libs/${{ env.BUILD_OS }}/downloads"
+          [ -d "$EMSDK_DIR" ] || git clone https://github.com/emscripten-core/emsdk.git "$EMSDK_DIR"
+          (cd "$EMSDK_DIR" && ./emsdk install 3.1.72 && ./emsdk activate 3.1.72)
+          source "$EMSDK_DIR/emsdk_env.sh"
+          bash build.sh wasm 2>&1 | tee build.log
+          exit ${PIPESTATUS[0]}
+
+      # ===================================================================
+      # Build WASM -- Windows
+      # ===================================================================
+      - name: Build WASM (Windows)
+        if: env.BUILD_OS == 'windows'
+        working-directory: app
+        shell: pwsh
+        run: |
+          .\build.ps1 wasm 2>&1 | Tee-Object -FilePath build.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # Upload build log for debugging
       - name: Upload build log
@@ -70,63 +121,60 @@ jobs:
           retention-days: 7
 
       # Stage Pages artifact
-      # build.sh da copy favicon.svg, manifest.webmanifest, sw.js vao BUILD_WASM_DIR
-      # chi can stage toan bo vao public/ de deploy
       - name: Stage Pages artifact
+        shell: bash
         run: |
           mkdir -p public
-          cp app/build/wasm/ubuntu/cTetris.html  public/index.html
-          cp app/build/wasm/ubuntu/cTetris.js    public/
-          cp app/build/wasm/ubuntu/cTetris.wasm  public/
-          # Static assets -- copy neu ton tai (build.sh da copy tu web/ va brandkit/)
+          src="app/build/wasm/${{ env.BUILD_OS }}"
+          cp "$src/cTetris.html" public/index.html
+          cp "$src/cTetris.js"   public/
+          cp "$src/cTetris.wasm" public/
           for asset in favicon.svg favicon.ico manifest.webmanifest sw.js; do
-            if [ -f "app/build/wasm/ubuntu/$asset" ]; then
-              cp "app/build/wasm/ubuntu/$asset" "public/$asset"
+            if [ -f "$src/$asset" ]; then
+              cp "$src/$asset" "public/$asset"
+              echo "[OK] $asset"
             else
-              echo "[WARN] $asset khong co trong build output -- PWA co the bi anh huong"
+              echo "[WARN] $asset not in build output -- PWA may be affected"
             fi
           done
           touch public/.nojekyll
-          echo "--- Kiem tra noi dung public/ ---"
+          echo "--- public/ contents ---"
           ls -la public/
 
-      # Upload Pages artifact
+      # --- PAGES SETUP & UPLOAD ---
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: public
+          path: ./public
 
   # ---------------------------------------------------------------------------
   # Job 2: DEPLOY GITHUB PAGES
   # ---------------------------------------------------------------------------
   deploy:
     name: Deploy to GitHub Pages
-    needs: build
+    needs: [config, build]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      pages: write
-      id-token: write
-      actions: write        # ✅ required to list + delete artifacts
     steps:
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
 
       - name: Cleanup workflow artifacts (except cache)
         if: ${{ success() }}
+        shell: bash
         run: |
-          echo "Cleaning up workflow artifacts except cache..."
           ids=$(gh api "repos/${{ github.repository }}/actions/artifacts" \
             --paginate -q '.artifacts[] | select(.expired==false) | select(.name | test("^cache") | not) | .id' 2>/dev/null || true)
-
           if [ -z "$ids" ]; then
             echo "No artifacts to delete."
             exit 0
           fi
-
           echo "$ids" | xargs -r -I{} gh api --method DELETE \
             "repos/${{ github.repository }}/actions/artifacts/{}"
         env:
