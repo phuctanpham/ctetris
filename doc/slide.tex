@@ -16,7 +16,13 @@
   \setsansfont{Roboto}
 }{
   \IfFontExistsTF{Arial}{
-    \setsansfont{Arial}
+    \setsansfont{Arial}[
+      ItalicFont={Arial},
+      ItalicFeatures={FakeSlant=0.25},
+      BoldFont={Arial Bold},
+      BoldItalicFont={Arial Bold},
+      BoldItalicFeatures={FakeSlant=0.25}
+    ]
   }{
     \IfFontExistsTF{Noto Sans}{
       \setsansfont{Noto Sans}
@@ -46,7 +52,7 @@
 \pagestyle{empty}
 \parindent=0pt
 
-\newcommand{\TOCitem}[1]{{\color{cyel}\vrule width 2pt height 8pt depth 0pt}\ #1}
+\newcommand{\TOCitem}[1]{{\color{sap}\vrule width 2pt height 8pt depth 0pt}\ #1}
 
 %── Refined Elegant Palette (Updated to pure Blue/Yellow)
 \definecolor{sap}{HTML}{0000FF}              % Primary: Pure Blue
@@ -192,11 +198,11 @@
       column sep=5mm, row sep=15mm,
       anchor=north west] at (17mm, -60mm)
     {
-      \TOCitem{Slide 1: Phân hệ chính - Tổng quát} & \TOCitem{Slide 2: Phân hệ chính - V1 vs V2} & \TOCitem{Slide 3: Phân hệ chính - Thống kê} \\
-      \TOCitem{Slide 4: Phân hệ cấu hình - Tổng quát} & \TOCitem{Slide 5: Phân hệ cấu hình - V1 vs V2} & \TOCitem{Slide 6: Phân hệ cấu hình - Thống kê} \\
-      \TOCitem{Slide 7: Phân hệ tuyến truyện - Tổng quát} & \TOCitem{Slide 8: Phân hệ tuyến truyện - V1 vs V2} & \TOCitem{Slide 9: Phân hệ tuyến truyện - Thống kê} \\
-      \TOCitem{Slide 10: Sơ đồ gameLoop} & \TOCitem{Slide 11: Chiến lược công nghệ} & \TOCitem{Slide 12: Sơ đồ lớp và CSDL} \\
-      \TOCitem{Slide 13: Nguồn gốc xung đột} & \TOCitem{Slide 14: Giải quyết xung đột} & \TOCitem{Slide 15: Bài học làm việc nhóm} \\
+      \TOCitem{1: Phân hệ chính - Tổng quát} & \TOCitem{2: Phân hệ chính - V1 vs V2} & \TOCitem{3: Phân hệ chính - Thống kê} \\
+      \TOCitem{4: Phân hệ cấu hình - Tổng quát} & \TOCitem{5: Phân hệ cấu hình - V1 vs V2} & \TOCitem{6: Phân hệ cấu hình - Thống kê} \\
+      \TOCitem{7: Phân hệ tuyến truyện - Tổng quát} & \TOCitem{8: Phân hệ tuyến truyện - V1 vs V2} & \TOCitem{9: Phân hệ tuyến truyện - Thống kê} \\
+      \TOCitem{10: Sơ đồ gameLoop} & \TOCitem{11: Chiến lược công nghệ} & \TOCitem{12: Sơ đồ lớp và CSDL} \\
+      \TOCitem{13: Nguồn gốc xung đột} & \TOCitem{14: Giải quyết xung đột} & \TOCitem{15: Bài học làm việc nhóm} \\
     };
   \end{scope}
 \end{tikzpicture}
@@ -291,9 +297,9 @@
         \addplot[cbk,solproj] coordinates{(1,.20)(2,.20)(3,.20)(4,.66)(5,.29)(6,.29)(7,.49)};
         \addlegendentry{conflict/commit}
       \end{axis}
-      \Insight{17}{-184}{bggr}{cgr}{\faSlack}{Sp1 (W1-2): Nhóm khởi đầu đồng đều 0.88.}{Sp2 (W3-4): Tỷ lệ giảm 0.78 khi tăng tốc xây dựng.}{Sp3 (W5-7): Đạt mức tự chủ 0.62.}{Vòng lặp 60 FPS giảm phụ thuộc AI.}
-      \Insight{120}{-184}{bgbl}{cbl}{\faTrello}{Sp1 (W1-2): Lỗi kiểm soát tốt ở 0.30.}{Sp2 (W3-4): Bùng phát 5.22 – xây dựng hệ vật lý.}{Sp3 (W5-7): Giảm còn 1.33 sau tối ưu.}{Lỗi tập trung ở thuật toán va chạm 20×10.}
-      \Insight{223}{-184}{bgbk}{cbk}{\faGithub}{Sp1 (W1-2): Merge ổn định (0.19).}{Sp2 (W3-4): Nhảy vọt 0.77 – refactor cốt lõi.}{Sp3 (W5-7): Duy trì 0.49 sau chuẩn hóa.}{Tái cấu trúc game loop gây xung đột cao điểm.}
+      \Insight{17}{-184}{bggr}{cgr}{\faSlack}{Sp1 (W1-2): Nhóm khởi đầu đồng đều 0.88.}{Sp2 (W3-4): Tỷ lệ giảm 0.78 khi tăng tốc xây dựng.}{Sp3 (W5-7): Đạt mức tự chủ 0.62.}{Tỷ lệ tin nhắn của lập trình viên so với bot giảm nghĩa là "nói ít hơn, hoặc làm nhiều hơn, hoặc cả 2" vì bot chỉ nhắn khi commit.}
+      \Insight{120}{-184}{bgbl}{cbl}{\faTrello}{Sp1 (W1-2): Lỗi kiểm soát tốt ở 0.30.}{Sp2 (W3-4): Bùng phát 5.22 – xây dựng hệ vật lý.}{Sp3 (W5-7): Giảm còn 1.33 sau tối ưu.}{Phân hệ có tỷ lệ lỗi thấp nhât vì cứ mỗi tác vụ hoàn thành mới có 0.68 lỗi phát sinh.}
+      \Insight{223}{-184}{bgbk}{cbk}{\faGithub}{Sp1 (W1-2): Merge ổn định (0.19).}{Sp2 (W3-4): Nhảy vọt 0.77 – refactor cốt lõi.}{Sp3 (W5-7): Duy trì 0.49 sau chuẩn hóa.}{Tỷ lệ xung đột trên số lượng commit cao dần vào thời điểm tích hợp.}
   \end{scope}
 \end{tikzpicture}
 \newpage
@@ -387,9 +393,9 @@
         \addplot[cbk,solproj] coordinates{(1,.20)(2,.20)(3,.20)(4,.66)(5,.29)(6,.29)(7,.49)};
         \addlegendentry{conflict/commit}
       \end{axis}
-      \Insight{17}{-184}{bggr}{cgr}{\faSlack}{Sp1 (W1-2): Tỷ lệ giao tiếp ổn định 0.88.}{Sp2 (W3-4): Giảm 0.78 khi tích hợp DB.}{Sp3 (W5-7): Cán mốc 0.62 – cấu hình vững.}{Ít hỏi AI hơn khi nắm vững SQLite.}
-      \Insight{120}{-184}{bgbl}{cbl}{\faTrello}{Sp1 (W1-2): Lỗi thấp nhất cả dự án (0.27).}{Sp2 (W3-4): Vọt lên 2.91 – tích hợp Cloudflare D1.}{Sp3 (W5-7): Chưa về chuẩn, duy trì 1.83.}{D1 API là nguồn phát sinh lỗi chính.}
-      \Insight{223}{-184}{bgbk}{cbk}{\faGithub}{Sp1 (W1-2): Xung đột rất thấp (0.19).}{Sp2 (W3-4): Tăng lên 0.61 khi merge schema DB.}{Sp3 (W5-7): Kiểm soát còn 0.49 sau chia nhánh.}{Module cấu hình chung gây xung đột chéo.}
+      \Insight{17}{-184}{bggr}{cgr}{\faSlack}{Sp1 (W1-2): Tỷ lệ giao tiếp ổn định 0.88.}{Sp2 (W3-4): Giảm 0.78 khi tích hợp DB.}{Sp3 (W5-7): Cán mốc 0.62 – cấu hình vững.}{Tương tự các phân hệ khác, tỷ lệ giao tiếp cao ở thời gian đầu và giảm dân khi đã nắm vũng công nghệ.}
+      \Insight{120}{-184}{bgbl}{cbl}{\faTrello}{Sp1 (W1-2): Lỗi thấp nhất cả dự án (0.27).}{Sp2 (W3-4): Vọt lên 2.91 – tích hợp Cloudflare D1.}{Sp3 (W5-7): Chưa về chuẩn, duy trì 1.83.}{Đây là phân hệ có tỷ lệ  phát sinh lỗi cao nhất và ngày càng gia tăng, nghĩa là càng làm nhiều, càng nhiều lỗi.}
+      \Insight{223}{-184}{bgbk}{cbk}{\faGithub}{Sp1 (W1-2): Xung đột rất thấp (0.19).}{Sp2 (W3-4): Tăng lên 0.61 khi merge schema DB.}{Sp3 (W5-7): Kiểm soát còn 0.49 sau chia nhánh.}{Các xung đột xảy ra chủ yếu khi tích hợp, và vẫn còn xuất hiện khi chia nhánh, cho thấy cần cải thiện quy trình làm việc nhóm.}
   \end{scope}
 \end{tikzpicture}
 \newpage
@@ -483,9 +489,9 @@
         \addplot[cbk,solproj] coordinates{(1,.20)(2,.20)(3,.20)(4,.66)(5,.29)(6,.29)(7,.49)};
         \addlegendentry{conflict/commit}
       \end{axis}
-      \Insight{17}{-184}{bggr}{cgr}{\faSlack}{Sp1 (W1-2): Bắt đầu ở 0.88 – AI hỗ trợ SVG.}{Sp2 (W3-4): Duy trì 0.79 – cốt truyện phức tạp.}{Sp3 (W5-7): Đạt 0.62 sau khi API ổn định.}{Gist sync giảm yêu cầu hỏi AI trực tiếp.}
-      \Insight{120}{-184}{bgbl}{cbl}{\faTrello}{Sp1 (W1-2): Tỷ lệ lỗi cao ngay từ đầu (0.42).}{Sp2 (W3-4): Đỉnh 3.37 – hệ thống hội thoại.}{Sp3 (W5-7): Giảm tốt về 1.33 sau refactor.}{Module đa phương tiện khó nhất, lỗi xuất hiện sớm.}
-      \Insight{223}{-184}{bgbk}{cbk}{\faGithub}{Sp1 (W1-2): Git ratio cao hơn chuẩn (0.24).}{Sp2 (W3-4): Lên 0.61 khi tích hợp Gist API.}{Sp3 (W5-7): Ổn định 0.49 sau khi SHA sync vận hành.}{Đồng bộ mã băm phức tạp dễ gây xung đột merge.}
+      \Insight{17}{-184}{bggr}{cgr}{\faSlack}{Sp1 (W1-2): Bắt đầu ở 0.88 – AI hỗ trợ SVG.}{Sp2 (W3-4): Duy trì 0.79 – cốt truyện phức tạp.}{Sp3 (W5-7): Đạt 0.62 sau khi API ổn định.}{Thuần túy hướng nội thích làm hơn nói chuyện vì phần lớn tin nhắn báo commit mới từ bot ở phân hệ này.}
+      \Insight{120}{-184}{bgbl}{cbl}{\faTrello}{Sp1 (W1-2): Tỷ lệ lỗi cao ngay từ đầu (0.42).}{Sp2 (W3-4): Đỉnh 3.37 – hệ thống hội thoại.}{Sp3 (W5-7): Giảm tốt về 1.33 sau refactor.}{Phân hệ này ứng dụng các thư viện đa phương tiện (SFML, SDL) từ sớm và khó nhất nên lỗi xuất hiện sớm.}
+      \Insight{223}{-184}{bgbk}{cbk}{\faGithub}{Sp1 (W1-2): Git ratio cao hơn chuẩn (0.24).}{Sp2 (W3-4): Lên 0.61 khi tích hợp Gist API.}{Sp3 (W5-7): Ổn định 0.49 sau khi SHA sync vận hành.}{Tương tự phân hệ khác, tỷ lệ xung đột tăng vào thời điểm tích hợp, khả năng cao lỗi từ khâu thiết kế phần mềm.}
   \end{scope}
 \end{tikzpicture}
 \newpage
@@ -556,12 +562,13 @@
 
     \matrix (techtable) [
       matrix of nodes,
+      nodes in empty cells,
       nodes={anchor=center, font=\fontsize{16}{22}\selectfont\color{cbk}, text width=65mm, align=center, inner ysep=15pt},
       row 1/.style={nodes={font=\fontsize{20}{26}\selectfont\bfseries\color{sap}, align=center}},
       column 1/.style={nodes={align=left, text width=75mm, font=\fontsize{20}{24}\selectfont\bfseries\color{cslate}}},
       anchor=north west
     ] at (17mm, -55mm) {
-       & V1 & V2 & V3 \\
+      ~ & V1 & V2 & V3 \\
 
       SDL3 &
       { \Large\faImage \\[1ex] Media } &
@@ -572,6 +579,11 @@
       ~ &
       { \Large\faDatabase \\[1ex] Storage } &
       { \Large\faSync \\[1ex] Sync } \\
+
+      Cloudflare D1 & 
+      ~ & 
+      ~ & 
+      { \Large\faPlug \\[1ex] API } \\
     };
 
     \draw[cyel, line width=4pt] ([yshift=-2mm]techtable-1-1.south west) -- ([yshift=-2mm]techtable-1-4.south east);
