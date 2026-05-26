@@ -1,0 +1,58 @@
+﻿scope,metric,unit,W1(Apr10-16),W2(Apr17-23),W3(Apr24-30),W4★(May01-07),W5(May08-14),W6(May15-21),W7(May22-27),%chg_W1(Apr10-16),%chg_W2(Apr17-23),%chg_W3(Apr24-30),%chg_W4★(May01-07),%chg_W5(May08-14),%chg_W6(May15-21),%chg_W7(May22-27)
+gameCore,weeklyTotalMessages,msgs/wk,14.22,14.22,14.22,7.56,7.56,7.56,3.11,,0.0,0.0,-46.84,0.0,0.0,-58.86
+project,weeklyTotalMessages,msgs/wk,42.66,42.66,42.66,23.01,23.01,23.01,9.33,,0.0,0.0,-46.06,0.0,0.0,-59.45
+gameCore,weeklyTotalHumanMessages,msgs/wk,12.56,12.56,12.56,5.89,5.89,5.89,1.94,,0.0,0.0,-53.11,0.0,0.0,-67.06
+project,weeklyTotalHumanMessages,msgs/wk,37.68,37.68,37.68,18.0,18.0,18.0,5.82,,0.0,0.0,-52.23,0.0,0.0,-67.67
+gameCore,weeklyTotalCompletedTasks,tasks/wk,6.67,6.67,6.67,0.78,0.78,0.78,1.56,,0.0,0.0,-88.31,0.0,0.0,100.0
+project,weeklyTotalCompletedTasks,tasks/wk,15.67,15.67,15.67,3.33,3.33,3.33,4.68,,0.0,0.0,-78.75,0.0,0.0,40.54
+gameCore,weeklyTotalCompletedIssues,issues/wk,2.0,2.0,2.0,4.07,2.07,2.07,2.07,,0.0,0.0,103.5,-49.14,0.0,0.0
+project,weeklyTotalCompletedIssues,issues/wk,5.0,5.0,5.0,12.0,6.99,6.99,6.99,,0.0,0.0,140.0,-41.75,0.0,0.0
+gameCore,weeklyTotalCommits,commits/wk,11.89,11.89,11.89,5.11,5.11,5.11,3.5,,0.0,0.0,-57.02,0.0,0.0,-31.51
+project,weeklyTotalCommits,commits/wk,33.0,33.0,33.0,17.99,17.99,17.99,10.5,,0.0,0.0,-45.48,0.0,0.0,-41.63
+gameCore,weeklyTotalSolvedConflicts,MCs/wk,2.22,2.22,2.22,3.95,1.73,1.73,1.73,,0.0,0.0,77.93,-56.2,0.0,0.0
+project,weeklyTotalSolvedConflicts,MCs/wk,6.67,6.67,6.67,11.85,5.19,5.19,5.19,,0.0,0.0,77.66,-56.2,0.0,0.0
+gameCore,chart_comm_ratio (humanSM/totalSM),ratio,0.88,0.88,0.88,0.78,0.78,0.78,0.62,,0.0,0.0,-11.36,0.0,0.0,-20.51
+project,chart_comm_ratio (humanSM/totalSM),ratio,0.88,0.88,0.88,0.78,0.78,0.78,0.62,,0.0,0.0,-11.36,0.0,0.0,-20.51
+gameCore,chart_task_ratio (issues/tasks),ratio,0.3,0.3,0.3,5.22,2.65,2.65,1.33,,0.0,0.0,1640.0,-49.23,0.0,-49.81
+project,chart_task_ratio (issues/tasks),ratio,0.32,0.32,0.32,3.6,2.1,2.1,1.49,,0.0,0.0,1025.0,-41.67,0.0,-29.05
+gameCore,chart_git_ratio (MC/commits),ratio,0.19,0.19,0.19,0.77,0.34,0.34,0.49,,0.0,0.0,305.26,-55.84,0.0,44.12
+project,chart_git_ratio (MC/commits),ratio,0.2,0.2,0.2,0.66,0.29,0.29,0.49,,0.0,0.0,230.0,-56.06,0.0,68.97
+
+gameConsole,weeklyTotalMessages,msgs/wk,14.22,14.22,14.22,7.56,7.56,7.56,3.11,,0.0,0.0,-46.84,0.0,0.0,-58.86
+project,weeklyTotalMessages,msgs/wk,42.66,42.66,42.66,23.01,23.01,23.01,9.33,,0.0,0.0,-46.06,0.0,0.0,-59.45
+gameConsole,weeklyTotalHumanMessages,msgs/wk,12.56,12.56,12.56,5.89,5.89,5.89,1.94,,0.0,0.0,-53.11,0.0,0.0,-67.06
+project,weeklyTotalHumanMessages,msgs/wk,37.68,37.68,37.68,18.0,18.0,18.0,5.82,,0.0,0.0,-52.23,0.0,0.0,-67.67
+gameConsole,weeklyTotalCompletedTasks,tasks/wk,5.0,5.0,5.0,1.44,1.44,1.44,1.56,,0.0,0.0,-71.2,0.0,0.0,8.33
+project,weeklyTotalCompletedTasks,tasks/wk,15.67,15.67,15.67,3.33,3.33,3.33,4.68,,0.0,0.0,-78.75,0.0,0.0,40.54
+gameConsole,weeklyTotalCompletedIssues,issues/wk,1.33,1.33,1.33,4.19,2.85,2.85,2.85,,0.0,0.0,215.04,-31.98,0.0,0.0
+project,weeklyTotalCompletedIssues,issues/wk,5.0,5.0,5.0,12.0,6.99,6.99,6.99,,0.0,0.0,140.0,-41.75,0.0,0.0
+gameConsole,weeklyTotalCommits,commits/wk,11.89,11.89,11.89,6.44,6.44,6.44,3.5,,0.0,0.0,-45.84,0.0,0.0,-45.65
+project,weeklyTotalCommits,commits/wk,33.0,33.0,33.0,17.99,17.99,17.99,10.5,,0.0,0.0,-45.48,0.0,0.0,-41.63
+gameConsole,weeklyTotalSolvedConflicts,MCs/wk,2.22,2.22,2.22,3.95,1.73,1.73,1.73,,0.0,0.0,77.93,-56.2,0.0,0.0
+project,weeklyTotalSolvedConflicts,MCs/wk,6.67,6.67,6.67,11.85,5.19,5.19,5.19,,0.0,0.0,77.66,-56.2,0.0,0.0
+gameConsole,chart_comm_ratio (humanSM/totalSM),ratio,0.88,0.88,0.88,0.78,0.78,0.78,0.62,,0.0,0.0,-11.36,0.0,0.0,-20.51
+project,chart_comm_ratio (humanSM/totalSM),ratio,0.88,0.88,0.88,0.78,0.78,0.78,0.62,,0.0,0.0,-11.36,0.0,0.0,-20.51
+gameConsole,chart_task_ratio (issues/tasks),ratio,0.27,0.27,0.27,2.91,1.98,1.98,1.83,,0.0,0.0,977.78,-31.96,0.0,-7.58
+project,chart_task_ratio (issues/tasks),ratio,0.32,0.32,0.32,3.6,2.1,2.1,1.49,,0.0,0.0,1025.0,-41.67,0.0,-29.05
+gameConsole,chart_git_ratio (MC/commits),ratio,0.19,0.19,0.19,0.61,0.27,0.27,0.49,,0.0,0.0,221.05,-55.74,0.0,81.48
+project,chart_git_ratio (MC/commits),ratio,0.2,0.2,0.2,0.66,0.29,0.29,0.49,,0.0,0.0,230.0,-56.06,0.0,68.97
+
+gameStory,weeklyTotalMessages,msgs/wk,14.22,14.22,14.22,7.89,7.89,7.89,3.11,,0.0,0.0,-44.51,0.0,0.0,-60.58
+project,weeklyTotalMessages,msgs/wk,42.66,42.66,42.66,23.01,23.01,23.01,9.33,,0.0,0.0,-46.06,0.0,0.0,-59.45
+gameStory,weeklyTotalHumanMessages,msgs/wk,12.56,12.56,12.56,6.22,6.22,6.22,1.94,,0.0,0.0,-50.48,0.0,0.0,-68.81
+project,weeklyTotalHumanMessages,msgs/wk,37.68,37.68,37.68,18.0,18.0,18.0,5.82,,0.0,0.0,-52.23,0.0,0.0,-67.67
+gameStory,weeklyTotalCompletedTasks,tasks/wk,4.0,4.0,4.0,1.11,1.11,1.11,1.56,,0.0,0.0,-72.25,0.0,0.0,40.54
+project,weeklyTotalCompletedTasks,tasks/wk,15.67,15.67,15.67,3.33,3.33,3.33,4.68,,0.0,0.0,-78.75,0.0,0.0,40.54
+gameStory,weeklyTotalCompletedIssues,issues/wk,1.67,1.67,1.67,3.74,2.07,2.07,2.07,,0.0,0.0,123.95,-44.65,0.0,0.0
+project,weeklyTotalCompletedIssues,issues/wk,5.0,5.0,5.0,12.0,6.99,6.99,6.99,,0.0,0.0,140.0,-41.75,0.0,0.0
+gameStory,weeklyTotalCommits,commits/wk,9.22,9.22,9.22,6.44,6.44,6.44,3.5,,0.0,0.0,-30.15,0.0,0.0,-45.65
+project,weeklyTotalCommits,commits/wk,33.0,33.0,33.0,17.99,17.99,17.99,10.5,,0.0,0.0,-45.48,0.0,0.0,-41.63
+gameStory,weeklyTotalSolvedConflicts,MCs/wk,2.22,2.22,2.22,3.95,1.73,1.73,1.73,,0.0,0.0,77.93,-56.2,0.0,0.0
+project,weeklyTotalSolvedConflicts,MCs/wk,6.67,6.67,6.67,11.85,5.19,5.19,5.19,,0.0,0.0,77.66,-56.2,0.0,0.0
+gameStory,chart_comm_ratio (humanSM/totalSM),ratio,0.88,0.88,0.88,0.79,0.79,0.79,0.62,,0.0,0.0,-10.23,0.0,0.0,-21.52
+project,chart_comm_ratio (humanSM/totalSM),ratio,0.88,0.88,0.88,0.78,0.78,0.78,0.62,,0.0,0.0,-11.36,0.0,0.0,-20.51
+gameStory,chart_task_ratio (issues/tasks),ratio,0.42,0.42,0.42,3.37,1.86,1.86,1.33,,0.0,0.0,702.38,-44.81,0.0,-28.49
+project,chart_task_ratio (issues/tasks),ratio,0.32,0.32,0.32,3.6,2.1,2.1,1.49,,0.0,0.0,1025.0,-41.67,0.0,-29.05
+gameStory,chart_git_ratio (MC/commits),ratio,0.24,0.24,0.24,0.61,0.27,0.27,0.49,,0.0,0.0,154.17,-55.74,0.0,81.48
+project,chart_git_ratio (MC/commits),ratio,0.2,0.2,0.2,0.66,0.29,0.29,0.49,,0.0,0.0,230.0,-56.06,0.0,68.97
+
