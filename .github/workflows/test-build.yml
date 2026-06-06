@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - main
-      - test
+      - phucpt/tich-hop-v2
     paths:
       - 'app/**'
       - '.github/workflows/test-build.yml'

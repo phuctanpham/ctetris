@@ -2,7 +2,7 @@ name: Deploy Cloudflare Worker
 
 on:
   push:
-    branches: [main]
+    branches: [main, phucpt/tich-hop-v2]
     paths:
       - 'api/**'
       - '.github/workflows/deploy-cloudflare.yml'

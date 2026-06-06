@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - test
+      - phucpt/tich-hop-v2
     paths:
       - 'app/src/**'
       - 'app/main.cpp'

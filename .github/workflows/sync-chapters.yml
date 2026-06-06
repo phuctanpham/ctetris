@@ -2,7 +2,7 @@ name: Sync chapters to Gist manifest
 
 on:
   push:
-    branches: [main, test]
+    branches: [main, phucpt/tich-hop-v2]
     paths: ['chapters/src/**/*.json', '.github/workflows/sync-chapters.yml']
   workflow_dispatch:
 
