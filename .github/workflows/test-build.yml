@@ -1,0 +1,142 @@
+name: Test Build (cross-platform)
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - phucpt/tich-hop-v2
+    paths:
+      - 'app/**'
+      - '.github/workflows/test-build.yml'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    name: ${{ matrix.os_label }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os_label: windows
+            runner: windows-latest
+            script: app/build.ps1
+          - os_label: ubuntu
+            runner: ubuntu-latest
+            script: app/build.sh
+          - os_label: macos
+            runner: macos-latest
+            script: app/build.sh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Cache dung chung native + wasm cua cung 1 OS
+      # (SDL-3.2.8/, sdl3-native/, sdl3-wasm-3.2.8/, emsdk/, nanosvg/)
+      - name: Cache heavy downloads
+        uses: actions/cache@v4
+        with:
+          path: app/libs/${{ matrix.os_label }}/downloads
+          key: libs-${{ matrix.os_label }}-${{ hashFiles(matrix.script) }}
+          restore-keys: |
+            libs-${{ matrix.os_label }}-
+
+      # ---------- Ubuntu setup ----------
+      - name: Install Ubuntu dev libs
+        if: matrix.os_label == 'ubuntu'
+        uses: awalsh128/cache-apt-pkgs-action@v1.5.3
+        with:
+          packages: >-
+            build-essential pkg-config ninja-build
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev
+            libxi-dev libxinerama-dev
+            libxss-dev libxxf86vm-dev libxfixes-dev libxkbcommon-dev
+            libgl1-mesa-dev libgles2-mesa-dev
+            libpulse-dev libasound2-dev
+            libdbus-1-dev libudev-dev
+          version: 6.0
+          execute_install_scripts: true
+
+      # ---------- Windows setup ----------
+      - name: Install Ninja (Windows)
+        if: matrix.os_label == 'windows'
+        shell: pwsh
+        run: choco install ninja -y --no-progress
+
+      # ===================================================================
+      # Step 1: Build NATIVE
+      # ===================================================================
+      - name: Build native (Windows)
+        if: matrix.os_label == 'windows'
+        working-directory: app
+        shell: pwsh
+        run: |
+          .\build.ps1 native 2>&1 | Tee-Object -FilePath build-native.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build native (Linux/macOS)
+        if: matrix.os_label != 'windows'
+        working-directory: app
+        shell: bash
+        run: |
+          bash build.sh native 2>&1 | tee build-native.log
+          exit ${PIPESTATUS[0]}
+
+      # ===================================================================
+      # Step 2: Build WASM (sau khi native xong, chia se SDL3/emsdk cache)
+      # ===================================================================
+      - name: Build wasm (Windows)
+        if: matrix.os_label == 'windows'
+        working-directory: app
+        shell: pwsh
+        run: |
+          .\build.ps1 wasm 2>&1 | Tee-Object -FilePath build-wasm.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build wasm (Linux/macOS)
+        if: matrix.os_label != 'windows'
+        working-directory: app
+        shell: bash
+        run: |
+          EMSDK_DIR="libs/${{ matrix.os_label }}/downloads/emsdk"
+          mkdir -p "libs/${{ matrix.os_label }}/downloads"
+          [ -d "$EMSDK_DIR" ] || git clone https://github.com/emscripten-core/emsdk.git "$EMSDK_DIR"
+          (cd "$EMSDK_DIR" && ./emsdk install 3.1.72 && ./emsdk activate 3.1.72)
+          source "$EMSDK_DIR/emsdk_env.sh"
+          bash build.sh wasm 2>&1 | tee build-wasm.log
+          exit ${PIPESTATUS[0]}
+
+      # ===================================================================
+      # Debug: dump build/ tree & upload logs khi fail
+      # ===================================================================
+      - name: List build output
+        if: always()
+        working-directory: app
+        shell: bash
+        run: |
+          if [ -d build ]; then
+            echo "=== build/ tree ==="
+            find build -maxdepth 4 -type f | head -100 || true
+          fi
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-build-log-${{ matrix.os_label }}
+          path: |
+            app/build-native.log
+            app/build-wasm.log
+          retention-days: 7
+          if-no-files-found: warn

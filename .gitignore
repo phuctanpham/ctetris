@@ -84,10 +84,10 @@ bld/
 *.svclog
 *.scc
 **/build
+**/node_modules
 app/libs
 
 # API / Cloudflare
-**/node_modules/
 **/.wrangler/
 !**/.env.example
 **/.dev.vars*

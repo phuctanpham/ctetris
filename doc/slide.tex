@@ -1,0 +1,131 @@
+% !TEX TS-program = lualatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass{article}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{pdfpages} % Thư viện quan trọng để chèn các trang PDF khác
+
+% Cấu hình đường dẫn: slide.tex nằm cùng cấp với thư mục assets
+\graphicspath{{assets/}{assets/tikz/}}
+
+\usepackage[
+  paperwidth=338mm, paperheight=190mm,
+  top=0mm, bottom=0mm, left=0mm, right=0mm
+]{geometry}
+
+% -- ROBUST FONT FIX FOR LUALATEX --
+\usepackage{fontspec}
+\IfFontExistsTF{Roboto}{
+  \setsansfont{Roboto}
+}{
+  \IfFontExistsTF{Arial}{
+    \setsansfont{Arial}
+  }{
+    \renewcommand{\familydefault}{\sfdefault}
+  }
+}
+\renewcommand{\familydefault}{\sfdefault}
+
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usetikzlibrary{calc, matrix}
+\pagestyle{empty}
+\parindent=0pt
+
+%── Bảng màu chuẩn (Đồng bộ với các tệp part*.tex)
+\definecolor{sap}{HTML}{0000FF}              % Primary: Pure Blue
+\definecolor{cyel}{HTML}{FFFF00}             % Secondary: Pure Yellow
+\definecolor{cbk}{HTML}{424242}
+\definecolor{cslate}{HTML}{64748B}
+
+\newcommand{\TOCitem}[1]{{\color{sap}\vrule width 2pt height 8pt depth 0pt}\ #1}
+\newcommand{\TitleLine}[1]{%
+  \draw[cyel, line width=6pt] (17mm, -10mm) -- (17mm, -25mm);
+  \node[anchor=west, font=\fontsize{35}{40}\selectfont\bfseries, text=sap] at (21mm, -17.5mm) {#1};
+}
+
+\begin{document}
+
+% ===================================================================
+% SECTION 1: TRANG BÌA (Tự biên dịch)
+% ===================================================================
+\begin{tikzpicture}[remember picture, overlay]
+  \coordinate (NW) at (current page.north west);
+  \begin{scope}[shift={(NW)}]
+    % Tiêu đề chính
+    \node[anchor=north west, font=\fontsize{24}{28}\selectfont\bfseries\color{sap}] at (17mm, -45mm) {Báo cáo đồ án cuối khóa};
+    \node[anchor=north west, font=\fontsize{35}{40}\selectfont\bfseries\color{sap}] at (17mm, -62mm) {LẬP TRÌNH GAME XẾP HÌNH};
+
+    % Thông tin nhóm
+    \node[anchor=north west, font=\fontsize{16}{24}\selectfont, text width=160mm] at (17mm, -100mm) {
+      \textbf{Nhóm:} 03 \hspace{2cm} \textbf{Lớp:} F21.SS004\\[1em]
+      Ngô Triều Vĩ – MSSV: 25730160\\
+      Phạm Tấn Phúc – MSSV: 25730134\\
+      Tạ Minh Trường – MSSV: 25730157\\
+      Đàm Gia Thái – MSSV: 25730144\\
+      Nguyễn Trung Kiên – MSSV: 25730118\\[0.5em]
+      \textbf{GVHD: Ths Nguyễn Văn Toàn}
+    };
+
+    % Logo khu vực bên phải
+    \node[anchor=center] at (254mm, -90mm) {
+      \includegraphics[width=90mm, keepaspectratio]{ctetris-logo.png}
+    };
+    \node[anchor=center, font=\fontsize{26}{30}\selectfont\bfseries\color{sap}] at (254mm, -150mm) {cTetris \textcopyright};
+
+    % Các component logo U-I-T
+    \node[anchor=center] at (254mm, -165mm) {
+      \includegraphics[width=24mm, height=24mm]{01-preface-logo-U-component.png}
+      \hspace{9mm}
+      \includegraphics[width=24mm, height=24mm]{01-preface-logo-I-component.png}
+      \hspace{9mm}
+      \includegraphics[width=24mm, height=24mm]{01-preface-logo-T-component.png}
+    };
+  \end{scope}
+\end{tikzpicture}
+\newpage
+
+% ===================================================================
+% SECTION 2: NỘI DUNG / TABLE OF CONTENTS (Tự biên dịch)
+% ===================================================================
+\begin{tikzpicture}[remember picture, overlay]
+  \coordinate (NW) at (current page.north west);
+  \begin{scope}[shift={(NW)}]
+    \TitleLine{Nội dung}
+
+    \matrix [matrix of nodes,
+      nodes={anchor=west, font=\fontsize{14}{18}\selectfont\color{cbk}, text width=95mm},
+      column sep=5mm, row sep=15mm,
+      anchor=north west] at (17mm, -60mm)
+    {
+      \TOCitem{1: Phân hệ chính - Tổng quát} & \TOCitem{2: Phân hệ chính - V1 vs V2} & \TOCitem{3: Phân hệ chính - Thống kê} \\
+      \TOCitem{4: Phân hệ cấu hình - Tổng quát} & \TOCitem{5: Phân hệ cấu hình - V1 vs V2} & \TOCitem{6: Phân hệ cấu hình - Thống kê} \\
+      \TOCitem{7: Phân hệ tuyến truyện - Tổng quát} & \TOCitem{8: Phân hệ tuyến truyện - V1 vs V2} & \TOCitem{9: Phân hệ tuyến truyện - Thống kê} \\
+      \TOCitem{10: Sơ đồ gameLoop} & \TOCitem{11: Chiến lược công nghệ} & \TOCitem{12: Sơ đồ lớp và CSDL} \\
+      \TOCitem{13: Nguồn gốc xung đột} & \TOCitem{14: Giải quyết xung đột} & \TOCitem{15: Bài học làm việc nhóm} \\
+    };
+  \end{scope}
+\end{tikzpicture}
+\newpage
+
+% ===================================================================
+% IMPORT CÁC SECTION CÒN LẠI TỪ PDF (Third Section onwards)
+% ===================================================================
+
+% Nhập Part 1: Hình vẽ Slide 1, 2, 3 (Phân hệ chính)
+\includepdf[pages=-]{assets/tikz/diagrams-slide-part1.pdf}
+
+% Nhập Part 2: Hình vẽ Slide 4, 5, 6 (Phân hệ cấu hình)
+\includepdf[pages=-]{assets/tikz/diagrams-slide-part2.pdf}
+
+% Nhập Part 3: Hình vẽ Slide 7, 8, 9 (Phân hệ tuyến truyện)
+\includepdf[pages=-]{assets/tikz/diagrams-slide-part3.pdf}
+
+% Nhập Part 4: Hình vẽ Slide 10, 11, 12 (Kỹ thuật & Cấu trúc)
+\includepdf[pages=-]{assets/tikz/diagrams-slide-part4.pdf}
+
+% Nhập Part 5: Hình vẽ Slide 13, 14, 15 (Xung đột & Bài học)
+\includepdf[pages=-]{assets/tikz/diagrams-slide-part5.pdf}
+
+\end{document}
