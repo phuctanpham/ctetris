@@ -194,7 +194,7 @@ jobs:
             sha=$(git log -1 --format=%H -- "$jsonfile" 2>/dev/null || echo "uncommitted")
             gid=$(cat "/tmp/gist_${chapter_id}.id" 2>/dev/null || echo "")
             gist_url="https://gist.githubusercontent.com/${owner}/${gid}/raw/${chapter_id}.json"
-            media_url="https://raw.githubusercontent.com/${owner}/${repo}/main/chapters/src/${chapter_id}/media/"
+            media_url="https://raw.githubusercontent.com/${owner}/${repo}/${{ github.ref_name }}/chapters/src/${chapter_id}/media/"
             ver_entry=$(echo "$ver_entry" | jq \
               --arg cid "$chapter_id" --arg sha "$sha" \
               --arg gu  "$gist_url"   --arg mu  "$media_url" --arg dt "$now" \
