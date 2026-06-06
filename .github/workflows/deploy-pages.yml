@@ -1,4 +1,4 @@
-name: Deploy WASM
+name: Deploy WASM into github pages
 
 on:
   push:
